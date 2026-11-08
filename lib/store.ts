@@ -3,7 +3,7 @@ import "server-only";
 // Guild-sized data (tens to low hundreds of rows), so loading whole tables per request is fine.
 import { cache } from "react";
 import { isDemo } from "./config";
-import { sql } from "./db";
+import { json, sql, sqlOne } from "./db";
 import * as S from "./sample";
 import type { Quality, Role, SignupStatus, SourceType } from "./types";
 import { minutesSince } from "./ui";
@@ -84,9 +84,9 @@ const demoStore: Store = {
   memberTotal: async () => S.MEMBER_TOTAL,
 };
 
-// ---------------------------------------------------------------- postgres store
-const iso = (d: Date | string | null) => (d ? new Date(d).toISOString() : "");
-const shortDate = (d: Date | string) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/Chicago" });
+// ---------------------------------------------------------------- D1 store
+const iso = (d: string | null) => (d ? new Date(d).toISOString() : "");
+const shortDate = (d: string) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/Chicago" });
 
 const dbStore: Store = {
   async characters() {
@@ -97,48 +97,49 @@ const dbStore: Store = {
     return rows.map((r) => ({
       id: r.id, slug: r.slug, name: r.name, surname: r.surname, fullName: `${r.name} ${r.surname}`.trim(), level: r.level ?? 0,
       className: r.class ?? "Unknown", race: r.race ?? "", spec: r.spec ?? undefined, role: r.role ?? undefined, rank: r.guild_rank,
-      lastSeenMin: minutesSince(r.last_login_at), userId: r.user_id ?? undefined, isMain: !!r.is_main, inGuild: r.in_guild, claimed: r.claimed,
-      attendancePct: r.attendance_pct ?? undefined, fireResistance: r.fire_resistance ?? undefined, attunements: r.attunements ?? [],
-      professions: r.professions ?? [], stats: r.stats ?? [], legacy: r.legacy ?? undefined, gear: r.equipment ?? [],
+      lastSeenMin: minutesSince(r.last_login_at), userId: r.user_id ?? undefined, isMain: !!r.is_main, inGuild: !!r.in_guild, claimed: !!r.claimed,
+      attendancePct: r.attendance_pct ?? undefined, fireResistance: r.fire_resistance ?? undefined, attunements: json(r.attunements, []),
+      professions: json(r.professions, []), stats: json(r.stats, []), legacy: json(r.legacy, undefined), gear: json(r.equipment, []),
       renderUrl: r.render_url ?? undefined, syncedAt: iso(r.synced_at),
     }));
   },
   async items() {
     const rows = await sql<any>(
       `select i.*, s.type, s.raid, s.boss, s.zone, s.map_label, s.map_x, s.map_y, s.how
-       from items i left join lateral (select * from item_sources s where s.item_id = i.id order by s.type limit 1) s on true order by i.id`,
+       from items i left join item_sources s on s.rowid = (select s2.rowid from item_sources s2 where s2.item_id = i.id order by s2.type limit 1)
+       order by i.id`,
     );
     return rows.map((r) => ({
-      id: r.id, name: r.name, quality: r.quality ?? "common", slot: r.slot ?? "", slotDetail: r.slot_detail ?? r.slot ?? "", roles: r.roles ?? [],
+      id: r.id, name: r.name, quality: r.quality ?? "common", slot: r.slot ?? "", slotDetail: r.slot_detail ?? r.slot ?? "", roles: json(r.roles, []),
       source: { type: r.type ?? "world", raid: r.raid ?? undefined, boss: r.boss ?? "", zone: r.zone ?? "", mapLabel: r.map_label ?? undefined, mapX: r.map_x ?? undefined, mapY: r.map_y ?? undefined, how: r.how ?? "" },
     }));
   },
   async wishlists() {
     const rows = await sql<any>("select character_id, item_id, rank, approved from wishlist_items order by character_id, rank");
-    return rows.map((r) => ({ characterId: r.character_id, itemId: r.item_id, rank: r.rank, approved: r.approved }));
+    return rows.map((r) => ({ characterId: r.character_id, itemId: r.item_id, rank: r.rank, approved: !!r.approved }));
   },
   async bis() {
-    const rows = await sql<any>(
-      `select b.character_id, b.item_id, b.slot, b.status from bis_entries b order by b.character_id, b.slot`,
-    );
+    const rows = await sql<any>("select character_id, item_id, slot, status from bis_entries order by character_id, slot");
     return rows.map((r) => ({ characterId: r.character_id, itemId: r.item_id, slot: r.slot, status: r.status }));
   },
   async events() {
+    const since = new Date(Date.now() - 86400_000).toISOString();
     const evs = await sql<any>(
       `select e.*, coalesce(l.name || ' ' || l.surname, '[RAID LEADER]') as leader_name from raid_events e
-       left join characters l on l.id = e.leader_id where e.starts_at > now() - interval '1 day' order by e.starts_at`,
+       left join characters l on l.id = e.leader_id where e.starts_at > $1 order by e.starts_at`,
+      [since],
     );
-    const sus = await sql<any>("select event_id, character_id, status, consumables from signups");
+    const sus = await sql<any>("select s.event_id, s.character_id, s.status, s.consumables from signups s join raid_events e on e.id = s.event_id where e.starts_at > $1", [since]);
     return evs.map((e) => ({
       id: e.id, raid: e.raid, name: e.name ?? e.raid, kind: e.kind ?? "Raid", startsAt: iso(e.starts_at), size: e.size ?? 0,
-      sizeLabel: e.size ? `${e.size} players` : "All members", leader: e.leader_name, compNeeds: e.comp_needs ?? [], requirements: e.requirements ?? [],
+      sizeLabel: e.size ? `${e.size} players` : "All members", leader: e.leader_name, compNeeds: json(e.comp_needs, []), requirements: json(e.requirements, []),
       extraSigned: 0,
-      signups: sus.filter((s) => s.event_id === e.id).map((s) => ({ characterId: s.character_id, status: s.status, consumables: s.consumables })),
+      signups: sus.filter((s) => s.event_id === e.id).map((s) => ({ characterId: s.character_id, status: s.status, consumables: !!s.consumables })),
     }));
   },
   async ranks() {
-    const rows = await sql<any>("select * from guild_ranks order by index");
-    return rows.map((r) => ({ index: r.index, name: r.name, canSignUp: r.can_sign_up, canWishlist: r.can_wishlist, canRunRaids: r.can_run_raids, canAwardLoot: r.can_award_loot, isAdmin: r.is_admin }));
+    const rows = await sql<any>('select * from guild_ranks order by "index"');
+    return rows.map((r) => ({ index: r.index, name: r.name, canSignUp: !!r.can_sign_up, canWishlist: !!r.can_wishlist, canRunRaids: !!r.can_run_raids, canAwardLoot: !!r.can_award_loot, isAdmin: !!r.is_admin }));
   },
   async applications() {
     const rows = await sql<any>(
@@ -153,7 +154,7 @@ const dbStore: Store = {
   async announcements() {
     const rows = await sql<any>(
       `select a.*, c.name, c.surname, c.class, r.name as rank_name from announcements a
-       left join users u on u.id = a.author_id left join characters c on c.id = u.main_character_id left join guild_ranks r on r.index = c.guild_rank
+       left join users u on u.id = a.author_id left join characters c on c.id = u.main_character_id left join guild_ranks r on r."index" = c.guild_rank
        order by a.created_at desc limit 5`,
     );
     return rows.map((r) => ({
@@ -168,13 +169,14 @@ const dbStore: Store = {
        order by a.awarded_at desc limit 200`,
     );
     return rows.map((r) => ({
-      id: r.id, date: shortDate(r.awarded_at), itemId: r.item_id, itemName: r.item_name, quality: r.quality ?? "epic", characterName: `${r.name} ${r.surname}`,
+      id: r.id, date: shortDate(r.awarded_at), itemId: r.item_id, itemName: r.item_name, quality: r.quality ?? "epic", characterName: `${r.name} ${r.surname}`.trim(),
       className: r.class, raid: r.raid ?? "", boss: r.boss ?? "", method: r.method ?? "",
     }));
   },
   async syncRuns() {
     const rows = await sql<any>(
-      `select distinct on (job) job, status, value, note, coalesce(finished_at, started_at) as at from sync_runs order by job, started_at desc`,
+      `select job, status, value, note, coalesce(finished_at, started_at) as at from sync_runs s
+       where id = (select max(id) from sync_runs s2 where s2.job = s.job)`,
     );
     const byJob = new Map(rows.map((r) => [r.job, r]));
     return ["roster", "profiles", "renders", "warcraftlogs", "discord", "addon"].map((job) => {
@@ -185,25 +187,24 @@ const dbStore: Store = {
     });
   },
   async bank() {
-    const r = (await sql<any>("select gold, items, uploaded_at from bank_snapshots order by uploaded_at desc limit 1"))[0];
-    return r ? { gold: r.gold != null ? Number(r.gold) : null, uploadedAt: iso(r.uploaded_at), items: r.items ?? [] } : { gold: null, items: [] };
+    const r = await sqlOne<any>("select gold, items, uploaded_at from bank_snapshots order by uploaded_at desc limit 1");
+    return r ? { gold: r.gold != null ? Number(r.gold) : null, uploadedAt: iso(r.uploaded_at), items: json(r.items, []) } : { gold: null, items: [] };
   },
   async craftRequests() {
     const rows = await sql<any>(
       `select r.id, r.item_name, r.quantity, r.status, c.name, c.surname from craft_requests r left join characters c on c.id = r.requester_id
        where r.status = 'open' order by r.created_at desc limit 20`,
     );
-    return rows.map((r) => ({ id: r.id, itemName: r.item_name, quantity: r.quantity, requester: r.name ? `${r.name} ${r.surname}` : "", status: r.status }));
+    return rows.map((r) => ({ id: r.id, itemName: r.item_name, quantity: r.quantity, requester: r.name ? `${r.name} ${r.surname}`.trim() : "", status: r.status }));
   },
   async settings() {
     const rows = await sql<any>("select key, value from settings");
     const out = { ...S.SETTINGS } as Record<string, unknown>;
-    for (const r of rows) out[r.key] = r.value;
+    for (const r of rows) out[r.key] = json(r.value, r.value);
     return out as typeof S.SETTINGS;
   },
   async memberTotal() {
-    const r = await sql<any>("select count(*)::int as n from characters where in_guild");
-    return r[0]?.n ?? 0;
+    return (await sqlOne<any>("select count(*) as n from characters where in_guild = 1"))?.n ?? 0;
   },
 };
 

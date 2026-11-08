@@ -7,24 +7,29 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "node scripts/migrate.mjs",
-    "db:seed": "node scripts/seed.mts"
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "db:seed-sql": "node scripts/seed-sql.mts && node scripts/seed-sql.mts --demo",
+    "db:local": "wrangler d1 migrations apply DB --local && npm run db:seed-sql && wrangler d1 execute DB --local --file seeds/demo.sql",
+    "db:migrate": "wrangler d1 migrations apply DB --remote",
+    "db:seed-base": "npm run db:seed-sql && wrangler d1 execute DB --remote --file seeds/base.sql"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.16",
     "next": "^16.4.5",
-    "pg": "^8.23.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
-    "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.158.0"
   }
 }

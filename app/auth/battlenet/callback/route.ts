@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     await syncAccount(user.id, token.access_token);
     await createSession(user.id, { value: token.access_token, expiresIn: token.expires_in });
 
-    const claimed = await sqlOne<{ n: number }>("select count(*)::int as n from characters where user_id = $1 and claimed", [user.id]);
+    const claimed = await sqlOne<{ n: number }>("select count(*) as n from characters where user_id = $1 and claimed = 1", [user.id]);
     return NextResponse.redirect(new URL(claimed?.n ? "/" : "/sign-in?step=claim", req.url));
   } catch (e) {
     console.error("battle.net callback", e);

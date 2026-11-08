@@ -1,4 +1,8 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+
+// Gives `next dev` access to Cloudflare bindings (the local D1 database) via getCloudflareContext().
+initOpenNextCloudflareForDev();
 
 const securityHeaders = [
   // .app is HSTS-preloaded; keep the header too so every browser pins HTTPS.

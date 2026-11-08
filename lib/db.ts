@@ -1,44 +1,70 @@
 import "server-only";
-import { Pool, type QueryResultRow } from "pg";
+// Cloudflare D1 (SQLite) access. Queries use Postgres-style $1, $2 placeholders, rewritten to D1's ?1, ?2.
+// Values: booleans → 0/1, Dates → ISO strings, arrays/objects → JSON text.
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-declare global {
-  // eslint-disable-next-line no-var
-  var __dwPool: Pool | undefined;
-}
+type Row = Record<string, any>;
 
-function pool(): Pool {
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not set");
-  if (!globalThis.__dwPool) {
-    globalThis.__dwPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      max: 5,
-      ssl: process.env.DATABASE_SSL === "false" || /localhost|127\.0\.0\.1/.test(process.env.DATABASE_URL) ? undefined : { rejectUnauthorized: false },
-    });
-  }
-  return globalThis.__dwPool;
-}
+// Minimal D1 types (the full @cloudflare/workers-types globals clash with the DOM lib).
+interface D1Result<T> { results?: T[] }
+export interface D1PreparedStatement { bind(...values: unknown[]): D1PreparedStatement; all<T = Row>(): Promise<D1Result<T>> }
+export interface D1Database { prepare(query: string): D1PreparedStatement; batch(statements: D1PreparedStatement[]): Promise<unknown[]> }
 
-export async function sql<T extends QueryResultRow = QueryResultRow>(text: string, params: unknown[] = []): Promise<T[]> {
-  const res = await pool().query<T>(text, params);
-  return res.rows;
-}
-
-export async function sqlOne<T extends QueryResultRow = QueryResultRow>(text: string, params: unknown[] = []): Promise<T | null> {
-  const rows = await sql<T>(text, params);
-  return rows[0] ?? null;
-}
-
-export async function tx<T>(fn: (q: <R extends QueryResultRow = QueryResultRow>(text: string, params?: unknown[]) => Promise<R[]>) => Promise<T>): Promise<T> {
-  const client = await pool().connect();
+/** The D1 binding, or null when running without one (demo mode / plain `next start`). */
+export function d1(): D1Database | null {
+  if (process.env.DEMO_MODE === "1") return null;
   try {
-    await client.query("begin");
-    const out = await fn(async (text, params = []) => (await client.query(text, params)).rows);
-    await client.query("commit");
-    return out;
-  } catch (e) {
-    await client.query("rollback");
-    throw e;
-  } finally {
-    client.release();
+    return ((getCloudflareContext().env as unknown as { DB?: D1Database }).DB) ?? null;
+  } catch {
+    return null;
   }
 }
+
+function db(): D1Database {
+  const b = d1();
+  if (!b) throw new Error("D1 binding DB is not available");
+  return b;
+}
+
+const toSql = (text: string) => text.replace(/\$(\d+)/g, "?$1");
+const bindValue = (v: unknown): unknown => {
+  if (v === undefined || v === null) return null;
+  if (typeof v === "boolean") return v ? 1 : 0;
+  if (v instanceof Date) return v.toISOString();
+  if (Array.isArray(v) || (typeof v === "object" && !(v instanceof ArrayBuffer))) return JSON.stringify(v);
+  return v;
+};
+const prepare = (text: string, params: unknown[]) => db().prepare(toSql(text)).bind(...params.map(bindValue));
+
+export async function sql<T extends Row = Row>(text: string, params: unknown[] = []): Promise<T[]> {
+  const res = await prepare(text, params).all<T>();
+  return res.results ?? [];
+}
+
+export async function sqlOne<T extends Row = Row>(text: string, params: unknown[] = []): Promise<T | null> {
+  return (await sql<T>(text, params))[0] ?? null;
+}
+
+/**
+ * D1 has no interactive transactions. Inside `tx`, reads run immediately and every write is
+ * queued, then all writes commit together in one atomic batch at the end.
+ */
+export async function tx<T>(fn: (q: <R extends Row = Row>(text: string, params?: unknown[]) => Promise<R[]>) => Promise<T>): Promise<T> {
+  const writes: D1PreparedStatement[] = [];
+  const out = await fn(async <R extends Row>(text: string, params: unknown[] = []) => {
+    if (/^\s*(select|with)\b/i.test(text)) return sql<R>(text, params);
+    writes.push(prepare(text, params));
+    return [] as R[];
+  });
+  if (writes.length) await db().batch(writes);
+  return out;
+}
+
+export const nowIso = () => new Date().toISOString();
+export const isoIn = (ms: number) => new Date(Date.now() + ms).toISOString();
+export const json = <T>(v: unknown, fallback: T): T => {
+  if (v == null || v === "") return fallback;
+  if (typeof v !== "string") return v as T;
+  try { return JSON.parse(v) as T; } catch { return fallback; }
+};
+export const newId = () => crypto.randomUUID().replace(/-/g, "");

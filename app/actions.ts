@@ -3,7 +3,7 @@
 // In demo mode the checks pass but nothing is persisted.
 import { revalidatePath } from "next/cache";
 import { Forbidden, ownsCharacter, requirePermission, type Permission, type Viewer } from "@/lib/auth";
-import { sql, sqlOne, tx } from "@/lib/db";
+import { json, nowIso, sql, sqlOne, tx } from "@/lib/db";
 import { postToDiscord } from "@/lib/discord";
 import { syncAllProfiles, syncCharacter, syncRoster } from "@/lib/sync";
 import { configured } from "@/lib/config";
@@ -45,7 +45,7 @@ export async function claimCharacters(input: { claimed: string[]; main: string }
     const mainId = mine.get(input.main);
     if (!mainId) return { ok: false, error: "That character isn't on your Battle.net account." };
     await tx(async (q) => {
-      await q("update characters set claimed = (slug = any($2)) where user_id = $1", [v.userId, input.claimed]);
+      await q("update characters set claimed = (slug in (select value from json_each($2))) where user_id = $1", [v.userId, input.claimed]);
       await q("update users set main_character_id = $2 where id = $1", [v.userId, mainId]);
     });
     // Pull fresh profiles for the claimed characters in the background of this request.
@@ -84,11 +84,11 @@ export async function setSignup(input: { eventId: string; character: string; sta
     if (!ev) return { ok: false, error: "That event no longer exists." };
     // One signup per user per event: switching characters replaces the earlier one.
     await tx(async (q) => {
-      await q("delete from signups where event_id = $1 and character_id = any(select id from characters where user_id = $2) and character_id <> $3", [input.eventId, v.userId, characterId]);
+      await q("delete from signups where event_id = $1 and character_id in (select id from characters where user_id = $2) and character_id <> $3", [input.eventId, v.userId, characterId]);
       await q(
-        `insert into signups (event_id, character_id, status, consumables) values ($1,$2,$3,$4)
-         on conflict (event_id, character_id) do update set status = excluded.status, consumables = excluded.consumables, updated_at = now()`,
-        [input.eventId, characterId, input.status, !!input.consumables],
+        `insert into signups (event_id, character_id, status, consumables, updated_at) values ($1,$2,$3,$4,$5)
+         on conflict (event_id, character_id) do update set status = excluded.status, consumables = excluded.consumables, updated_at = excluded.updated_at`,
+        [input.eventId, characterId, input.status, !!input.consumables, nowIso()],
       );
     });
     revalidatePath("/raids");
@@ -101,7 +101,7 @@ export async function saveWishlist(input: { character: string; itemIds: number[]
   return act("canWishlist", "Wishlist saved", async (v) => {
     const characterId = ownCharacterId(v, input.character);
     const settings = await sql<{ key: string; value: any }>("select key, value from settings where key in ('wishlist_slots','wishlist_lock_date')");
-    const s = Object.fromEntries(settings.map((r) => [r.key, r.value]));
+    const s = Object.fromEntries(settings.map((r) => [r.key, json<any>(r.value, r.value)]));
     const slots = Number(s.wishlist_slots ?? 6);
     if (s.wishlist_lock_date && new Date() > new Date(`${s.wishlist_lock_date}T23:59:59-06:00`)) return { ok: false, error: "Wishlists are locked for this tier." };
     const ids = [...new Set(input.itemIds.map(Number).filter(Number.isInteger))];
@@ -109,7 +109,7 @@ export async function saveWishlist(input: { character: string; itemIds: number[]
     await tx(async (q) => {
       // Keep council approvals on items that stay on the list.
       const prev = await q<{ item_id: number; approved: boolean }>("select item_id, approved from wishlist_items where character_id = $1", [characterId]);
-      const approved = new Map(prev.map((p) => [p.item_id, p.approved]));
+      const approved = new Map(prev.map((p) => [p.item_id, !!p.approved]));
       await q("delete from wishlist_items where character_id = $1", [characterId]);
       for (const [i, id] of ids.entries()) {
         await q("insert into wishlist_items (character_id, item_id, rank, approved) values ($1,$2,$3,$4)", [characterId, id, i + 1, approved.get(id) ?? false]);
@@ -192,8 +192,8 @@ export async function saveRanks(input: { index: number; name: string; canSignUp:
       for (const r of input) {
         const name = str(r.name, 40) || `Rank ${r.index}`;
         await q(
-          `insert into guild_ranks (index, name, can_sign_up, can_wishlist, can_run_raids, can_award_loot, is_admin) values ($1,$2,$3,$4,$5,$6,$7)
-           on conflict (index) do update set name = excluded.name, can_sign_up = excluded.can_sign_up, can_wishlist = excluded.can_wishlist,
+          `insert into guild_ranks ("index", name, can_sign_up, can_wishlist, can_run_raids, can_award_loot, is_admin) values ($1,$2,$3,$4,$5,$6,$7)
+           on conflict ("index") do update set name = excluded.name, can_sign_up = excluded.can_sign_up, can_wishlist = excluded.can_wishlist,
              can_run_raids = excluded.can_run_raids, can_award_loot = excluded.can_award_loot, is_admin = excluded.is_admin`,
           [Math.floor(r.index), name, !!r.canSignUp, !!r.canWishlist, !!r.canRunRaids, !!r.canAwardLoot, !!r.isAdmin],
         );
@@ -247,7 +247,7 @@ export async function publishAnnouncement(input: { title: string; body: string; 
 
 export async function recordAward(input: { itemName: string; character: string; reason?: string }): Promise<ActionResult> {
   return act("canAwardLoot", "Award recorded", async (v) => {
-    const item = await sqlOne<{ id: number }>("select id from items where lower(name) = lower($1) or id::text = $1", [str(input.itemName, 120)]);
+    const item = await sqlOne<{ id: number }>("select id from items where lower(name) = lower($1) or cast(id as text) = $1", [str(input.itemName, 120)]);
     if (!item) return { ok: false, error: "Item not found in the hub's item list." };
     const ch = await sqlOne<{ id: string }>(
       "select id from characters where lower(name || ' ' || surname) = lower($1) or slug = lower($1) or lower(name) = lower($1) limit 1",
@@ -293,7 +293,7 @@ export async function importLootLog(csv: string): Promise<ActionResult> {
         imported++;
       }
     });
-    await sql("insert into sync_runs (job, status, value, note, finished_at) values ('addon','ok',$1,$2, now())", [`Loot: ${imported} awards`, skipped ? `${skipped} rows skipped (unknown item or character)` : "Loot export imported"]);
+    await sql("insert into sync_runs (job, status, value, note, finished_at) values ('addon','ok',$1,$2,$3)", [`Loot: ${imported} awards`, skipped ? `${skipped} rows skipped (unknown item or character)` : "Loot export imported", nowIso()]);
     revalidatePath("/loot");
     revalidatePath("/admin");
     return { ok: true, message: `Imported ${imported} awards${skipped ? `, skipped ${skipped}` : ""}` };
@@ -307,7 +307,7 @@ export async function importBank(json: string): Promise<ActionResult> {
     try { data = JSON.parse(json); } catch { return { ok: false, error: "Bank export must be JSON." }; }
     const items = Array.isArray(data.items) ? data.items.slice(0, 2000).map((i: any) => ({ name: str(i.name, 120), tab: str(i.tab, 60), qty: Number(i.qty) || 0, quality: str(i.quality, 20) || "common" })) : [];
     await sql("insert into bank_snapshots (gold, items, uploaded_by) values ($1,$2,$3)", [Number.isFinite(Number(data.gold)) ? Math.floor(Number(data.gold)) : null, JSON.stringify(items), v.userId]);
-    await sql("insert into sync_runs (job, status, value, note, finished_at) values ('addon','ok',$1,'Bank export uploaded', now())", [`Bank: ${items.length} items`]);
+    await sql("insert into sync_runs (job, status, value, note, finished_at) values ('addon','ok',$1,'Bank export uploaded',$2)", [`Bank: ${items.length} items`, nowIso()]);
     revalidatePath("/roster");
     revalidatePath("/");
     return { ok: true, message: "Bank export uploaded" };

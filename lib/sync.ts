@@ -1,14 +1,14 @@
 import "server-only";
 import * as bnet from "./blizzard";
-import { sql, sqlOne } from "./db";
+import { nowIso, sql, sqlOne, tx } from "./db";
 
-async function recordRun(job: string, status: string, value: string, note: string, startedAt: Date) {
-  await sql("insert into sync_runs (job, status, value, note, started_at, finished_at) values ($1,$2,$3,$4,$5, now())", [job, status, value, note, startedAt]);
+async function recordRun(job: string, status: string, value: string, note: string, startedAt: string) {
+  await sql("insert into sync_runs (job, status, value, note, started_at, finished_at) values ($1,$2,$3,$4,$5,$6)", [job, status, value, note, startedAt, nowIso()]);
 }
 
 /** Guild roster → characters (every 30 min). Marks members in_guild and stores their rank number. */
 export async function syncRoster() {
-  const started = new Date();
+  const started = nowIso();
   try {
     const json = await bnet.guildRoster();
     if (!json) {
@@ -16,30 +16,29 @@ export async function syncRoster() {
       return { ok: false as const, members: 0 };
     }
     const members = bnet.normaliseRoster(json);
-    for (const m of members) {
-      await sql(
-        `insert into characters (slug, name, surname, level, class, race, guild_rank, in_guild, synced_at)
-         values ($1,$2,$3,$4,$5,$6,$7,true, now())
-         on conflict (slug) do update set level = excluded.level, class = coalesce(excluded.class, characters.class),
-           race = coalesce(excluded.race, characters.race), guild_rank = excluded.guild_rank, in_guild = true, synced_at = now()`,
-        [m.slug, m.name, m.surname, m.level, m.className ?? null, m.race ?? null, m.rank ?? null],
-      );
-    }
-    // Anyone no longer on the roster has left the guild.
-    await sql("update characters set in_guild = false, guild_rank = null where in_guild and not (slug = any($1))", [members.map((m) => m.slug)]);
-    await ensureRanks(members.map((m) => m.rank ?? 0));
+    const now = nowIso();
+    await tx(async (q) => {
+      for (const m of members) {
+        await q(
+          `insert into characters (slug, name, surname, level, class, race, guild_rank, in_guild, synced_at)
+           values ($1,$2,$3,$4,$5,$6,$7,1,$8)
+           on conflict (slug) do update set level = excluded.level, class = coalesce(excluded.class, characters.class),
+             race = coalesce(excluded.race, characters.race), guild_rank = excluded.guild_rank, in_guild = 1, synced_at = excluded.synced_at`,
+          [m.slug, m.name, m.surname, m.level, m.className ?? null, m.race ?? null, m.rank ?? null, now],
+        );
+      }
+      // Anyone no longer on the roster has left the guild.
+      await q("update characters set in_guild = 0, guild_rank = null where in_guild = 1 and slug not in (select value from json_each($1))", [members.map((m) => m.slug)]);
+      // The roster only returns rank numbers; add a placeholder row for any number officers haven't named yet.
+      for (const i of [...new Set(members.map((m) => m.rank ?? 0))]) {
+        await q('insert into guild_ranks ("index", name) values ($1, $2) on conflict do nothing', [i, i === 0 ? "Guild Master" : `Rank ${i}`]);
+      }
+    });
     await recordRun("roster", "ok", `${members.length} members`, "Synced from the guild roster", started);
     return { ok: true as const, members: members.length };
   } catch (e) {
     await recordRun("roster", e instanceof bnet.RateLimited ? "partial" : "error", "Failed", String(e instanceof Error ? e.message : e), started);
     throw e;
-  }
-}
-
-/** The roster only returns rank numbers; create a placeholder row for any number officers haven't named yet. */
-async function ensureRanks(indices: number[]) {
-  for (const i of [...new Set(indices)]) {
-    await sql("insert into guild_ranks (index, name) values ($1, $2) on conflict do nothing", [i, i === 0 ? "Guild Master" : `Rank ${i}`]);
   }
 }
 
@@ -55,25 +54,30 @@ export async function syncCharacter(slug: string) {
     `update characters set level = coalesce($2, level), class = coalesce($3, class), race = coalesce($4, race), spec = coalesce($5, spec),
        last_login_at = coalesce($6, last_login_at), equipment = coalesce($7, equipment), stats = coalesce($8, stats),
        professions = coalesce($9, professions), render_url = coalesce($10, render_url), attunements = coalesce($11, attunements),
-       fire_resistance = coalesce($12, fire_resistance), synced_at = now()
+       fire_resistance = coalesce($12, fire_resistance), synced_at = $13
      where slug = $1`,
     [
       slug, s.level ?? null, s.className ?? null, s.race ?? null, s.spec ?? null, s.lastLoginAt ?? null,
-      equip ? JSON.stringify(bnet.normaliseEquipment(equip)) : null,
-      st.stats.length ? JSON.stringify(st.stats) : null,
-      profs ? JSON.stringify(bnet.normaliseProfessions(profs)) : null,
+      equip ? bnet.normaliseEquipment(equip) : null,
+      st.stats.length ? st.stats : null,
+      profs ? bnet.normaliseProfessions(profs) : null,
       bnet.renderUrl(mediaJson) ?? null,
       questJson ? bnet.normaliseAttunements(questJson) : null,
       st.fireResistance ?? null,
+      nowIso(),
     ],
   );
   return { ok: true as const, hasRender: !!bnet.renderUrl(mediaJson) };
 }
 
-/** Profiles for every guild member, a few at a time to stay under the rate limit. */
-export async function syncAllProfiles(batch = 4) {
-  const started = new Date();
-  const rows = await sql<{ slug: string }>("select slug from characters where in_guild order by synced_at nulls first");
+/** Profiles for guild members, a few at a time to stay under the rate limit. Stalest first. */
+// Each profile is 6 Blizzard calls. Workers Free allows 50 outbound requests per invocation, so the default is 7 per run;
+// on Workers Paid set PROFILE_SYNC_LIMIT higher (e.g. 100).
+export async function syncAllProfiles({ batch = 4, limit = Number(process.env.PROFILE_SYNC_LIMIT) || 7 }: { batch?: number; limit?: number } = {}) {
+  const started = nowIso();
+  // Each run handles the `limit` stalest profiles; the scheduled job rotates through everyone.
+  const rows = await sql<{ slug: string }>("select slug from characters where in_guild = 1 order by synced_at nulls first limit $1", [limit]);
+  const total = (await sqlOne<{ n: number }>("select count(*) as n from characters where in_guild = 1"))?.n ?? rows.length;
   let ok = 0, renders = 0;
   for (let i = 0; i < rows.length; i += batch) {
     const results = await Promise.allSettled(rows.slice(i, i + batch).map((r) => syncCharacter(r.slug)));
@@ -81,8 +85,8 @@ export async function syncAllProfiles(batch = 4) {
     if (results.some((r) => r.status === "rejected" && r.reason instanceof bnet.RateLimited)) break; // back off until next run
   }
   const missing = rows.length - ok;
-  await recordRun("profiles", missing ? "partial" : "ok", `${ok} / ${rows.length}`, missing ? `${missing} characters aren’t in the API yet` : "All profiles synced", started);
-  await recordRun("renders", renders < ok ? "partial" : "ok", `${renders} / ${rows.length}`, "New characters can take a day to get renders", started);
+  await recordRun("profiles", missing ? "partial" : "ok", `${ok} / ${rows.length} this run`, missing ? `${missing} characters aren’t in the API yet` : `Rotating through ${total} members`, started);
+  await recordRun("renders", renders < ok ? "partial" : "ok", `${renders} / ${ok}`, "New characters can take a day to get renders", started);
   return { ok, total: rows.length };
 }
 
@@ -90,17 +94,21 @@ export async function syncAllProfiles(batch = 4) {
 export async function syncAccount(userId: string, userToken: string) {
   const json = await bnet.accountCharacters(userToken);
   const chars = bnet.normaliseAccount(json);
-  for (const c of chars) {
-    // A character can only belong to one account: the Battle.net account that owns it.
-    await sql(
-      `insert into characters (slug, name, surname, level, class, race, user_id, synced_at)
-       values ($1,$2,$3,$4,$5,$6,$7, now())
-       on conflict (slug) do update set user_id = excluded.user_id, level = excluded.level,
-         claimed = case when characters.user_id = excluded.user_id then characters.claimed else false end,
-         class = coalesce(excluded.class, characters.class), race = coalesce(excluded.race, characters.race)`,
-      [c.slug, c.name, c.surname, c.level, c.className ?? null, c.race ?? null, userId],
-    );
-  }
+  const now = nowIso();
+  await tx(async (q) => {
+    for (const c of chars) {
+      // A character belongs to the Battle.net account that owns it; if it changed hands, its claim resets.
+      await q(
+        `insert into characters (slug, name, surname, level, class, race, user_id, synced_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8)
+         on conflict (slug) do update set
+           claimed = case when characters.user_id = excluded.user_id then characters.claimed else 0 end,
+           user_id = excluded.user_id, level = excluded.level,
+           class = coalesce(excluded.class, characters.class), race = coalesce(excluded.race, characters.race)`,
+        [c.slug, c.name, c.surname, c.level, c.className ?? null, c.race ?? null, userId, now],
+      );
+    }
+  });
   return chars.length;
 }
 

@@ -3,7 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { randomBytes } from "node:crypto";
 import { isDemo } from "./config";
-import { sql, sqlOne } from "./db";
+import { isoIn, nowIso, sql, sqlOne } from "./db";
 import { CHARACTERS, RANKS } from "./sample";
 
 export const SESSION_COOKIE = "dw_session";
@@ -43,10 +43,11 @@ export const newToken = (bytes = 32) => randomBytes(bytes).toString("base64url")
 export async function createSession(userId: string, bnetToken?: { value: string; expiresIn: number }) {
   const id = newToken();
   await sql(
-    `insert into sessions (id, user_id, bnet_token, bnet_token_expires, expires_at)
-     values ($1, $2, $3, $4, now() + ($5 || ' days')::interval)`,
-    [id, userId, bnetToken?.value ?? null, bnetToken ? new Date(Date.now() + bnetToken.expiresIn * 1000) : null, String(SESSION_DAYS)],
+    "insert into sessions (id, user_id, bnet_token, bnet_token_expires, expires_at) values ($1, $2, $3, $4, $5)",
+    [id, userId, bnetToken?.value ?? null, bnetToken ? isoIn(bnetToken.expiresIn * 1000) : null, isoIn(SESSION_DAYS * 86400_000)],
   );
+  // Housekeeping: drop expired sessions now and then.
+  if (Math.random() < 0.05) await sql("delete from sessions where expires_at < $1", [nowIso()]);
   (await cookies()).set(SESSION_COOKIE, id, cookieOptions(SESSION_DAYS * 86400));
   return id;
 }
@@ -63,9 +64,9 @@ export async function currentSession() {
   if (isDemo()) return null;
   const id = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!id) return null;
-  return sqlOne<{ id: string; user_id: string; bnet_token: string | null; bnet_token_expires: Date | null }>(
-    "select id, user_id, bnet_token, bnet_token_expires from sessions where id = $1 and expires_at > now()",
-    [id],
+  return sqlOne<{ id: string; user_id: string; bnet_token: string | null; bnet_token_expires: string | null }>(
+    "select id, user_id, bnet_token, bnet_token_expires from sessions where id = $1 and expires_at > $2",
+    [id, nowIso()],
   );
 }
 
@@ -92,20 +93,20 @@ export const getViewer = cache(async (): Promise<Viewer> => {
   );
   if (!user) return { demo: false, signedIn: false, characters: [], perms: NO_PERMS };
 
-  const rows = await sql<{ id: string; slug: string; name: string; surname: string; class: string | null; level: number | null; in_guild: boolean; guild_rank: number | null }>(
+  const rows = await sql<{ id: string; slug: string; name: string; surname: string; class: string | null; level: number | null; in_guild: number; guild_rank: number | null }>(
     `select id, slug, name, surname, class, level, in_guild, guild_rank from characters
      where user_id = $1 and claimed order by level desc nulls last, name`,
     [user.id],
   );
   const characters = rows.map((r) => ({
-    id: r.id, slug: r.slug, name: `${r.name} ${r.surname}`.trim(), className: r.class, level: r.level, isMain: r.id === user.main_character_id, inGuild: r.in_guild,
+    id: r.id, slug: r.slug, name: `${r.name} ${r.surname}`.trim(), className: r.class, level: r.level, isMain: r.id === user.main_character_id, inGuild: !!r.in_guild,
   }));
 
   // Permissions come from the best (lowest-numbered) guild rank among the user's claimed, in-guild characters.
   const ranks = rows.filter((r) => r.in_guild && r.guild_rank != null).map((r) => r.guild_rank!);
   const best = ranks.length ? Math.min(...ranks) : null;
-  const rank = best == null ? null : await sqlOne<{ name: string; can_sign_up: boolean; can_wishlist: boolean; can_run_raids: boolean; can_award_loot: boolean; is_admin: boolean }>(
-    "select * from guild_ranks where index = $1",
+  const rank = best == null ? null : await sqlOne<{ name: string; can_sign_up: number; can_wishlist: number; can_run_raids: number; can_award_loot: number; is_admin: number }>(
+    'select * from guild_ranks where "index" = $1',
     [best],
   );
 
@@ -118,7 +119,7 @@ export const getViewer = cache(async (): Promise<Viewer> => {
     characters,
     main: characters.find((c) => c.isMain) ?? characters[0],
     perms: rank
-      ? { canSignUp: rank.can_sign_up, canWishlist: rank.can_wishlist, canRunRaids: rank.can_run_raids, canAwardLoot: rank.can_award_loot, isAdmin: rank.is_admin }
+      ? { canSignUp: !!rank.can_sign_up, canWishlist: !!rank.can_wishlist, canRunRaids: !!rank.can_run_raids, canAwardLoot: !!rank.can_award_loot, isAdmin: !!rank.is_admin }
       : NO_PERMS,
   };
 });

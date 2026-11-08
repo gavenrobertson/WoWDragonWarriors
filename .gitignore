@@ -9,3 +9,8 @@ next-env.d.ts
 .DS_Store
 npm-debug.log*
 .vercel
+.open-next/
+.wrangler/
+.dev.vars
+cloudflare-env.d.ts
+seeds/

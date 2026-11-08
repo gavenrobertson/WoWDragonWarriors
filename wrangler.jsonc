@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "dragon-warriors-hub",
+  "main": "custom-worker.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "upload_source_maps": true,
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "observability": { "enabled": true },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dragon-warriors-hub",
+      "database_id": "0c97ef44-d0ae-4ad6-a26c-26b26d043e20",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Blizzard sync jobs (see custom-worker.ts). Times are UTC.
+  "triggers": { "crons": ["*/30 * * * *", "*/10 * * * *"] },
+
+  // Non-secret settings. Secrets (BNET_CLIENT_SECRET, CRON_SECRET, DISCORD_*) are set with `wrangler secret put`.
+  "vars": {
+    "SITE_URL": "https://dragonwarriors.app",
+    "APP_NAME": "Dragon Warriors",
+    "GUILD_SLUG": "dragon-warriors",
+    "REGION": "us",
+    "BNET_REDIRECT_URI": "https://dragonwarriors.app/auth/battlenet/callback",
+    "DISCORD_REDIRECT_URI": "https://dragonwarriors.app/auth/discord/callback",
+    "COOKIE_DOMAIN": "dragonwarriors.app"
+  }
+}

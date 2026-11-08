@@ -1,3 +1,5 @@
+import { d1 } from "./db";
+
 export const SITE = {
   url: process.env.SITE_URL ?? "https://dragonwarriors.app",
   name: process.env.APP_NAME ?? "Dragon Warriors",
@@ -46,7 +48,7 @@ export const NS = {
 
 /** Integrations are "configured" when their keys are present. */
 export const configured = {
-  db: () => !!process.env.DATABASE_URL,
+  db: () => !!d1(),
   battlenet: () => !!(process.env.BNET_CLIENT_ID && process.env.BNET_CLIENT_SECRET),
   warcraftlogs: () => !!(process.env.WCL_CLIENT_ID && process.env.WCL_CLIENT_SECRET),
   discord: () => !!(process.env.DISCORD_BOT_TOKEN || process.env.DISCORD_SIGNUPS_WEBHOOK_URL),

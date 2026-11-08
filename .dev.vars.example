@@ -1,0 +1,8 @@
+# Copy to .dev.vars for `npm run dev` / `npm run preview` (never commit .dev.vars).
+SITE_URL=http://localhost:3000
+BNET_REDIRECT_URI=http://localhost:3000/auth/battlenet/callback
+COOKIE_DOMAIN=
+BNET_CLIENT_ID=
+BNET_CLIENT_SECRET=
+CRON_SECRET=local-cron-secret
+# DEMO_MODE=1   # ignore the local D1 database and show the built-in sample guild

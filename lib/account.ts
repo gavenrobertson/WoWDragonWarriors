@@ -18,5 +18,5 @@ export async function accountCharacters(v: Viewer): Promise<AccountChar[]> {
      from characters c join users u on u.id = c.user_id where c.user_id = $1 order by c.level desc nulls last, c.name`,
     [v.userId],
   );
-  return rows.map((r) => ({ slug: r.slug, name: `${r.name} ${r.surname}`.trim(), level: r.level ?? 0, className: r.class ?? "", inGuild: r.in_guild, claimed: r.claimed, isMain: !!r.is_main }));
+  return rows.map((r) => ({ slug: r.slug, name: `${r.name} ${r.surname}`.trim(), level: r.level ?? 0, className: r.class ?? "", inGuild: !!r.in_guild, claimed: !!r.claimed, isMain: !!r.is_main }));
 }
