@@ -1,0 +1,221 @@
+import "server-only";
+// One read API for every page. Demo mode reads lib/sample.ts; otherwise Postgres.
+// Guild-sized data (tens to low hundreds of rows), so loading whole tables per request is fine.
+import { cache } from "react";
+import { isDemo } from "./config";
+import { sql } from "./db";
+import * as S from "./sample";
+import type { Quality, Role, SignupStatus, SourceType } from "./types";
+import { minutesSince } from "./ui";
+
+export interface HubCharacter {
+  id: string; slug: string; name: string; surname: string; fullName: string; level: number; className: string; race: string;
+  spec?: string; role?: Role; roleLabel?: string; rank: number | null; lastSeenMin: number | null; userId?: string;
+  isMain: boolean; inGuild: boolean; claimed: boolean; attendancePct?: number; fireResistance?: number; attunements: string[];
+  professions: { name: string; skill: number; max?: number }[]; stats: { label: string; value: string }[];
+  legacy?: { rank: number; pct: number; milestones: { title: string; when: string }[] };
+  gear: { slot: string; name: string; quality: Quality | "empty" }[]; renderUrl?: string; syncedAt?: string;
+}
+export interface HubItem {
+  id: number; name: string; quality: Quality; slot: string; slotDetail: string; roles: Role[];
+  source: { type: SourceType; raid?: string; boss: string; zone: string; mapLabel?: string; mapX?: number; mapY?: number; how: string };
+}
+export interface HubWish { characterId: string; itemId: number; rank: number; approved: boolean }
+export interface HubBis { characterId: string; itemId: number; slot: string; status: "have" | "wishlisted" | "need"; how?: string }
+export interface HubEvent {
+  id: string; raid: string; name: string; kind: string; startsAt: string; size: number; sizeLabel: string; leader: string;
+  compNeeds: { role: string; need: number }[]; requirements: string[];
+  signups: { characterId: string; status: SignupStatus; consumables: boolean }[]; extraSigned: number;
+}
+export interface HubRank { index: number; name: string; canSignUp: boolean; canWishlist: boolean; canRunRaids: boolean; canAwardLoot: boolean; isAdmin: boolean }
+export interface HubApplication { id: string; name: string; slug: string; level: number | null; className: string | null; role: Role; availability: string; logs: string; about: string; status: "pending" | "accepted" | "declined" }
+export interface HubAnnouncement { id: string; title: string; body: string; author: string; authorRole: string; authorColor?: string; date: string }
+export interface HubAward { id: string; date: string; itemId: number; itemName: string; quality: Quality; characterName: string; className: string; raid: string; boss: string; method: string }
+export interface HubSyncRun { job: string; status: string; value: string; note: string; minutesAgo: number | null }
+export interface HubBank { gold: number | null; uploadedAt?: string; items: { name: string; tab: string; qty: number; quality: Quality }[] }
+export interface HubCraftRequest { id: string; itemName: string; quantity: number; requester: string; status: string }
+
+export interface Store {
+  characters(): Promise<HubCharacter[]>;
+  items(): Promise<HubItem[]>;
+  wishlists(): Promise<HubWish[]>;
+  bis(): Promise<HubBis[]>;
+  events(): Promise<HubEvent[]>;
+  ranks(): Promise<HubRank[]>;
+  applications(): Promise<HubApplication[]>;
+  announcements(): Promise<HubAnnouncement[]>;
+  awards(): Promise<HubAward[]>;
+  syncRuns(): Promise<HubSyncRun[]>;
+  bank(): Promise<HubBank>;
+  craftRequests(): Promise<HubCraftRequest[]>;
+  settings(): Promise<typeof S.SETTINGS>;
+  memberTotal(): Promise<number>;
+}
+
+// ---------------------------------------------------------------- demo store
+const demoChars = (): HubCharacter[] =>
+  S.CHARACTERS.map((c) => ({
+    id: c.slug, slug: c.slug, name: c.name, surname: c.surname, fullName: `${c.name} ${c.surname}`, level: c.level, className: c.className, race: c.race,
+    spec: c.spec, role: c.role, roleLabel: c.roleLabel, rank: c.rank >= 0 ? c.rank : null, lastSeenMin: c.lastSeenMin,
+    userId: c.account ?? c.slug, isMain: !!c.isMain, inGuild: c.inGuild !== false, claimed: c.inGuild !== false,
+    attendancePct: c.attendancePct, fireResistance: c.fireResistance, attunements: c.attunements ?? [],
+    professions: c.professions ?? [], stats: c.stats ?? [], legacy: c.legacy, gear: c.gear ?? [],
+  }));
+
+const demoStore: Store = {
+  characters: async () => demoChars(),
+  items: async () => S.ITEMS,
+  wishlists: async () => Object.entries(S.WISHLISTS).flatMap(([slug, list]) => list.map((w, i) => ({ characterId: slug, itemId: w.itemId, rank: i + 1, approved: w.approved }))),
+  bis: async () => Object.entries(S.BIS).flatMap(([slug, list]) => list.map((b) => ({ characterId: slug, ...b }))),
+  events: async () =>
+    S.EVENTS.map((e) => ({
+      id: e.key, raid: e.raid, name: e.name, kind: e.kind, startsAt: e.startsAt, size: e.size, sizeLabel: e.sizeLabel, leader: e.leader,
+      compNeeds: e.compNeeds, requirements: e.requirements, extraSigned: e.extraSigned,
+      signups: e.signups.map((s) => ({ characterId: s.slug, status: s.status, consumables: false })),
+    })),
+  ranks: async () => S.RANKS,
+  applications: async () => S.APPLICATIONS.map((a) => ({ ...a, status: "pending" as const })),
+  announcements: async () => S.ANNOUNCEMENTS.map((a, i) => ({ id: String(i), ...a })),
+  awards: async () => [],
+  syncRuns: async () => S.SYNC_RUNS,
+  bank: async () => S.BANK,
+  craftRequests: async () => [],
+  settings: async () => S.SETTINGS,
+  memberTotal: async () => S.MEMBER_TOTAL,
+};
+
+// ---------------------------------------------------------------- postgres store
+const iso = (d: Date | string | null) => (d ? new Date(d).toISOString() : "");
+const shortDate = (d: Date | string) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/Chicago" });
+
+const dbStore: Store = {
+  async characters() {
+    const rows = await sql<any>(
+      `select c.*, (u.main_character_id = c.id) as is_main from characters c left join users u on u.id = c.user_id
+       order by c.level desc nulls last, c.name`,
+    );
+    return rows.map((r) => ({
+      id: r.id, slug: r.slug, name: r.name, surname: r.surname, fullName: `${r.name} ${r.surname}`.trim(), level: r.level ?? 0,
+      className: r.class ?? "Unknown", race: r.race ?? "", spec: r.spec ?? undefined, role: r.role ?? undefined, rank: r.guild_rank,
+      lastSeenMin: minutesSince(r.last_login_at), userId: r.user_id ?? undefined, isMain: !!r.is_main, inGuild: r.in_guild, claimed: r.claimed,
+      attendancePct: r.attendance_pct ?? undefined, fireResistance: r.fire_resistance ?? undefined, attunements: r.attunements ?? [],
+      professions: r.professions ?? [], stats: r.stats ?? [], legacy: r.legacy ?? undefined, gear: r.equipment ?? [],
+      renderUrl: r.render_url ?? undefined, syncedAt: iso(r.synced_at),
+    }));
+  },
+  async items() {
+    const rows = await sql<any>(
+      `select i.*, s.type, s.raid, s.boss, s.zone, s.map_label, s.map_x, s.map_y, s.how
+       from items i left join lateral (select * from item_sources s where s.item_id = i.id order by s.type limit 1) s on true order by i.id`,
+    );
+    return rows.map((r) => ({
+      id: r.id, name: r.name, quality: r.quality ?? "common", slot: r.slot ?? "", slotDetail: r.slot_detail ?? r.slot ?? "", roles: r.roles ?? [],
+      source: { type: r.type ?? "world", raid: r.raid ?? undefined, boss: r.boss ?? "", zone: r.zone ?? "", mapLabel: r.map_label ?? undefined, mapX: r.map_x ?? undefined, mapY: r.map_y ?? undefined, how: r.how ?? "" },
+    }));
+  },
+  async wishlists() {
+    const rows = await sql<any>("select character_id, item_id, rank, approved from wishlist_items order by character_id, rank");
+    return rows.map((r) => ({ characterId: r.character_id, itemId: r.item_id, rank: r.rank, approved: r.approved }));
+  },
+  async bis() {
+    const rows = await sql<any>(
+      `select b.character_id, b.item_id, b.slot, b.status from bis_entries b order by b.character_id, b.slot`,
+    );
+    return rows.map((r) => ({ characterId: r.character_id, itemId: r.item_id, slot: r.slot, status: r.status }));
+  },
+  async events() {
+    const evs = await sql<any>(
+      `select e.*, coalesce(l.name || ' ' || l.surname, '[RAID LEADER]') as leader_name from raid_events e
+       left join characters l on l.id = e.leader_id where e.starts_at > now() - interval '1 day' order by e.starts_at`,
+    );
+    const sus = await sql<any>("select event_id, character_id, status, consumables from signups");
+    return evs.map((e) => ({
+      id: e.id, raid: e.raid, name: e.name ?? e.raid, kind: e.kind ?? "Raid", startsAt: iso(e.starts_at), size: e.size ?? 0,
+      sizeLabel: e.size ? `${e.size} players` : "All members", leader: e.leader_name, compNeeds: e.comp_needs ?? [], requirements: e.requirements ?? [],
+      extraSigned: 0,
+      signups: sus.filter((s) => s.event_id === e.id).map((s) => ({ characterId: s.character_id, status: s.status, consumables: s.consumables })),
+    }));
+  },
+  async ranks() {
+    const rows = await sql<any>("select * from guild_ranks order by index");
+    return rows.map((r) => ({ index: r.index, name: r.name, canSignUp: r.can_sign_up, canWishlist: r.can_wishlist, canRunRaids: r.can_run_raids, canAwardLoot: r.can_award_loot, isAdmin: r.is_admin }));
+  },
+  async applications() {
+    const rows = await sql<any>(
+      `select a.*, c.name, c.surname, c.level, c.class from applications a left join characters c on c.slug = a.character_slug
+       order by (a.status = 'pending') desc, a.created_at desc limit 50`,
+    );
+    return rows.map((r) => ({
+      id: r.id, name: r.name ? `${r.name} ${r.surname}` : r.character_slug, slug: r.character_slug, level: r.level, className: r.class,
+      role: r.role, availability: r.availability ?? "", logs: r.logs_url ?? "", about: r.about ?? "", status: r.status,
+    }));
+  },
+  async announcements() {
+    const rows = await sql<any>(
+      `select a.*, c.name, c.surname, c.class, r.name as rank_name from announcements a
+       left join users u on u.id = a.author_id left join characters c on c.id = u.main_character_id left join guild_ranks r on r.index = c.guild_rank
+       order by a.created_at desc limit 5`,
+    );
+    return rows.map((r) => ({
+      id: r.id, title: r.title, body: r.body, author: r.name ? `${r.name} ${r.surname}` : "Officer", authorRole: r.rank_name ?? "Officer",
+      authorColor: undefined, date: shortDate(r.created_at),
+    }));
+  },
+  async awards() {
+    const rows = await sql<any>(
+      `select a.id, a.awarded_at, a.item_id, i.name as item_name, i.quality, c.name, c.surname, c.class, e.raid, a.boss, a.method
+       from loot_awards a join items i on i.id = a.item_id join characters c on c.id = a.character_id left join raid_events e on e.id = a.event_id
+       order by a.awarded_at desc limit 200`,
+    );
+    return rows.map((r) => ({
+      id: r.id, date: shortDate(r.awarded_at), itemId: r.item_id, itemName: r.item_name, quality: r.quality ?? "epic", characterName: `${r.name} ${r.surname}`,
+      className: r.class, raid: r.raid ?? "", boss: r.boss ?? "", method: r.method ?? "",
+    }));
+  },
+  async syncRuns() {
+    const rows = await sql<any>(
+      `select distinct on (job) job, status, value, note, coalesce(finished_at, started_at) as at from sync_runs order by job, started_at desc`,
+    );
+    const byJob = new Map(rows.map((r) => [r.job, r]));
+    return ["roster", "profiles", "renders", "warcraftlogs", "discord", "addon"].map((job) => {
+      const r = byJob.get(job);
+      return r
+        ? { job, status: r.status, value: r.value ?? "", note: r.note ?? "", minutesAgo: minutesSince(r.at) }
+        : { job, status: "waiting", value: "Never run", note: "No runs recorded yet", minutesAgo: null };
+    });
+  },
+  async bank() {
+    const r = (await sql<any>("select gold, items, uploaded_at from bank_snapshots order by uploaded_at desc limit 1"))[0];
+    return r ? { gold: r.gold != null ? Number(r.gold) : null, uploadedAt: iso(r.uploaded_at), items: r.items ?? [] } : { gold: null, items: [] };
+  },
+  async craftRequests() {
+    const rows = await sql<any>(
+      `select r.id, r.item_name, r.quantity, r.status, c.name, c.surname from craft_requests r left join characters c on c.id = r.requester_id
+       where r.status = 'open' order by r.created_at desc limit 20`,
+    );
+    return rows.map((r) => ({ id: r.id, itemName: r.item_name, quantity: r.quantity, requester: r.name ? `${r.name} ${r.surname}` : "", status: r.status }));
+  },
+  async settings() {
+    const rows = await sql<any>("select key, value from settings");
+    const out = { ...S.SETTINGS } as Record<string, unknown>;
+    for (const r of rows) out[r.key] = r.value;
+    return out as typeof S.SETTINGS;
+  },
+  async memberTotal() {
+    const r = await sql<any>("select count(*)::int as n from characters where in_guild");
+    return r[0]?.n ?? 0;
+  },
+};
+
+export const store = (): Store => (isDemo() ? demoStore : dbStore);
+
+// Per-request memoised accessors (several components on one page ask for the same table).
+export const getCharacters = cache(() => store().characters());
+export const getItems = cache(() => store().items());
+export const getWishlists = cache(() => store().wishlists());
+export const getEvents = cache(() => store().events());
+export const getRanks = cache(() => store().ranks());
+export const getSettings = cache(() => store().settings());
+
+export const RAIDS = S.RAIDS;
+export const LEVEL_BANDS_SAMPLE = S.LEVEL_BANDS;

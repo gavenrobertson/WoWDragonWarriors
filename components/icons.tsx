@@ -1,0 +1,10 @@
+const base = { width: 18, height: 18, viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+export const IconSync = () => <svg {...base}><path d="M16 10a6 6 0 1 1-1.8-4.3M16 3.5v3.5h-3.5" /></svg>;
+export const IconRotL = () => <svg {...base} width={20} height={20}><path d="M4 10a6 6 0 1 0 1.8-4.3M4 3.5V7h3.5" /></svg>;
+export const IconRotR = () => <svg {...base} width={20} height={20}><path d="M16 10a6 6 0 1 1-1.8-4.3M16 3.5V7h-3.5" /></svg>;
+export const IconPlus = () => <svg {...base} width={20} height={20}><path d="M10 4v12M4 10h12" /></svg>;
+export const IconUp = () => <svg {...base}><path d="M5 12l5-5 5 5" /></svg>;
+export const IconDown = () => <svg {...base}><path d="M5 8l5 5 5-5" /></svg>;
+export const IconX = () => <svg {...base}><path d="M5 5l10 10M15 5L5 15" /></svg>;
+export const IconCheck = () => <svg {...base} strokeWidth={2.4}><path d="M4.5 10.5l3.5 3.5 7.5-8" /></svg>;
+export const IconKey = () => <svg {...base} width={20} height={20}><circle cx="7" cy="10" r="3.5" /><path d="M10.5 10H18M15 10v3M17.5 10v2" /></svg>;

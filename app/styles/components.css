@@ -1,0 +1,64 @@
+/* Class-based version of the canvas motion layer. Pair with tokens.css. */
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--dw-bg);color:var(--dw-text);font:var(--fs-body)/1.5 var(--font-body);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(227,179,65,.35)}
+a[href],button:not(:disabled),[role="tab"],select,summary,input[type="checkbox"],input[type="radio"],input[type="date"],input[type="time"],label:has(>input[type="checkbox"]){cursor:pointer}
+button:disabled,[aria-disabled="true"]{cursor:not-allowed;opacity:.5}
+:focus{outline:none}
+:focus-visible{box-shadow:var(--focus-ring);border-radius:var(--r-md)}
+
+.skip-link{position:absolute;left:16px;top:-60px;z-index:50;padding:12px 18px;border-radius:var(--r-md);background:var(--dw-gold);color:var(--dw-on-gold);font-weight:700}
+.skip-link:focus{top:12px}
+
+/* ambient aura: <div class="aura" aria-hidden="true"><span></span><span></span><span></span></div> */
+.aura{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.aura span{position:absolute;border-radius:50%;filter:blur(90px)}
+.aura span:nth-child(1){width:560px;height:560px;left:-140px;top:-160px;background:#5B2FB8;opacity:.55;animation:drift 22s ease-in-out infinite alternate}
+.aura span:nth-child(2){width:420px;height:420px;right:-120px;top:22%;background:var(--dw-gold);opacity:.16;animation:drift 26s ease-in-out -8s infinite alternate-reverse}
+.aura span:nth-child(3){width:520px;height:520px;left:30%;bottom:-260px;background:#7A3FE0;opacity:.32;animation:drift 30s ease-in-out -4s infinite alternate}
+@keyframes drift{50%{transform:translate3d(60px,40px,0) scale(1.08)}100%{transform:translate3d(-40px,70px,0) scale(.96)}}
+
+.site-header{position:sticky;top:0;z-index:30;background:rgba(28,15,51,.72);backdrop-filter:blur(16px) saturate(150%);border-top:3px solid var(--dw-gold-antique);border-bottom:1px solid #4A3A1A}
+.nav-link{padding:10px 14px;color:var(--dw-text-muted);border-bottom:2px solid transparent;text-decoration:none;transition:color .2s,text-shadow .2s}
+.nav-link:hover{color:var(--dw-text);text-shadow:0 0 14px rgba(245,215,126,.45)}
+.nav-link[aria-current="page"]{color:var(--dw-text);font-weight:600;border-color:var(--dw-gold);text-shadow:0 0 16px rgba(245,215,126,.55)}
+.logo{border-radius:var(--r-md);border:1px solid var(--dw-gold-antique);animation:logo 5s ease-in-out infinite}
+@keyframes logo{50%{box-shadow:0 0 0 1px rgba(245,215,126,.7),0 0 26px 2px rgba(155,93,255,.55)}}
+
+.btn{min-height:var(--tap);padding:0 18px;border-radius:var(--r-md);font:inherit;font-weight:600;border:1px solid var(--dw-border-3);background:transparent;color:var(--dw-text);transition:all .2s var(--ease-out)}
+.btn:hover{border-color:var(--dw-gold-antique);box-shadow:0 8px 24px -12px rgba(227,179,65,.55)}
+.btn:active{transform:scale(.98)}
+.btn-primary{position:relative;overflow:hidden;border:none;background:var(--dw-gold);color:var(--dw-on-gold);font-weight:700;box-shadow:var(--glow-gold);animation:breath 3.6s ease-in-out infinite}
+.btn-primary::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateX(-130%);transition:transform .7s}
+.btn-primary:hover{background:var(--dw-gold-hover);transform:translateY(-2px);box-shadow:var(--glow-gold-strong)}
+.btn-primary:hover::after{transform:translateX(130%)}
+@keyframes breath{50%{box-shadow:0 10px 38px -8px rgba(227,179,65,.95)}}
+
+.card{background:var(--dw-card);border:1px solid var(--dw-border);border-radius:var(--r-lg)}
+.card-royal{background:var(--dw-panel-royal);border:1px solid var(--dw-border-2);border-radius:var(--r-xl)}
+.select-card{border:2px solid var(--dw-border);border-radius:var(--r-lg);background:var(--dw-card);transition:all .2s var(--ease-out)}
+.select-card:hover{transform:translateY(-3px);border-color:var(--dw-gold-antique);box-shadow:var(--glow-purple)}
+.select-card[aria-pressed="true"]{border-color:var(--dw-gold);background:var(--dw-selected);animation:selected 2.8s ease-in-out infinite}
+@keyframes selected{0%,100%{box-shadow:0 0 0 1px rgba(227,179,65,.45),0 0 22px -8px rgba(227,179,65,.45)}50%{box-shadow:0 0 0 1px rgba(245,215,126,.7),0 0 34px -4px rgba(227,179,65,.7)}}
+
+.tab{min-height:46px;padding:0 16px;border:0;border-bottom:2px solid transparent;background:none;color:var(--dw-text-muted);font:inherit;font-weight:600}
+.tab:hover{color:var(--dw-text)}
+.tab[aria-selected="true"]{color:var(--dw-text);border-color:var(--dw-gold);text-shadow:0 0 16px rgba(245,215,126,.55)}
+.chip{min-height:40px;padding:0 14px;border-radius:var(--r-pill);border:1px solid var(--dw-border-2);background:var(--dw-card);color:var(--dw-text);font-weight:600}
+.chip[aria-pressed="true"]{border-color:var(--dw-gold);background:#2E2414}
+
+.progress{height:10px;border-radius:var(--r-pill);background:var(--dw-border);overflow:hidden}
+.progress > span{display:block;height:100%;background:var(--dw-gold);transform-origin:left;animation:grow 1.1s var(--ease-out) both;position:relative;overflow:hidden}
+.progress > span::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transform:translateX(-100%);animation:shimmer 2.8s ease-in-out 1.2s infinite}
+@keyframes grow{from{transform:scaleX(0)}}
+@keyframes shimmer{to{transform:translateX(100%)}}
+
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--dw-ok);animation:ping 2s ease-out infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(76,217,100,.55)}100%{box-shadow:0 0 0 9px rgba(76,217,100,0)}}
+
+input,select,textarea{min-height:48px;padding:0 12px;border-radius:var(--r-md);border:1px solid var(--dw-border-2);background:var(--dw-card);color:var(--dw-text);font:inherit}
+input:focus,select:focus,textarea:focus{border-color:var(--dw-gold);box-shadow:0 0 0 3px rgba(227,179,65,.22),0 0 24px -6px rgba(227,179,65,.5)}
+
+.rise{animation:rise .75s var(--ease-out) both}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

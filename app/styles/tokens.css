@@ -1,0 +1,49 @@
+/* Dragon Warriors — design tokens (royal purple & gold) */
+:root {
+  /* surfaces */
+  --dw-bg: #120C1C;            /* page */
+  --dw-header: #1C0F33;        /* header (use at 72% alpha + blur) */
+  --dw-panel-royal: #231544;   /* hero / feature panels */
+  --dw-card: #1A1229;          /* cards */
+  --dw-card-2: #21172F;        /* nested / raised */
+  --dw-input: #251A35;
+  --dw-selected: #2B2114;      /* gold-tinted selected background */
+  /* lines */
+  --dw-border: #33264A;
+  --dw-border-2: #3E2F58;
+  --dw-border-3: #4E3C6E;
+  /* gold */
+  --dw-gold: #E3B341;          /* primary action */
+  --dw-gold-hover: #F0C557;
+  --dw-gold-light: #F5D77E;    /* titles */
+  --dw-gold-link: #F2CF6B;
+  --dw-gold-antique: #C9A13B;  /* header trim, logo frame */
+  --dw-on-gold: #1A1206;
+  /* text */
+  --dw-text: #F3EEF8;
+  --dw-text-2: #CEC5DD;
+  --dw-text-muted: #A99CC0;
+  /* status */
+  --dw-ok: #4CD964; --dw-warn: #F2B84B; --dw-bad: #FF8A7A;
+  /* item quality (lightened for dark UI contrast) */
+  --q-legendary: #FF9433; --q-epic: #C08CFF; --q-rare: #5AA6FF; --q-uncommon: #4CD964; --q-common: #E6E1D8; --q-empty: #75698C;
+  /* class colors */
+  --c-warrior: #C69B6D; --c-paladin: #F48CBA; --c-hunter: #AAD372; --c-rogue: #FFF468; --c-priest: #F2F2F2;
+  --c-shaman: #4A9EFF; --c-mage: #3FC7EB; --c-warlock: #9A9BF2; --c-druid: #FF7C0A;
+  /* type */
+  --font-display: "Cinzel", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --fs-h1: 44px; --fs-h2: 24px; --fs-body: 15px; --fs-small: 13px; --fs-micro: 12px;
+  /* shape */
+  --r-sm: 8px; --r-md: 10px; --r-lg: 12px; --r-xl: 16px; --r-pill: 999px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px;
+  --tap: 44px;                 /* minimum touch target */
+  /* glow */
+  --glow-gold: 0 10px 30px -12px rgba(227,179,65,.75);
+  --glow-gold-strong: 0 16px 40px -10px rgba(227,179,65,.9);
+  --glow-purple: 0 18px 40px -18px rgba(122,63,224,.85);
+  --focus-ring: 0 0 0 2px #F5D77E, 0 0 0 6px rgba(227,179,65,.18);
+  --ease-out: cubic-bezier(.2,.8,.2,1);
+}
+/* Google Fonts:
+   https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap */
