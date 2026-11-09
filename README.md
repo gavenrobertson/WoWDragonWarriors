@@ -3,46 +3,57 @@
 Guild site for **Dragon Warriors** on WoW Forever, live at **https://dragonwarriors.app**.
 Raids unlock **December 9, 2026**: Onyxia's Lair (40), Hyjal Summit (20), Barrow Deeps (10).
 
-Built with Next.js 16 (App Router), TypeScript, Postgres, Battle.net OAuth and the Blizzard API.
+Built with Next.js 16 (App Router), TypeScript, Cloudflare Workers + D1, Battle.net OAuth and the Blizzard API.
 The design system (royal purple and gold) comes from the design handoff: `app/styles/tokens.css` and `app/styles/components.css`.
 
-## Quick start (demo mode)
+## Hosting
+
+Runs on **Cloudflare Workers** (OpenNext adapter) with a **Cloudflare D1** database. The Worker is `dragon-warriors-hub`,
+served on `dragonwarriors.app` and `www.dragonwarriors.app` (www redirects to the apex). Cron Triggers run the Blizzard
+syncs: the guild roster every 30 minutes and 7 character profiles every 10 minutes (stalest first).
+
+### Deploy
 
 ```bash
 npm install
-npm run dev
+npx wrangler login               # or set CLOUDFLARE_API_TOKEN
+npm run db:migrate               # applies migrations/ to the remote D1 database
+npm run deploy                   # opennextjs-cloudflare build + deploy
 ```
 
-Open http://localhost:3000. Without `DATABASE_URL`, the hub runs in **demo mode**: every page renders the sample guild from
-`lib/sample.ts`, you're signed in as the sample officer *Korvath Emberfang*, and nothing you change is saved.
-A banner at the top says so.
+The API token needs: Account › Workers Scripts: Edit, Account › D1: Edit, Account › Account Settings: Read,
+Zone › Workers Routes: Edit and Zone › DNS: Edit (for dragonwarriors.app), User › User Details: Read.
 
-## Running against Postgres
+Secrets live on the Worker (Cloudflare dashboard → Workers & Pages → dragon-warriors-hub → Settings → Variables and Secrets,
+or `npx wrangler secret put NAME`):
+
+| Secret | What it is |
+| --- | --- |
+| `BNET_CLIENT_ID`, `BNET_CLIENT_SECRET` | Battle.net API client (develop.battle.net) |
+| `CRON_SECRET` | Any long random string; the scheduled jobs use it to call `/api/cron/*` |
+| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_SIGNUPS_WEBHOOK_URL` | Optional: Discord linking and `#raid-signups` posts |
+| `WCL_CLIENT_ID`, `WCL_CLIENT_SECRET` | Optional: Warcraft Logs (import not built yet) |
+| `PROFILE_SYNC_LIMIT` | Optional: profiles per 10-minute run (default 7, fits Workers Free; raise to ~100 on Workers Paid) |
+
+Plain settings (`SITE_URL`, `GUILD_SLUG`, `REGION`, redirect URIs, `COOKIE_DOMAIN`) are in `wrangler.jsonc` → `vars`.
+
+After the first sign-in, the guild master names the ranks in **Admin › Ranks & permissions**: the roster API only returns
+rank numbers. Rank 0 is always the guild master.
+
+## Local development
 
 ```bash
-cp .env.example .env.local        # fill in DATABASE_URL at least
-npm run db:migrate                # applies db/*.sql once each
-npm run db:seed                   # optional: loads the sample guild (dev/staging only)
-npm run dev
+npm install
+cp .dev.vars.example .dev.vars   # local settings and secrets
+npm run db:local                 # local D1: schema + the sample guild
+npm run dev                      # http://localhost:3000
 ```
 
-With a database configured, visitors are guests until they sign in with Battle.net. What each person can see and do
-comes from their characters' guild rank (Admin › Ranks & permissions). **Every write is checked on the server**
+`npm run preview` runs the production build in the Workers runtime locally. Set `DEMO_MODE=1` in `.dev.vars` to ignore
+the database and render the built-in sample guild (signed in as the sample officer *Korvath Emberfang*, nothing saved).
+
+Who can see and do what comes from each person's characters' guild rank. **Every write is checked on the server**
 in `app/actions.ts`, not just hidden in the UI.
-
-## Going live
-
-1. **Battle.net client** (develop.battle.net → API Access): add redirect URLs
-   `https://dragonwarriors.app/auth/battlenet/callback` and `http://localhost:3000/auth/battlenet/callback`.
-   Set `BNET_CLIENT_ID`, `BNET_CLIENT_SECRET` and `BNET_REDIRECT_URI`.
-2. **Postgres** (Neon or Supabase): set `DATABASE_URL`, run `npm run db:migrate`.
-3. **Host** (Vercel recommended): point the apex and `www` at it. `www` redirects to the apex (`next.config.ts`),
-   and HSTS is sent on every response (`.app` is HSTS-preloaded, so HTTPS is mandatory anyway).
-4. Set `SITE_URL`, `COOKIE_DOMAIN=dragonwarriors.app` and `CRON_SECRET`. (No `SESSION_SECRET` needed: sessions are random ids stored in Postgres.) `vercel.json` schedules:
-   - `/api/cron/roster` every 30 min: guild roster → `characters` (rank numbers, levels, who's still in the guild)
-   - `/api/cron/profiles` hourly: gear, stats, professions, renders and attunements per member, 4 at a time, backing off on 429
-5. Sign in as the guild master, then name ranks in **Admin › Ranks & permissions**. The roster API only returns rank numbers.
-6. Optional: `DISCORD_*` for account linking and `#raid-signups` posts; `WCL_*` for Warcraft Logs attendance (import not built yet).
 
 ## What's built
 
@@ -65,8 +76,11 @@ app/                 routes (server components) + client components per page, ap
 lib/auth.ts          sessions (random id in an HttpOnly cookie, row in `sessions`), viewer + rank permissions
 lib/blizzard.ts      Battle.net OAuth + Forever API client, retry/backoff, response normalisers
 lib/sync.ts          roster / profile / account sync jobs (record runs in `sync_runs` for Admin › Sync health)
-lib/store.ts         one read API with two backends: demo (lib/sample.ts) and Postgres
-db/                  001 = handoff schema, 002 = hub extensions (cached profile JSON, comp needs, sessions, sync runs)
+lib/store.ts         one read API with two backends: demo (lib/sample.ts) and D1
+lib/db.ts            D1 access: sql(), sqlOne(), tx() (writes batched atomically)
+migrations/          D1 schema (wrangler d1 migrations)
+custom-worker.ts     Worker entry: the Next.js handler plus Cron Triggers for the sync jobs
+scripts/seed-sql.mts writes seeds/base.sql (ranks, settings, loot table) and seeds/demo.sql (sample guild)
 ```
 
 ## Not built yet

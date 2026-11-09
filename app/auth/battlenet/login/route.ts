@@ -5,9 +5,10 @@ import { STATE_COOKIE, cookieOptions, newToken } from "@/lib/auth";
 import { configured, isDemo } from "@/lib/config";
 
 export async function GET(req: NextRequest) {
-  // Without a database or Battle.net client, walk through the demo claim flow instead.
-  if (isDemo() || !configured.battlenet()) {
-    return NextResponse.redirect(new URL("/sign-in?step=claim", req.url));
+  // Demo mode: walk through the sample claim flow instead.
+  if (isDemo()) return NextResponse.redirect(new URL("/sign-in?step=claim", req.url));
+  if (!configured.battlenet()) {
+    return NextResponse.redirect(new URL(`/sign-in?error=${encodeURIComponent("Battle.net sign-in isn't set up yet. An officer needs to add the Battle.net API keys.")}`, req.url));
   }
   const state = newToken(24);
   (await cookies()).set(STATE_COOKIE, state, cookieOptions(600));

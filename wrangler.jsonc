@@ -7,6 +7,13 @@
   "upload_source_maps": true,
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
   "observability": { "enabled": true },
+  "workers_dev": true,
+
+  // Serve on the apex and www (next.config.ts redirects www → apex). DNS records are created automatically.
+  "routes": [
+    { "pattern": "dragonwarriors.app", "custom_domain": true },
+    { "pattern": "www.dragonwarriors.app", "custom_domain": true }
+  ],
 
   "d1_databases": [
     {
