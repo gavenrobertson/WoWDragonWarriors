@@ -31,7 +31,10 @@ export default async function PracticeCouncilPage() {
   ];
 
   const raidItems = items.filter((i) => i.source.type === "raid");
-  const picked = RAIDS.flatMap((r) => raidItems.filter((i) => i.source.raid === r.id).slice(0, 3)).slice(0, 8);
+  // Up to 8 items, taken round-robin across the raids that have loot.
+  const byRaid = RAIDS.map((r) => raidItems.filter((i) => i.source.raid === r.id)).filter((l) => l.length);
+  const picked: typeof raidItems = [];
+  for (let k = 0; picked.length < 8 && byRaid.some((l) => l[k]); k++) for (const l of byRaid) if (l[k] && picked.length < 8) picked.push(l[k]);
   const councilItems: CouncilItem[] = picked.map((i) => {
     const rand = rng(i.id);
     const shuffled = [...pool].sort(() => rand() - 0.5);
