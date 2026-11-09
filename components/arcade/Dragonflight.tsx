@@ -110,7 +110,7 @@ export function Dragonflight() {
             {phase === "countdown" ? "Get ready…" : phase === "idle" ? "1.00×" : phase === "lost" ? <span className="lost">DOVE {result?.point}×</span> : `${mult.toFixed(2)}×`}
           </div>
         </div>
-        <div className="game-history" aria-label="Recent flights">
+        <div className="game-history" role="group" aria-label="Recent flights">
           {history.map((h, i) => <span key={i} style={{ background: h >= 10 ? "#ff8a2e" : h >= 2 ? "#c9a13b" : "#5a4a2e" }}>{h}×</span>)}
         </div>
       </div>

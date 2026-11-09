@@ -23,7 +23,7 @@ export async function SiteHeader() {
       <header className="site-header">
         <div className="bar-inner">
           <Link href="/" className="brand">
-            <img src="/assets/crest-128.png" alt="" width={52} height={52} className="logo" style={{ display: "block", width: 52, height: 52, objectFit: "contain" }} />
+            <img src="/assets/crest-128.webp" alt="" width={52} height={52} className="logo" style={{ display: "block", width: 52, height: 52, objectFit: "contain" }} />
             <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
               <span className="brand-name">{SITE.name}</span>
               <span className="micro muted">{SITE.tagline}</span>

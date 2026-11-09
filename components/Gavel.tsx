@@ -37,7 +37,7 @@ export function GavelSlam({ moment, onDone }: { moment: GavelMoment | null; onDo
       <div className="gavel-vignette" aria-hidden="true" />
 
       <div className="gavel-plate" aria-hidden="true">
-        <img src="/assets/crest-256.png" alt="" />
+        <img src="/assets/crest-256.webp" alt="" />
       </div>
       <div className="gavel-impact" aria-hidden="true">
         <span className="gavel-flash" />

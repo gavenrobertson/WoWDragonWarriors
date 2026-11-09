@@ -101,7 +101,7 @@ export function Plinko({ tables }: { tables: Record<string, number[]> }) {
           })}
           {balls.map((b) => { const p = pos(b); return <circle key={b.id} cx={p.x} cy={p.y} r={Math.max(3.4, s * 0.17)} fill="url(#pkBall)" stroke="#5a3a00" strokeWidth=".6" />; })}
         </svg>
-        <div className="game-history" aria-label="Recent results">
+        <div className="game-history" role="group" aria-label="Recent results">
           {log.map((l) => <span key={l.k} style={{ background: heat(l.mult) }}>{l.mult}×</span>)}
         </div>
       </div>

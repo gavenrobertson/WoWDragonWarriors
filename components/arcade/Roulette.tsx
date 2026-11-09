@@ -77,7 +77,7 @@ export function Roulette() {
           </svg>
           <div className={`rl-result ${last ? color(last.n) : ""}`} aria-live="polite">{spinning ? "…" : last ? last.n : "—"}</div>
         </div>
-        <div className="game-history" aria-label="Recent numbers">{history.map((n, i) => <span key={i} className={`rl-h ${color(n)}`}>{n}</span>)}</div>
+        <div className="game-history" role="group" aria-label="Recent numbers">{history.map((n, i) => <span key={i} className={`rl-h ${color(n)}`}>{n}</span>)}</div>
       </div>
       <div className="game-controls panel">
         <div className="field">Chip

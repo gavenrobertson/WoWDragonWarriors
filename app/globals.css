@@ -1584,3 +1584,15 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; h
   .arcade-hero { padding: 18px; gap: 16px; }
 }
 .game-even { margin: 0; color: #FFD100; font-weight: 700; font-size: 15px; }
+
+/* performance: the big blurred background glows stop drifting on phones and touch devices (they're costly to re-composite) */
+@media (max-width: 860px), (pointer: coarse) {
+  .aura span { animation: none !important; filter: blur(70px); }
+}
+.aura span { will-change: transform; }
+@media (max-width: 860px), (pointer: coarse) { .aura span { will-change: auto; } }
+.view3d-btn { position: absolute; z-index: 3; left: 50%; bottom: 74px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; cursor: pointer;
+  border: 1px solid #000; color: #FFD100; font: 600 15px var(--font-display); white-space: nowrap; background: linear-gradient(180deg, rgba(42,32,18,.95), rgba(18,13,7,.95)); box-shadow: inset 0 0 0 1px #b8902f, 0 8px 22px -8px #000, 0 0 24px -8px rgba(155,93,255,.8); }
+.view3d-btn .micro { color: #a99a7a; font-family: var(--font-body); font-weight: 400; }
+.view3d-btn:hover { box-shadow: inset 0 0 0 1px #FFD100, 0 8px 22px -8px #000, 0 0 30px -6px rgba(255,209,0,.7); }
+.view3d-cube { color: #c08cff; font-size: 18px; line-height: 1; }

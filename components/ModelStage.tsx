@@ -13,7 +13,11 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [mode3d, setMode3d] = useState<"off" | "loading" | "ready" | "failed">(slug ? "loading" : "off");
+  const [mode3d, setMode3d] = useState<"off" | "loading" | "ready" | "failed">("off");
+  // The 3D model is ~25 MB, so it loads only when wanted: automatically on desktops once the stage is in view
+  // and the page is idle; on phones and slow or data-saver connections, when the visitor taps "View in 3D".
+  const [want3d, setWant3d] = useState(false);
+  const [autoLoad, setAutoLoad] = useState<boolean | null>(null);
   const [missing, setMissing] = useState(0);
   const [why2d, setWhy2d] = useState<string | null>(null);
   const [anim, setAnim] = useState("Stand");
@@ -22,6 +26,25 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
   const drag = useRef<{ x: number; a: number } | null>(null);
   const stage = useRef<HTMLDivElement>(null);
   const img = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (!slug) return;
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    const lean = matchMedia("(max-width: 860px)").matches || !!conn?.saveData || /(^|-)2g|3g/.test(conn?.effectiveType ?? "");
+    setAutoLoad(!lean);
+    if (lean) return;
+    const el = stage.current; if (!el) return;
+    let idle = 0;
+    const io = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      const go = () => setWant3d(true);
+      const w = window as unknown as { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => number };
+      idle = w.requestIdleCallback ? w.requestIdleCallback(go, { timeout: 2500 }) : (setTimeout(go, 800) as unknown as number);
+    }, { rootMargin: "200px" });
+    io.observe(el);
+    return () => { io.disconnect(); const w = window as unknown as { cancelIdleCallback?: (n: number) => void }; if (w.cancelIdleCallback) w.cancelIdleCallback(idle); else clearTimeout(idle); };
+  }, [slug]);
 
   // Auto-rotate (off under reduced motion).
   useEffect(() => {
@@ -117,7 +140,12 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
           </svg>
         </div>
 
-        {slug && mode3d !== "failed" && (
+        {slug && !want3d && autoLoad === false && (
+          <button type="button" className="view3d-btn" onClick={() => setWant3d(true)}>
+            <span className="view3d-cube" aria-hidden="true">⬢</span> View in 3D <span className="micro">about 25 MB</span>
+          </button>
+        )}
+        {slug && want3d && mode3d !== "failed" && (
           <div className={`model3d-layer${is3d ? " ready" : ""}`}>
             <Model3D slug={slug} handleRef={handle} autoRotate={auto && is3d}
               onState={(st, info) => { setMode3d(st); if (info?.missing != null) setMissing(info.missing); if (st === "failed") setWhy2d(info?.reason ?? null); }} />

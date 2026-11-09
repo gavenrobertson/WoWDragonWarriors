@@ -36,7 +36,7 @@ export function Leap() {
       <div className="game-stage leap-stage">
         <div className={`leap-number${res ? (res.win ? " win" : " lose") : ""}`} aria-live="polite">{shown == null ? "1.00×" : `${shown >= 100 ? Math.floor(shown).toLocaleString("en-US") : shown.toFixed(2)}×`}</div>
         <div className="leap-target">Target <strong className="gold">{target.toFixed(2)}×</strong></div>
-        <div className="game-history" aria-label="Recent leaps">{log.map((l, i) => <span key={i} style={{ background: l.win ? "#4CD964" : "#5a4a2e" }}>{l.roll >= 100 ? Math.floor(l.roll) : l.roll.toFixed(2)}×</span>)}</div>
+        <div className="game-history" role="group" aria-label="Recent leaps">{log.map((l, i) => <span key={i} style={{ background: l.win ? "#4CD964" : "#5a4a2e" }}>{l.roll >= 100 ? Math.floor(l.roll) : l.roll.toFixed(2)}×</span>)}</div>
       </div>
       <div className="game-controls panel">
         <BetInput value={bet} onChange={setBet} disabled={busy} />

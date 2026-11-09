@@ -1,4 +1,11 @@
 import type { Metadata, Viewport } from "next";
+// Fonts are self-hosted (served from our own domain, latin only, font-display: swap) instead of Google Fonts.
+import "@fontsource/marcellus/latin-400.css";
+import "@fontsource/cinzel-decorative/latin-700.css";
+import "@fontsource/cinzel-decorative/latin-900.css";
+import "@fontsource/alegreya-sans/latin-400.css";
+import "@fontsource/alegreya-sans/latin-500.css";
+import "@fontsource/alegreya-sans/latin-700.css";
 import "./globals.css";
 import { SITE } from "@/lib/config";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -28,12 +35,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const theme = themeAttr(viewer?.cosmetics?.theme);
   return (
     <html lang="en" data-theme={theme}>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Marcellus&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
-      </head>
       <body>
         <div className="aura" aria-hidden="true"><span /><span /><span /></div>
         <Embers />

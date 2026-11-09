@@ -26,7 +26,7 @@ export default function BrandPage() {
           <div className="brand-sizes" aria-label="Crest at small sizes">
             {[128, 64, 48, 32].map((s) => (
               <figure key={s}>
-                <img src="/assets/crest-256.png" alt={`${SITE.name} crest, ${s}px`} width={s} height={s} className="logo" />
+                <img src="/assets/crest-256.webp" alt={`${SITE.name} crest, ${s}px`} width={s} height={s} className="logo" />
                 <figcaption className="micro muted">{s}px</figcaption>
               </figure>
             ))}
