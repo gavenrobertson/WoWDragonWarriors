@@ -33,7 +33,7 @@ export default async function GuildPage() {
     members: members.length,
     totals: { quests: sum("quests"), dungeons: sum("dungeons"), bosses: sum("bosses"), kills: sum("kills"), hks: sum("hks"), deaths: sum("deaths") },
     boards: METRICS.map((m) => ({
-      key: m.key, title: m.title, label: m.label, group: m.group, glyph: m.glyph,
+      key: m.key, title: m.title, label: m.label, group: m.group, icon: m.icon,
       top: tracked
         .map((c) => ({ slug: c.slug, name: c.fullName, className: c.className, avatarUrl: c.avatarUrl ?? null, level: c.level, value: c.metrics!.v[m.key] ?? 0 }))
         .filter((r) => r.value > 0)

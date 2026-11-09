@@ -866,3 +866,12 @@ button:disabled, [aria-disabled="true"], select:disabled, input:disabled { curso
 }
 @media (prefers-reduced-motion: reduce) { .hof-card, .hof-bar span, .hof-crown { animation: none; } }
 .hof-wait.wow-scroll { min-height: 0; padding: 32px 20px; }
+/* Hall of Fame: real WoW icons in an action-bar style frame */
+.hof-icon { position: relative; display: inline-block; flex: none; width: 40px; height: 40px; border-radius: 5px; overflow: hidden; background: #000;
+  box-shadow: 0 0 0 1px #000, 0 0 0 2px #8a6a2c, 0 0 0 3px #000, 0 3px 8px -2px #000; }
+.hof-icon img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); }
+.hof-icon::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.18), transparent 38%), radial-gradient(120% 100% at 50% 120%, rgba(0,0,0,.45), transparent 60%); }
+.hof-icon.sm { width: 30px; height: 30px; border-radius: 4px; margin-bottom: 4px; }
+.hof-card:hover .hof-icon { box-shadow: 0 0 0 1px #000, 0 0 0 2px #FFD100, 0 0 0 3px #000, 0 0 12px rgba(255,209,0,.45); }
+.hof-group-head h2::before { content: "❖"; margin-right: 10px; font-size: 14px; color: #b8902f; vertical-align: 3px; }

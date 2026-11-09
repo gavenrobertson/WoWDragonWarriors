@@ -1,11 +1,11 @@
 "use client";
 // Guild Hall of Fame: leaderboards built from each member's Blizzard character statistics.
 import Link from "next/link";
-import { GROUPS, type MetricGroup } from "@/lib/metrics";
+import { GROUPS, wowIcon, type MetricGroup } from "@/lib/metrics";
 import { classColor } from "@/lib/ui";
 
 export interface FameEntry { slug: string; name: string; className: string; avatarUrl: string | null; level: number; value: number }
-export interface FameBoard { key: string; title: string; label: string; group: MetricGroup; glyph: string; top: FameEntry[] }
+export interface FameBoard { key: string; title: string; label: string; group: MetricGroup; icon: string; top: FameEntry[] }
 export interface HallOfFameData {
   tracked: number;
   members: number;
@@ -30,7 +30,7 @@ function Board({ b, i }: { b: FameBoard; i: number }) {
   return (
     <article className="hof-card" style={{ ["--i" as string]: i }}>
       <header className="hof-card-head">
-        <span className="hof-glyph" aria-hidden="true">{b.glyph}</span>
+        <span className="hof-icon" aria-hidden="true"><img src={wowIcon(b.icon)} alt="" /></span>
         <span className="hof-card-titles">
           <h3>{b.title}</h3>
           <span>Most {b.label}</span>
@@ -67,8 +67,9 @@ function Board({ b, i }: { b: FameBoard; i: number }) {
 export function HallOfFame({ data }: { data: HallOfFameData }) {
   const t = data.totals;
   const tiles: [string, number, string][] = [
-    ["❗", t.quests, "Quests completed"], ["🗝", t.dungeons, "Dungeons entered"], ["💀", t.bosses, "Bosses slain"],
-    ["⚔", t.kills, "Total kills"], ["🛡", t.hks, "Honorable kills"], ["👻", t.deaths, "Deaths"],
+    ["achievement_quests_completed_08", t.quests, "Quests completed"], ["achievement_dungeon_classicdungeonmaster", t.dungeons, "Dungeons entered"],
+    ["inv_misc_bone_humanskull_01", t.bosses, "Bosses slain"], ["ability_warrior_bladestorm", t.kills, "Total kills"],
+    ["achievement_pvp_a_a", t.hks, "Honorable kills"], ["spell_holy_guardianspirit", t.deaths, "Deaths"],
   ];
   const maxD = Math.max(1, ...data.dungeons.map((d) => d.kills));
   let i = 0;
@@ -86,7 +87,7 @@ export function HallOfFame({ data }: { data: HallOfFameData }) {
       <section aria-label="Guild totals" className="hof-totals">
         {tiles.map(([g, v, label]) => (
           <div key={label} className="hof-total">
-            <span className="hof-total-glyph" aria-hidden="true">{g}</span>
+            <span className="hof-icon sm" aria-hidden="true"><img src={wowIcon(g, 36)} alt="" /></span>
             <strong>{n(v)}</strong>
             <span>{label}</span>
           </div>
@@ -105,7 +106,7 @@ export function HallOfFame({ data }: { data: HallOfFameData }) {
             {g.id === "legends" && data.dungeons.length > 0 && (
               <article className="hof-card hof-wide" style={{ ["--i" as string]: i++ }}>
                 <header className="hof-card-head">
-                  <span className="hof-glyph" aria-hidden="true">🏰</span>
+                  <span className="hof-icon" aria-hidden="true"><img src={wowIcon("inv_misc_key_10")} alt="" /></span>
                   <span className="hof-card-titles"><h3>Favorite Haunts</h3><span>Boss kills by dungeon, whole guild</span></span>
                 </header>
                 <ul className="hof-bars">
