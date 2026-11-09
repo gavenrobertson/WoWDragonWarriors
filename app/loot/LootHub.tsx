@@ -242,7 +242,10 @@ export function LootHub(props: {
                     <td><span className="strong" style={{ color: qualityColor(a.quality) }}>{a.itemName}</span></td>
                     <td><span className="strong" style={{ color: classColor(a.className) }}>{a.characterName}</span></td>
                     <td>{[raids.find((r) => r.id === a.raid)?.name, a.boss].filter(Boolean).join(" · ") || "—"}</td>
-                    <td>{a.method}</td>
+                    <td>
+                      <span className={a.method === "admin override" ? "strong" : undefined} style={a.method === "admin override" ? { color: "#ffb4a6" } : undefined}>{a.method === "admin override" ? "⚖ Admin override" : a.method}</span>
+                      {a.reason && <><br /><span className="micro muted">{a.reason}</span></>}
+                    </td>
                   </tr>
                 ))}
               </tbody>

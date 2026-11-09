@@ -690,3 +690,75 @@ h1, .title-xl, .wow-title, .countdown-num { font-feature-settings: "liga" 0, "dl
 @media (max-width: 900px) { .contender { flex-basis: 165px; } }
 .discord-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 14px; }
 .discord-row input[type="url"] { min-width: 240px; }
+
+/* ---------- council gavel ---------- */
+.council-hall.quake { animation: quake .5s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes quake { 10%, 90% { transform: translate3d(-2px, 1px, 0); } 20%, 80% { transform: translate3d(4px, -2px, 0); } 30%, 50%, 70% { transform: translate3d(-7px, 3px, 0); } 40%, 60% { transform: translate3d(7px, -3px, 0); } }
+.gavel-scene { position: absolute; inset: 0; z-index: 20; pointer-events: none; display: grid; place-items: center; }
+.gavel-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 55%, rgba(0,0,0,.15), rgba(0,0,0,.82) 75%); animation: fadeIn .35s ease both; }
+@keyframes fadeIn { from { opacity: 0; } }
+.phase-stamp .gavel-vignette { animation: none; opacity: 1; }
+/* striking plate (sound block) with the crest */
+.gavel-plate { position: absolute; left: 50%; top: 58%; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%; padding: 8px; transform: perspective(600px) rotateX(58deg);
+  background: conic-gradient(from 200deg, #ffe39a, #8a6a2c, #ffd76a, #6b4f1c, #ffe39a); box-shadow: 0 0 0 3px #000, 0 30px 40px -10px #000, 0 0 40px -6px rgba(255,209,0,.6); animation: fadeIn .35s ease both; }
+.gavel-plate img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid #000; }
+.phase-slam .gavel-plate, .phase-stamp .gavel-plate { box-shadow: 0 0 0 3px #000, 0 30px 40px -10px #000, 0 0 70px 6px rgba(255,209,0,.85); }
+/* gavel arm: pivots at the handle end, off to the right of the plate */
+.gavel-arm { position: absolute; left: 50%; top: 58%; width: 320px; height: 120px; margin-left: -6px; margin-top: -200px; transform-origin: 6px 200px; }
+.gavel-svg { width: 320px; height: 120px; overflow: visible; filter: drop-shadow(0 16px 18px rgba(0,0,0,.85)) drop-shadow(0 0 14px rgba(255,209,0,.25)); }
+.gavel-arm { transform: translateX(-280px) rotate(-8deg); }
+.phase-raise .gavel-arm { animation: gavelRaise .65s cubic-bezier(.25,.8,.3,1) both; }
+.phase-slam .gavel-arm, .phase-stamp .gavel-arm { animation: gavelSlam .26s cubic-bezier(.7,0,1,.45) both, gavelSettle .5s ease-out .26s both; }
+@keyframes gavelRaise { from { transform: translateX(-280px) translateY(120px) rotate(30deg); opacity: 0; } 60% { opacity: 1; } to { transform: translateX(-280px) rotate(-62deg); opacity: 1; } }
+@keyframes gavelSlam { from { transform: translateX(-280px) rotate(-62deg); } to { transform: translateX(-280px) rotate(4deg); } }
+@keyframes gavelSettle { 0% { transform: translateX(-280px) rotate(4deg); } 35% { transform: translateX(-280px) rotate(-6deg); } 100% { transform: translateX(-280px) rotate(0deg); } }
+.phase-stamp .gavel-arm { animation: gavelOut .5s ease 1.9s both; transform: translateX(-280px) rotate(0deg); }
+@keyframes gavelOut { to { opacity: 0; transform: translateX(-280px) translateY(-40px) rotate(-30deg); } }
+.gavel-gem { animation: gemPulse 1.4s ease-in-out infinite; }
+@keyframes gemPulse { 50% { filter: brightness(1.7); } }
+/* impact */
+.gavel-impact { position: absolute; left: 50%; top: 58%; width: 0; height: 0; }
+.gavel-flash, .gavel-wave, .gavel-sparks { position: absolute; left: 0; top: 0; opacity: 0; }
+.gavel-flash { width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%; background: radial-gradient(circle, rgba(255,250,220,.95), rgba(255,209,0,.55) 25%, rgba(155,93,255,.25) 45%, transparent 65%); }
+.gavel-wave { width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 4px solid #FFD100; box-shadow: 0 0 24px rgba(255,209,0,.8), inset 0 0 18px rgba(255,209,0,.6); transform: perspective(600px) rotateX(58deg); }
+.gavel-sparks i { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: #FFE27A; box-shadow: 0 0 10px 3px rgba(255,190,60,.9); }
+.gavel-sparks i:nth-child(3n) { background: #d9b8ff; box-shadow: 0 0 10px 3px rgba(155,93,255,.9); }
+.phase-stamp .gavel-flash { animation: flash .6s ease-out both; }
+.phase-stamp .gavel-wave { animation: wave .9s cubic-bezier(.2,.7,.2,1) both; }
+.phase-stamp .gavel-wave.w2 { animation-delay: .12s; border-color: #9B5DFF; box-shadow: 0 0 24px rgba(155,93,255,.8); }
+.phase-stamp .gavel-sparks { opacity: 1; }
+.phase-stamp .gavel-sparks i { animation: burst .9s cubic-bezier(.15,.7,.3,1) both; }
+@keyframes flash { 0% { opacity: 1; transform: scale(.4); } 100% { opacity: 0; transform: scale(1.3); } }
+@keyframes wave { 0% { opacity: 1; transform: perspective(600px) rotateX(58deg) scale(.6); } 100% { opacity: 0; transform: perspective(600px) rotateX(58deg) scale(5); } }
+@keyframes burst { 0% { transform: rotate(var(--a)) translateX(0) scale(1.3); opacity: 1; } 100% { transform: rotate(var(--a)) translateX(var(--d)) translateY(30px) scale(.4); opacity: 0; } }
+/* stamp */
+.gavel-stamp { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; animation: stampIn .45s cubic-bezier(.2,1.6,.4,1) both, stampOut .5s ease 2.05s both; white-space: nowrap; }
+.gavel-stamp-word { font-family: var(--font-title); font-size: 64px; line-height: 1; letter-spacing: .06em; color: transparent; font-feature-settings: "liga" 0, "calt" 0;
+  background: linear-gradient(180deg, #FFF3B0, #FFD100 45%, #E0A100 70%, #FFD100); -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 3px 0 #000) drop-shadow(0 0 2px #000) drop-shadow(0 0 30px rgba(255,170,0,.6)); }
+.gavel-stamp-item { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 22px; text-shadow: 0 2px 0 #000, 0 0 10px rgba(0,0,0,.9); padding: 6px 14px; border-radius: 6px; background: rgba(0,0,0,.6); box-shadow: inset 0 0 0 1px #8a6a2c; }
+.gavel-stamp-item img { width: 36px; height: 36px; border-radius: 4px; border: 2px solid var(--q); box-shadow: 0 0 16px var(--q); }
+.gavel-stamp-winner { font-family: var(--font-display); font-size: 18px; color: #F2E8D0; text-shadow: 0 2px 0 #000; }
+@keyframes stampIn { from { opacity: 0; transform: translateX(-50%) scale(2.4) rotate(-6deg); } to { opacity: 1; transform: translateX(-50%) scale(1) rotate(0); } }
+@keyframes stampOut { to { opacity: 0; transform: translateX(-50%) translateY(-14px); } }
+.phase-stamp .gavel-vignette { animation: fadeOut .5s ease 2.1s both; } .phase-stamp .gavel-plate { animation: fadeOut .5s ease 2.1s both; }
+@keyframes fadeOut { to { opacity: 0; } }
+/* majority seal on a contender */
+.majority-seal { position: absolute; top: 40px; right: 8px; z-index: 2; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; text-align: center;
+  font-family: var(--font-display); font-size: 10px; line-height: 1.05; color: #fff3d6; text-shadow: 0 1px 0 #000;
+  background: radial-gradient(circle at 35% 30%, #d9332a, #7a150e 70%); box-shadow: 0 0 0 2px #000, 0 0 0 3px #d9a640, 0 6px 14px -4px #000; animation: sealIn .5s cubic-bezier(.2,1.6,.4,1) both; transform: rotate(-12deg); }
+@keyframes sealIn { from { transform: rotate(-12deg) scale(2); opacity: 0; } }
+@media (max-width: 760px) { .gavel-stamp-word { font-size: 40px; } .gavel-arm { transform: translateX(-200px) scale(.7) rotate(-8deg); } }
+/* gavel geometry: pivot at the handle's end so the head lands on the plate's centre */
+.gavel-arm { margin-top: -100px; transform-origin: 6px 60px; transform: translateX(-252px) rotate(-8deg); }
+@keyframes gavelRaise { from { transform: translateX(-252px) translateY(120px) rotate(30deg); opacity: 0; } 60% { opacity: 1; } to { transform: translateX(-252px) rotate(-62deg); opacity: 1; } }
+@keyframes gavelSlam { from { transform: translateX(-252px) rotate(-62deg); } to { transform: translateX(-252px) rotate(3deg); } }
+@keyframes gavelSettle { 0% { transform: translateX(-252px) rotate(3deg); } 35% { transform: translateX(-252px) rotate(-7deg); } 100% { transform: translateX(-252px) rotate(0deg); } }
+@keyframes gavelOut { to { opacity: 0; transform: translateX(-252px) translateY(-40px) rotate(-30deg); } }
+.phase-stamp .gavel-arm { transform: translateX(-252px) rotate(0deg); }
+.gavel-stamp { top: 6%; padding: 14px 28px 16px; border-radius: 10px; background: radial-gradient(ellipse at center, rgba(8,5,3,.92), rgba(8,5,3,.75) 60%, transparent 100%); }
+@media (max-width: 760px) { .gavel-arm { transform: translateX(-180px) scale(.7) rotate(-8deg); } }
+.override-btn { margin-top: 4px; color: #ff9a8a; box-shadow: inset 0 0 0 1px #a8473a; }
+.override-panel { position: relative; z-index: 3; display: flex; flex-direction: column; gap: 12px; margin: 0 auto 20px; max-width: 760px; padding: 16px 18px; border-radius: 8px;
+  background: linear-gradient(180deg, rgba(80,16,10,.55), rgba(20,8,5,.85)); border: 1px solid #000; box-shadow: inset 0 0 0 1px #a8473a, 0 16px 30px -18px #000; animation: rise .3s var(--ease-out) both; }
+.override-panel h3 { color: #ffb4a6; }

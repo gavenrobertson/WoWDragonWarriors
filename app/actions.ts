@@ -526,3 +526,24 @@ export async function testDiscord(category: string): Promise<ActionResult> {
     return r.posted ? { ok: true, message: `Test posted to Discord (${def.label})` } : { ok: false, error: `Not posted: ${r.reason}` };
   });
 }
+
+/** Admin override: overrule the council and give an item to any guild member, with a required reason. */
+export async function overrideAward(input: { itemId: number; characterId: string; reason: string }): Promise<ActionResult> {
+  return act("isAdmin", "Council overruled", async (v) => {
+    const reason = str(input.reason, 300);
+    if (reason.length < 3) return { ok: false, error: "Give a short reason for the override." };
+    const itemId = Math.floor(Number(input.itemId));
+    const ch = await sqlOne<{ id: string; name: string }>("select id, name from characters where id = $1 and in_guild = 1", [input.characterId]);
+    const item = await sqlOne<{ id: number; name: string }>("select id, name from items where id = $1", [itemId]);
+    if (!ch || !item) return { ok: false, error: "Pick a guild member and an item." };
+    await tx(async (q) => {
+      await q("insert into loot_awards (item_id, character_id, method, reason, awarded_by, awarded_at) values ($1,$2,'admin override',$3,$4,$5)", [itemId, ch.id, reason, v.userId, nowIso()]);
+      await q("delete from wishlist_items where character_id = $1 and item_id = $2", [ch.id, itemId]);
+      await q("delete from council_votes where item_id = $1", [itemId]);
+    });
+    await notifyAward(itemId, ch.id, `⚖️ Admin override: ${reason}`, v);
+    revalidatePath("/loot");
+    revalidatePath("/loot/council");
+    return { ok: true, message: `${item.name} given to ${ch.name} (council overruled)` };
+  });
+}

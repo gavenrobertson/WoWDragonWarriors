@@ -30,7 +30,7 @@ export interface HubEvent {
 export interface HubRank { index: number; name: string; canSignUp: boolean; canWishlist: boolean; canRunRaids: boolean; canAwardLoot: boolean; isAdmin: boolean }
 export interface HubApplication { id: string; name: string; slug: string; level: number | null; className: string | null; role: Role; availability: string; logs: string; about: string; status: "pending" | "accepted" | "declined" }
 export interface HubAnnouncement { id: string; title: string; body: string; author: string; authorRole: string; authorColor?: string; date: string }
-export interface HubAward { id: string; date: string; itemId: number; itemName: string; quality: Quality; characterName: string; className: string; raid: string; boss: string; method: string }
+export interface HubAward { id: string; date: string; itemId: number; itemName: string; quality: Quality; characterName: string; className: string; raid: string; boss: string; method: string; reason?: string }
 export interface HubSyncRun { job: string; status: string; value: string; note: string; minutesAgo: number | null }
 export interface HubBank { gold: number | null; uploadedAt?: string; items: { name: string; tab: string; qty: number; quality: Quality }[] }
 export interface HubCraftRequest { id: string; itemName: string; quantity: number; requester: string; status: string }
@@ -212,13 +212,13 @@ const dbStore: Store = {
   },
   async awards() {
     const rows = await sql<any>(
-      `select a.id, a.awarded_at, a.item_id, i.name as item_name, i.quality, c.name, c.surname, c.class, e.raid, a.boss, a.method
+      `select a.id, a.awarded_at, a.item_id, i.name as item_name, i.quality, c.name, c.surname, c.class, e.raid, a.boss, a.method, a.reason
        from loot_awards a join items i on i.id = a.item_id join characters c on c.id = a.character_id left join raid_events e on e.id = a.event_id
        order by a.awarded_at desc limit 200`,
     );
     return rows.map((r) => ({
       id: r.id, date: shortDate(r.awarded_at), itemId: r.item_id, itemName: r.item_name, quality: r.quality ?? "epic", characterName: `${r.name} ${r.surname}`.trim(),
-      className: r.class, raid: r.raid ?? "", boss: r.boss ?? "", method: r.method ?? "",
+      className: r.class, raid: r.raid ?? "", boss: r.boss ?? "", method: r.method ?? "", reason: r.reason ?? undefined,
     }));
   },
   async syncRuns() {

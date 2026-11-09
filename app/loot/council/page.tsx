@@ -57,6 +57,8 @@ export default async function CouncilPage() {
       members={members}
       me={viewer.userId ?? "demo"}
       canVote={viewer.perms.canAwardLoot}
+      canOverride={viewer.perms.isAdmin}
+      roster={viewer.perms.isAdmin ? chars.filter((c) => c.inGuild).map((c) => ({ id: c.id, name: c.fullName, className: c.className, level: c.level })).sort((a, b) => a.name.localeCompare(b.name)) : []}
     />
   );
 }

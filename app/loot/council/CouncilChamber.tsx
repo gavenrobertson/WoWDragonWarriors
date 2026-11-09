@@ -3,8 +3,9 @@
 // council members' votes as portraits on each candidate, and an award button.
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { awardItem, castVote } from "@/app/actions";
+import { awardItem, castVote, overrideAward } from "@/app/actions";
 import { Avatar, ItemIcon } from "@/components/bits";
+import { GavelSlam, type GavelMoment } from "@/components/Gavel";
 import { Toast } from "@/components/Toast";
 import { useAction } from "@/components/useAction";
 import type { CouncilMember } from "@/lib/store";
@@ -19,11 +20,16 @@ export interface CouncilItem {
   candidates: CouncilCandidate[]; votes: { voterUserId: string; characterId: string }[];
 }
 
-export function CouncilChamber({ items: initial, members, me, canVote }: { items: CouncilItem[]; members: CouncilMember[]; me: string; canVote: boolean }) {
+export function CouncilChamber({ items: initial, members, me, canVote, canOverride, roster }: {
+  items: CouncilItem[]; members: CouncilMember[]; me: string; canVote: boolean; canOverride: boolean;
+  roster: { id: string; name: string; className: string; level: number }[];
+}) {
   const [items, setItems] = useState(initial);
   const [sel, setSel] = useState(initial[0]?.id ?? 0);
   const [confirm, setConfirm] = useState<string | null>(null);
   const [awarded, setAwarded] = useState<Record<number, string>>({});
+  const [slam, setSlam] = useState<GavelMoment | null>(null);
+  const [override, setOverride] = useState<{ characterId: string; reason: string } | null>(null);
   const { pending, run, toast } = useAction();
   const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
 
@@ -52,7 +58,11 @@ export function CouncilChamber({ items: initial, members, me, canVote }: { items
   const award = (c: CouncilCandidate) => {
     if (confirm !== c.characterId) { setConfirm(c.characterId); setTimeout(() => setConfirm((x) => (x === c.characterId ? null : x)), 4000); return; }
     setConfirm(null);
-    run(() => awardItem({ itemId: item.id, characterId: c.characterId }), () => setAwarded((a) => ({ ...a, [item.id]: c.name })));
+    const it = item;
+    run(() => awardItem({ itemId: it.id, characterId: c.characterId }), () => {
+      setAwarded((a) => ({ ...a, [it.id]: c.name }));
+      setSlam({ key: Date.now(), item: it.name, winner: c.name, color: qualityColor(it.quality), icon: it.iconUrl });
+    });
   };
 
   return (
@@ -77,6 +87,7 @@ export function CouncilChamber({ items: initial, members, me, canVote }: { items
         </nav>
 
         <section className="council-hall" aria-labelledby="council-item-name">
+          <GavelSlam moment={slam} onDone={() => setSlam(null)} />
           <div className="council-dais">
             <div className="council-pedestal" aria-hidden="true">
               <svg viewBox="0 0 200 200" className="council-ring"><circle cx="100" cy="100" r="92" fill="none" stroke="#FFD100" strokeOpacity=".5" strokeWidth="1.5" strokeDasharray="3 9" /><circle cx="100" cy="100" r="78" fill="none" stroke="#9B5DFF" strokeOpacity=".45" strokeWidth="1.2" /></svg>
@@ -90,18 +101,60 @@ export function CouncilChamber({ items: initial, members, me, canVote }: { items
               {awarded[item.id]
                 ? <span className="pill">Awarded to {awarded[item.id]}</span>
                 : <span className="small soft">{item.votes.length} of {members.length} council vote{members.length === 1 ? "" : "s"} cast</span>}
+              {canOverride && !awarded[item.id] && !override && (
+                <button type="button" className="btn btn-sm override-btn" onClick={() => setOverride({ characterId: item.candidates[0]?.characterId ?? "", reason: "" })}>⚖ Overrule the council</button>
+              )}
             </div>
           </div>
+
+          {override && !awarded[item.id] && (
+            <form className="override-panel" onSubmit={(e) => {
+              e.preventDefault();
+              const it = item, who = roster.find((r) => r.id === override.characterId);
+              if (!who) return;
+              run(() => overrideAward({ itemId: it.id, characterId: who.id, reason: override.reason }), () => {
+                setOverride(null);
+                setAwarded((a) => ({ ...a, [it.id]: who.name }));
+                setSlam({ key: Date.now(), item: it.name, winner: who.name, color: qualityColor(it.quality), icon: it.iconUrl, word: "Overruled" });
+              });
+            }}>
+              <div className="row between baseline"><h3>⚖ Admin override</h3><span className="micro muted">Gives the item directly. Recorded in loot history with your reason.</span></div>
+              <div className="grid-auto" style={{ ["--min" as string]: "220px", gap: 10 }}>
+                <label className="field">Give {item.name} to
+                  <select required value={override.characterId} onChange={(e) => setOverride({ ...override, characterId: e.target.value })}>
+                    <option value="" disabled>Choose a guild member</option>
+                    {item.candidates.length > 0 && (
+                      <optgroup label="Contenders">
+                        {item.candidates.map((c) => <option key={c.characterId} value={c.characterId}>{c.name} · wishlist #{c.wishRank}</option>)}
+                      </optgroup>
+                    )}
+                    <optgroup label="Whole guild">
+                      {roster.filter((r) => !item.candidates.some((c) => c.characterId === r.id)).map((r) => <option key={r.id} value={r.id}>{r.name} · {r.level} {r.className}</option>)}
+                    </optgroup>
+                  </select>
+                </label>
+                <label className="field">Reason (required)
+                  <input type="text" required minLength={3} maxLength={300} placeholder="e.g. Decided in officer chat; tank priority for Onyxia" value={override.reason} onChange={(e) => setOverride({ ...override, reason: e.target.value })} />
+                </label>
+              </div>
+              <div className="row" style={{ gap: 8 }}>
+                <button type="submit" className="btn btn-primary" disabled={pending || !override.characterId || override.reason.trim().length < 3}>Overrule and award</button>
+                <button type="button" className="btn" onClick={() => setOverride(null)}>Cancel</button>
+              </div>
+            </form>
+          )}
 
           <div className="council-candidates" role="list" aria-label="Contenders">
             {item.candidates.map((c) => {
               const t = tally(c.characterId);
               const voters = item.votes.filter((v) => v.characterId === c.characterId).map((v) => memberById.get(v.voterUserId)).filter(Boolean) as CouncilMember[];
               const isLeader = !awarded[item.id] && leader?.characterId === c.characterId && (maxVotes > 0);
+              const majority = !awarded[item.id] && members.length > 0 && t > members.length / 2;
               const color = classColor(c.className);
               return (
                 <article key={c.characterId} role="listitem" className={`contender${isLeader ? " leading" : ""}${myVote === c.characterId ? " my-vote" : ""}`} style={{ ["--cls" as string]: color }}>
                   {isLeader && <span className="contender-crown" aria-label="Council favourite">♛ Council favourite</span>}
+                  {majority && <span className="majority-seal" aria-label="Majority reached: ready to award">Majority<br />reached</span>}
                   <Link href={`/characters/${c.slug}`} className="contender-figure" aria-label={`${c.name}'s character page`}>
                     {c.renderUrl ? <img src={c.renderUrl} alt="" loading="lazy" /> : <span className="contender-initial" style={{ color }}>{c.name.charAt(0)}</span>}
                   </Link>
