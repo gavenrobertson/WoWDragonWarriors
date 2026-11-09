@@ -119,10 +119,9 @@ export const BIS: Record<string, { itemId: number; slot: string; status: "have" 
     { itemId: 18404, slot: "Neck", status: "need" },
     { itemId: 13340, slot: "Back", status: "have" },
     { itemId: 17068, slot: "Main hand", status: "wishlisted", how: "Drops from Onyxia. Wishlisted at #2, behind another warrior’s #1." },
-    { itemId: 17063, slot: "Finger", status: "wishlisted" },
-    { itemId: 11815, slot: "Trinket", status: "have" },
-    { itemId: 13965, slot: "Trinket", status: "need" },
-    { itemId: 12784, slot: "Two-hand", status: "need" },
+    { itemId: 17063, slot: "Finger 1", status: "wishlisted" },
+    { itemId: 11815, slot: "Trinket 1", status: "have" },
+    { itemId: 13965, slot: "Trinket 2", status: "need" },
   ],
   "morwen-ashveil": [
     { itemId: 16914, slot: "Head", status: "wishlisted" },

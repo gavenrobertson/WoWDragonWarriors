@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getViewer } from "@/lib/auth";
 import { NS, SITE } from "@/lib/config";
-import { getCharacters, getItems, getRanks, getWishlists } from "@/lib/store";
+import { getCharacters, getRanks, getWishlists, store } from "@/lib/store";
 import { CharacterView, type CharacterVM } from "./CharacterView";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -15,9 +15,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CharacterPage({ params }: Props) {
   const { slug } = await params;
-  const [viewer, chars, ranks, wishes, items] = await Promise.all([getViewer(), getCharacters(), getRanks(), getWishlists(), getItems()]);
+  const [viewer, chars, ranks, wishes] = await Promise.all([getViewer(), getCharacters(), getRanks(), getWishlists()]);
   const active = chars.find((c) => c.slug === slug);
   if (!active) notFound();
+  const account0 = active.userId ? chars.filter((c) => c.userId === active.userId && c.claimed) : [active];
+  const wantIds = [...new Set([...active.gear.map((g) => g.itemId), ...wishes.filter((w) => account0.some((c) => c.id === w.characterId)).map((w) => w.itemId)].filter((x): x is number => !!x))];
+  const items = await store().itemsByIds(wantIds);
 
   // Switcher: every claimed character on the same Battle.net account (mains + alts).
   const account = active.userId ? chars.filter((c) => c.userId === active.userId && c.claimed) : [active];

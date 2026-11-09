@@ -17,11 +17,11 @@ export interface HubCharacter {
   gear: { slot: string; name: string; quality: Quality | "empty"; itemId?: number }[]; renderUrl?: string; avatarUrl?: string; syncedAt?: string;
 }
 export interface HubItem {
-  id: number; name: string; quality: Quality; slot: string; slotDetail: string; roles: Role[]; iconUrl?: string;
+  id: number; name: string; quality: Quality; slot: string; slotDetail: string; roles: Role[]; iconUrl?: string; itemLevel?: number; requiredLevel?: number;
   source: { type: SourceType; raid?: string; boss: string; zone: string; mapLabel?: string; mapX?: number; mapY?: number; how: string };
 }
 export interface HubWish { characterId: string; itemId: number; rank: number; approved: boolean }
-export interface HubBis { characterId: string; itemId: number; slot: string; status: "have" | "wishlisted" | "need"; how?: string }
+export interface HubBis { characterId: string; itemId: number; slot: string; status: "have" | "wishlisted" | "need"; how?: string; sourceType?: string | null; note?: string | null }
 export interface HubEvent {
   id: string; raid: string; name: string; kind: string; startsAt: string; size: number; sizeLabel: string; leader: string;
   compNeeds: { role: string; need: number }[]; requirements: string[];
@@ -45,6 +45,7 @@ export interface GuildProfile { name: string; faction: string; ruleset: string; 
 export interface Store {
   characters(): Promise<HubCharacter[]>;
   items(): Promise<HubItem[]>;
+  itemsByIds(ids: number[]): Promise<HubItem[]>;
   wishlists(): Promise<HubWish[]>;
   bis(): Promise<HubBis[]>;
   events(): Promise<HubEvent[]>;
@@ -74,6 +75,7 @@ const demoChars = (): HubCharacter[] =>
 const demoStore: Store = {
   characters: async () => demoChars(),
   items: async () => S.ITEMS,
+  itemsByIds: async (ids) => S.ITEMS.filter((i) => ids.includes(i.id)),
   wishlists: async () => Object.entries(S.WISHLISTS).flatMap(([slug, list]) => list.map((w, i) => ({ characterId: slug, itemId: w.itemId, rank: i + 1, approved: w.approved }))),
   bis: async () => Object.entries(S.BIS).flatMap(([slug, list]) => list.map((b) => ({ characterId: slug, ...b }))),
   events: async () =>
@@ -108,6 +110,19 @@ const demoStore: Store = {
 };
 
 // ---------------------------------------------------------------- D1 store
+async function itemRows(where: string, params: unknown[]): Promise<HubItem[]> {
+  const rows = await sql<any>(
+    `select i.*, s.type, s.raid, s.boss, s.zone, s.map_label, s.map_x, s.map_y, s.how
+     from items i left join item_sources s on s.rowid = (select s2.rowid from item_sources s2 where s2.item_id = i.id order by s2.type limit 1)
+     ${where} order by i.id`,
+    params,
+  );
+  return rows.map((r) => ({
+    id: r.id, name: r.name, quality: r.quality ?? "common", slot: r.slot ?? "", slotDetail: r.slot_detail ?? r.slot ?? "", roles: json(r.roles, []),
+    iconUrl: r.icon_url || undefined, itemLevel: r.item_level ?? undefined, requiredLevel: r.required_level ?? undefined,
+    source: { type: r.type ?? "", raid: r.raid ?? undefined, boss: r.boss ?? "", zone: r.zone ?? "", mapLabel: r.map_label ?? undefined, mapX: r.map_x ?? undefined, mapY: r.map_y ?? undefined, how: r.how ?? "" },
+  }));
+}
 const iso = (d: string | null) => (d ? new Date(d).toISOString() : "");
 const shortDate = (d: string) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/Chicago" });
 
@@ -127,23 +142,20 @@ const dbStore: Store = {
     }));
   },
   async items() {
-    const rows = await sql<any>(
-      `select i.*, s.type, s.raid, s.boss, s.zone, s.map_label, s.map_x, s.map_y, s.how
-       from items i left join item_sources s on s.rowid = (select s2.rowid from item_sources s2 where s2.item_id = i.id order by s2.type limit 1)
-       order by i.id`,
-    );
-    return rows.map((r) => ({
-      id: r.id, name: r.name, quality: r.quality ?? "common", slot: r.slot ?? "", slotDetail: r.slot_detail ?? r.slot ?? "", roles: json(r.roles, []), iconUrl: r.icon_url || undefined,
-      source: { type: r.type ?? "world", raid: r.raid ?? undefined, boss: r.boss ?? "", zone: r.zone ?? "", mapLabel: r.map_label ?? undefined, mapX: r.map_x ?? undefined, mapY: r.map_y ?? undefined, how: r.how ?? "" },
-    }));
+    // Loot pools and BiS sources: only items with a curated source (searched/equipped items are fetched by id).
+    return itemRows("where exists (select 1 from item_sources x where x.item_id = i.id)", []);
+  },
+  async itemsByIds(ids) {
+    if (!ids.length) return [];
+    return itemRows("where i.id in (select value from json_each($1))", [ids]);
   },
   async wishlists() {
     const rows = await sql<any>("select character_id, item_id, rank, approved from wishlist_items order by character_id, rank");
     return rows.map((r) => ({ characterId: r.character_id, itemId: r.item_id, rank: r.rank, approved: !!r.approved }));
   },
   async bis() {
-    const rows = await sql<any>("select character_id, item_id, slot, status from bis_entries order by character_id, slot");
-    return rows.map((r) => ({ characterId: r.character_id, itemId: r.item_id, slot: r.slot, status: r.status }));
+    const rows = await sql<any>("select character_id, item_id, slot, status, source_type, note from bis_entries where phase = 'phase-1' order by character_id, slot");
+    return rows.map((r) => ({ characterId: r.character_id, itemId: r.item_id, slot: r.slot, status: r.status, sourceType: r.source_type, note: r.note }));
   },
   async events() {
     const since = new Date(Date.now() - 86400_000).toISOString();

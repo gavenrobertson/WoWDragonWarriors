@@ -403,3 +403,35 @@ label.btn:focus-within { box-shadow: var(--focus-ring); }
   .wow-info { grid-template-columns: 1fr; }
   .wow-tabs { left: 12px; }
 }
+
+/* ---------- BiS planner (character-sheet layout) ---------- */
+.bis-sheet { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(320px, 1.35fr) minmax(220px, 1fr); grid-template-areas: "left center right" "weapons weapons weapons"; gap: 14px; align-items: start; }
+.bis-sheet > .bis-col:first-child { grid-area: left; } .bis-center { grid-area: center; } .bis-sheet > .bis-col:nth-child(3) { grid-area: right; } .bis-weapons { grid-area: weapons; }
+.bis-col { display: flex; flex-direction: column; gap: 8px; }
+.bis-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.bis-slot { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 12px; border-radius: var(--r-md); border: 1px solid var(--dw-border); background: var(--dw-card); color: var(--dw-text); font: inherit; text-align: left; cursor: pointer; position: relative; }
+.bis-slot:hover:not(:disabled) { border-color: var(--dw-gold-antique); }
+.bis-slot[aria-pressed="true"] { border-color: var(--dw-gold); background: var(--dw-selected); box-shadow: 0 0 0 1px rgba(227,179,65,.45), 0 0 26px -8px rgba(227,179,65,.6); }
+.bis-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bis-empty-icon { flex: none; width: 40px; height: 40px; border-radius: 6px; border: 2px dashed var(--dw-border-3); display: grid; place-items: center; color: var(--dw-text-muted); }
+.bis-slot:hover .bis-empty-icon { border-color: var(--dw-gold-antique); color: var(--dw-gold-light); }
+.bis-center { position: relative; align-self: stretch; display: flex; flex-direction: column; gap: 14px; }
+.bis-detail { position: relative; z-index: 1; }
+/* character render below the detail panel, cropped to the figure (renders are 1600×1200 with the character centred) */
+.bis-figure { position: relative; flex: 1 1 260px; min-height: 260px; border-radius: var(--r-lg); border: 1px solid var(--dw-border); overflow: hidden; display: grid; place-items: center;
+  background: radial-gradient(60% 70% at 50% 75%, rgba(155,93,255,.28), transparent 70%), linear-gradient(#120F0D, #0D0A14); }
+.bis-figure img { position: absolute; left: 50%; top: 50%; height: 220%; width: auto; max-width: none; transform: translate(-50%, -54%); filter: drop-shadow(0 0 24px rgba(155,93,255,.45)); animation: float 5.5s ease-in-out infinite; }
+.picker { width: min(620px, calc(100vw - 32px)); max-height: min(720px, calc(100vh - 48px)); padding: 0; border: 1px solid var(--dw-gold-antique); border-radius: var(--r-xl); background: var(--dw-card); color: var(--dw-text); box-shadow: var(--glow-purple), 0 30px 80px -20px #000; }
+.picker::backdrop { background: rgba(8,5,14,.72); backdrop-filter: blur(3px); }
+.picker[open] { animation: rise .25s var(--ease-out) both; }
+.picker-inner { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+.picker-results { display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow: auto; }
+.picker-item { width: 100%; cursor: pointer; color: var(--dw-text); font: inherit; }
+@media (max-width: 980px) {
+  .bis-sheet { grid-template-columns: 1fr 1fr; grid-template-areas: "center center" "left right" "weapons weapons"; }
+  .bis-figure { display: none; }
+}
+@media (max-width: 620px) {
+  .bis-sheet { grid-template-columns: 1fr; grid-template-areas: "center" "left" "right" "weapons"; }
+  .bis-row { grid-template-columns: 1fr; }
+}

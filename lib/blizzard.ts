@@ -104,6 +104,7 @@ export const guildActivity = (guildSlug = SITE.guildSlug) => get<any>(`/data/wow
 
 // --- Static / dynamic ---
 export const item = (id: number) => get<any>(`/data/wow/item/${id}`, NS.static);
+export const searchItems = (params: URLSearchParams) => get<any>(`/data/wow/search/item?${params}`, NS.static);
 export const itemMedia = (id: number) => get<any>(`/data/wow/media/item/${id}`, NS.static); // verify for Forever
 export const rulesets = () => get<any>(`/data/wow/ruleset/index`, NS.dynamic);
 export const auctions = (rulesetId: number) => get<any>(`/data/wow/ruleset/${rulesetId}/auctions`, NS.dynamic);

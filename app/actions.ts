@@ -10,6 +10,7 @@ import { configured } from "@/lib/config";
 import type { ActionResult } from "@/components/useAction";
 import type { Role, SignupStatus } from "@/lib/types";
 import { assignableRoles, canChangeRoleOf, roleLabel, type SiteRole } from "@/lib/roles";
+import { BIS_PHASE, SLOTS, SOURCE_TYPES } from "@/lib/bis";
 
 const ROLES: Role[] = ["tank", "healer", "melee", "ranged"];
 const SIGNUP: SignupStatus[] = ["accepted", "tentative", "late", "bench", "declined"];
@@ -122,13 +123,52 @@ export async function saveWishlist(input: { character: string; itemIds: number[]
   });
 }
 
-export async function setBisStatus(input: { character: string; itemId: number; status: "have" | "need" }): Promise<ActionResult> {
+export async function setBisStatus(input: { character: string; slot: string; status: "have" | "need" }): Promise<ActionResult> {
   return act(undefined, input.status === "have" ? "Marked as obtained" : "Marked as needed", async (v) => {
     const characterId = ownCharacterId(v, input.character);
     if (!["have", "need"].includes(input.status)) return { ok: false, error: "Unknown status." };
-    await sql("update bis_entries set status = $3 where character_id = $1 and item_id = $2", [characterId, input.itemId, input.status]);
+    await sql("update bis_entries set status = $3, updated_at = $4 where character_id = $1 and phase = $5 and slot = $2", [characterId, input.slot, input.status, nowIso(), BIS_PHASE]);
     revalidatePath("/bis");
     return { ok: true, message: input.status === "have" ? "Marked as obtained" : "Marked as needed" };
+  });
+}
+
+/** Choose (or replace) the BiS item for one slot. One item per slot per character. */
+export async function setBisItem(input: { character: string; slot: string; itemId: number; sourceType?: string; note?: string }): Promise<ActionResult> {
+  return act(undefined, "BiS updated", async (v) => {
+    const characterId = ownCharacterId(v, input.character);
+    if (!(SLOTS as readonly string[]).includes(input.slot)) return { ok: false, error: "Unknown slot." };
+    const item = await sqlOne<{ id: number }>("select id from items where id = $1", [Math.floor(Number(input.itemId))]);
+    if (!item) return { ok: false, error: "Pick the item from the search results." };
+    const curated = await sqlOne<{ type: string; boss: string | null }>("select type, boss from item_sources where item_id = $1 limit 1", [item.id]);
+    const type = (SOURCE_TYPES as readonly string[]).includes(input.sourceType ?? "") ? input.sourceType! : curated?.type ?? null;
+    await tx(async (q) => {
+      await q("delete from bis_entries where character_id = $1 and phase = $2 and slot = $3", [characterId, BIS_PHASE, input.slot]);
+      await q("insert into bis_entries (character_id, phase, slot, item_id, status, source_type, note, updated_at) values ($1,$2,$3,$4,'need',$5,$6,$7)",
+        [characterId, BIS_PHASE, input.slot, item.id, type, str(input.note, 120) || curated?.boss || null, nowIso()]);
+    });
+    revalidatePath("/bis");
+    return { ok: true, message: "BiS updated" };
+  });
+}
+
+export async function updateBisEntry(input: { character: string; slot: string; sourceType: string | null; note: string }): Promise<ActionResult> {
+  return act(undefined, "Saved", async (v) => {
+    const characterId = ownCharacterId(v, input.character);
+    const type = input.sourceType && (SOURCE_TYPES as readonly string[]).includes(input.sourceType) ? input.sourceType : null;
+    await sql("update bis_entries set source_type = $3, note = $4, updated_at = $5 where character_id = $1 and phase = $6 and slot = $2",
+      [characterId, input.slot, type, str(input.note, 120) || null, nowIso(), BIS_PHASE]);
+    revalidatePath("/bis");
+    return { ok: true, message: "Saved" };
+  });
+}
+
+export async function removeBisItem(input: { character: string; slot: string }): Promise<ActionResult> {
+  return act(undefined, "Removed from BiS", async (v) => {
+    const characterId = ownCharacterId(v, input.character);
+    await sql("delete from bis_entries where character_id = $1 and phase = $2 and slot = $3", [characterId, BIS_PHASE, input.slot]);
+    revalidatePath("/bis");
+    return { ok: true, message: "Removed from BiS" };
   });
 }
 

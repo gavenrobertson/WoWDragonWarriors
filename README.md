@@ -31,6 +31,7 @@ or `npx wrangler secret put NAME`):
 | --- | --- |
 | `BNET_CLIENT_ID`, `BNET_CLIENT_SECRET` | Battle.net API client (develop.battle.net) |
 | `CRON_SECRET` | Any long random string; the scheduled jobs use it to call `/api/cron/*` |
+| `SUPER_ADMIN_CLAIM_CODE` | One-time code for the first Super Admin (see Roles) |
 | `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_SIGNUPS_WEBHOOK_URL` | Optional: Discord linking and `#raid-signups` posts |
 | `WCL_CLIENT_ID`, `WCL_CLIENT_SECRET` | Optional: Warcraft Logs (import not built yet) |
 | `PROFILE_SYNC_LIMIT` | Optional: profiles per 10-minute run (default 7, fits Workers Free; raise to ~100 on Workers Paid) |
@@ -55,14 +56,25 @@ the database and render the built-in sample guild (signed in as the sample offic
 Who can see and do what comes from each person's characters' guild rank. **Every write is checked on the server**
 in `app/actions.ts`, not just hidden in the UI.
 
+## Roles and the Super Admin
+
+Permissions come from two places, added together:
+- **In-game guild rank** (from the roster), configured in Admin › Ranks & permissions.
+- **Hub role** per Battle.net account, assigned in Admin › People & roles: Super Admin, Guild Leader, Officer, Raid Leader, Loot Master.
+
+Super Admins can assign any role; Guild Leaders can assign Officer, Raid Leader and Loot Master. The last Super Admin can't be
+removed. The first Super Admin claims the role by signing in and opening `/admin/claim?code=<SUPER_ADMIN_CLAIM_CODE>` (a Worker
+secret); the link stops working once a Super Admin exists.
+
 ## What's built
 
 | Route | What it does |
 | --- | --- |
+| `/guild` | Public guild page styled like the in-game guild window: roster with class icons, ranks, MOTD, guild info |
 | `/` | Countdown to raid unlock, raid readiness, Road to 60, officer news, recently active, guild bank, crafters |
 | `/sign-in`, `/apply` | Battle.net OAuth → claim characters → pick a main; guild application form |
 | `/characters/[slug]` | Account character switcher, paperdoll, model stage (render or placeholder), stats / Legacy / wishlist / professions tabs, "Sync from Armory" |
-| `/bis` | BiS per slot with source type, schematic map pins, have/need toggles |
+| `/bis` | Self-service BiS planner: every member picks their own item per slot (17 slots) from Blizzard's item search, sets where it drops, tracks have/need; equipped items count as Have |
 | `/loot` | Raid loot pools with role filter and priority queue, wishlist with reorder, loot history |
 | `/raids` | Event list, signup with status and character, comp bars, signups, readiness checks; `/raids/calendar.ics` iCal feed |
 | `/roster` | Members table (search and role filter, main/alt, Onyxia ready), crafting directory and requests, guild bank |
@@ -90,7 +102,6 @@ scripts/seed-sql.mts writes seeds/base.sql (ranks, settings, loot table) and see
   third-party viewer into `CharacterView.tsx` fed by `/appearance` + `/equipment`.
 - **Item icons.** `items.icon_url` exists; a job that caches `/data/wow/media/item/{id}` isn't written yet.
 - **Discord bot.** Only webhooks are wired: event and announcement posts, application pings.
-- **Curated BiS lists per class.** `bis_entries` is per character; officers need a way to publish class lists.
 
 ## Forever API caveats
 
