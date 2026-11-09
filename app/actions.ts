@@ -391,3 +391,47 @@ export async function saveGuildPage(input: { motd: string; info: string }): Prom
     return { ok: true, message: "Guild page saved" };
   });
 }
+
+// ------------------------------------------------------------ loot council
+/** Cast (or move) your council vote for an item. Same candidate again = withdraw the vote. */
+export async function castVote(input: { itemId: number; characterId: string }): Promise<ActionResult> {
+  return act("canAwardLoot", "Vote recorded", async (v) => {
+    const itemId = Math.floor(Number(input.itemId));
+    const wished = await sqlOne("select 1 from wishlist_items where item_id = $1 and character_id = $2", [itemId, input.characterId]);
+    if (!wished) return { ok: false, error: "That player hasn't wishlisted this item." };
+    const cur = await sqlOne<{ character_id: string }>("select character_id from council_votes where item_id = $1 and voter_user_id = $2", [itemId, v.userId]);
+    if (cur?.character_id === input.characterId) {
+      await sql("delete from council_votes where item_id = $1 and voter_user_id = $2", [itemId, v.userId]);
+      revalidatePath("/loot/council");
+      return { ok: true, message: "Vote withdrawn" };
+    }
+    await sql(
+      `insert into council_votes (item_id, voter_user_id, character_id, created_at) values ($1,$2,$3,$4)
+       on conflict (item_id, voter_user_id) do update set character_id = excluded.character_id, created_at = excluded.created_at`,
+      [itemId, v.userId, input.characterId, nowIso()],
+    );
+    revalidatePath("/loot/council");
+    return { ok: true, message: "Vote recorded" };
+  });
+}
+
+/** Award an item to a candidate: records the award, removes it from their wishlist, clears the votes. */
+export async function awardItem(input: { itemId: number; characterId: string; reason?: string }): Promise<ActionResult> {
+  return act("canAwardLoot", "Item awarded", async (v) => {
+    const itemId = Math.floor(Number(input.itemId));
+    const ch = await sqlOne<{ id: string; name: string; surname: string }>("select id, name, surname from characters where id = $1", [input.characterId]);
+    const item = await sqlOne<{ id: number; name: string }>("select id, name from items where id = $1", [itemId]);
+    if (!ch || !item) return { ok: false, error: "Item or character not found." };
+    const votes = await sqlOne<{ n: number }>("select count(*) as n from council_votes where item_id = $1 and character_id = $2", [itemId, ch.id]);
+    await tx(async (q) => {
+      await q("insert into loot_awards (item_id, character_id, method, reason, awarded_by, awarded_at) values ($1,$2,'council',$3,$4,$5)",
+        [itemId, ch.id, str(input.reason, 300) || (votes?.n ? `Council vote (${votes.n})` : null), v.userId, nowIso()]);
+      await q("delete from wishlist_items where character_id = $1 and item_id = $2", [ch.id, itemId]);
+      await q("delete from council_votes where item_id = $1", [itemId]);
+    });
+    await postToDiscord(`🏆 **${item.name}** awarded to **${ch.name} ${ch.surname}** by the loot council.`).catch(() => {});
+    revalidatePath("/loot");
+    revalidatePath("/loot/council");
+    return { ok: true, message: `${item.name} awarded to ${ch.name}` };
+  });
+}

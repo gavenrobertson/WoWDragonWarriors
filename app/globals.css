@@ -627,3 +627,64 @@ h1, .title-xl, .wow-title, .countdown-num { font-variant-ligatures: none; font-f
 .wow-window { min-width: 0; width: 100%; box-sizing: border-box; }
 h1, .title-xl, .wow-title, .countdown-num { font-feature-settings: "liga" 0, "dlig" 0, "clig" 0, "calt" 0, "swsh" 0, "salt" 0; }
 @media (max-width: 760px) { .wow-subhead { padding-left: 84px; } }
+
+/* ---------- loot council chamber ---------- */
+.council-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 18px; align-items: start; }
+.council-items { display: flex; flex-direction: column; gap: 6px; position: sticky; top: 96px; max-height: calc(100vh - 120px); overflow: auto; padding: 12px 8px;
+  background: linear-gradient(180deg, rgba(48,36,20,.55), rgba(10,7,4,.55)), var(--dw-card); border: 1px solid #000; border-radius: 6px; box-shadow: inset 0 0 0 1px #5a4520; }
+.council-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; min-height: 56px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--dw-text); font: inherit; cursor: pointer; }
+.council-item:hover:not(:disabled) { background: linear-gradient(90deg, rgba(80,130,255,.2), rgba(80,130,255,.03)); box-shadow: none; }
+.council-item[aria-pressed="true"] { background: linear-gradient(90deg, rgba(255,209,0,.16), transparent); box-shadow: inset 3px 0 0 #FFD100; }
+.council-item-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.council-hall { position: relative; border-radius: 10px; padding: 22px 22px 26px; border: 3px solid #5a4520; overflow: hidden;
+  background:
+    radial-gradient(60% 45% at 50% 18%, rgba(255,190,80,.18), transparent 70%),
+    radial-gradient(80% 60% at 50% 100%, rgba(155,93,255,.16), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.02) 0 1px, transparent 1px 64px),
+    linear-gradient(180deg, #1d150c, #0c0805 80%);
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000, inset 0 0 0 3px #8a6a2c, inset 0 0 0 4px #000, inset 0 2px 40px rgba(0,0,0,.85); }
+.council-hall::before { content: ""; position: absolute; left: 50%; top: -60px; width: 420px; height: 360px; margin-left: -210px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,235,190,.16), transparent 75%); clip-path: polygon(35% 0, 65% 0, 100% 100%, 0 100%); filter: blur(4px); }
+.council-dais { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; margin-bottom: 22px; }
+.council-pedestal { position: relative; width: 170px; height: 170px; display: grid; place-items: center; }
+.council-ring { position: absolute; inset: 0; width: 100%; height: 100%; animation: spin 36s linear infinite; filter: drop-shadow(0 0 8px rgba(255,209,0,.45)); }
+.council-relic { position: relative; animation: float 4.5s ease-in-out infinite; filter: drop-shadow(0 0 22px var(--c)) drop-shadow(0 10px 14px rgba(0,0,0,.8)); }
+.council-relic .item-icon { border-width: 3px; border-radius: 8px; }
+.council-candidates { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; align-items: end; }
+.contender { position: relative; display: flex; flex-direction: column; border-radius: 8px; overflow: hidden;
+  background: linear-gradient(180deg, transparent 0 40%, rgba(10,7,4,.92) 62%), radial-gradient(70% 55% at 50% 45%, color-mix(in srgb, var(--cls) 22%, transparent), transparent 70%), #0e0a06;
+  border: 1px solid #000; box-shadow: inset 0 0 0 1px #4a3a1a, 0 14px 30px -18px #000; transition: transform .25s var(--ease-out), box-shadow .3s ease; }
+.contender:hover { transform: translateY(-4px); box-shadow: inset 0 0 0 1px #b8902f, 0 24px 40px -22px #000, 0 0 30px -12px color-mix(in srgb, var(--cls) 70%, transparent); }
+.contender.leading { box-shadow: inset 0 0 0 2px #FFD100, 0 0 34px -6px rgba(255,209,0,.55), 0 24px 40px -22px #000; animation: favourite 2.6s ease-in-out infinite; }
+@keyframes favourite { 50% { box-shadow: inset 0 0 0 2px #FFF1A8, 0 0 46px -4px rgba(255,209,0,.75), 0 24px 40px -22px #000; } }
+.contender.my-vote:not(.leading) { box-shadow: inset 0 0 0 1px #4CD964, 0 0 22px -10px rgba(76,217,100,.7); }
+.contender-crown { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 2; white-space: nowrap; padding: 2px 10px; border-radius: 3px; font-family: var(--font-display); font-size: 12px; color: #1a1206; background: linear-gradient(180deg, #FFE27A, #E0A100); box-shadow: 0 0 0 1px #000, 0 0 16px rgba(255,209,0,.6); }
+.contender-figure { position: relative; display: grid; place-items: center; height: 250px; overflow: hidden; text-decoration: none; }
+/* Blizzard renders are 1600×1200 with the character centred: crop to the figure */
+.contender-figure img { position: absolute; left: 50%; top: 50%; height: 230%; width: auto; max-width: none; transform: translate(-50%, -52%); transition: transform .5s var(--ease-out); filter: drop-shadow(0 0 16px color-mix(in srgb, var(--cls) 45%, transparent)); }
+.contender:hover .contender-figure img { transform: translate(-50%, -54%) scale(1.04); }
+.contender-initial { font-family: var(--font-title); font-size: 80px; opacity: .5; }
+.contender-body { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 0 12px 12px; margin-top: -30px; }
+.contender-name { font-size: 16px; text-shadow: 0 1px 0 #000, 0 0 10px rgba(0,0,0,.9); }
+.contender-stats { margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.contender-stats div { padding: 4px 6px; border-radius: 3px; background: rgba(0,0,0,.45); box-shadow: inset 0 0 0 1px #3a2c16; text-align: center; }
+.contender-stats dt { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #A8987A; }
+.contender-stats dd { margin: 0; font-weight: 700; color: #fff; }
+.contender-votes { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+.contender-tally { min-width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; font-family: var(--font-title); font-size: 16px; color: #FFD100; background: radial-gradient(circle at 35% 30%, #3b2c12, #0e0a06); box-shadow: 0 0 0 1px #000, 0 0 0 2px #8a6a2c; }
+.contender .btn[aria-pressed="true"] { color: #4CD964; box-shadow: inset 0 0 0 1px #4CD964, 0 0 14px -4px rgba(76,217,100,.6); }
+.council-bench .bench-seat { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 8px; border-radius: 6px; background: rgba(0,0,0,.3); box-shadow: inset 0 0 0 1px #3a2c16; }
+.council-bench .bench-seat.voted { box-shadow: inset 0 0 0 1px rgba(76,217,100,.55); }
+@media (max-width: 900px) {
+  .council-layout { grid-template-columns: 1fr; }
+  .council-items { position: static; max-height: 260px; }
+  .council-candidates { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .contender-figure { height: 200px; }
+}
+@media (prefers-reduced-motion: reduce) { .contender.leading { animation: none; } }
+.council-candidates { display: flex; flex-wrap: wrap; justify-content: center; }
+.contender { flex: 0 1 220px; }
+.contender-figure img { height: 215%; transform: translate(-50%, -47%); }
+.contender:hover .contender-figure img { transform: translate(-50%, -49%) scale(1.04); }
+@media (max-width: 900px) { .contender { flex-basis: 165px; } }

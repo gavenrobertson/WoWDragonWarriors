@@ -69,6 +69,7 @@ export function LootHub(props: {
           <p className="soft" style={{ fontSize: 16 }}>Every drop, every wishlist, every award. Wishlists lock the night before raids open.</p>
         </div>
         <div className="row">
+          <Link href="/loot/council" className="btn btn-primary">Enter the council chamber</Link>
           <span className="pill plain">System: {props.systemLabel}</span>
           <span className="pill">{props.locked ? "Wishlists locked" : `Wishlists lock ${props.lockLabel}`}</span>
         </div>

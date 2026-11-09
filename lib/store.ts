@@ -40,6 +40,8 @@ export interface HubUser {
   main?: { name: string; className: string; level: number; avatarUrl?: string };
   characterCount: number; rankName?: string;
 }
+export interface CouncilVote { itemId: number; voterUserId: string; characterId: string }
+export interface CouncilMember { userId: string; name: string; className: string; avatarUrl?: string; role: string }
 export interface GuildProfile { name: string; faction: string; ruleset: string; createdAt?: string; memberCount: number; achievementPoints: number }
 
 export interface Store {
@@ -59,6 +61,8 @@ export interface Store {
   settings(): Promise<typeof S.SETTINGS>;
   memberTotal(): Promise<number>;
   users(): Promise<HubUser[]>;
+  councilVotes(): Promise<CouncilVote[]>;
+  councilMembers(): Promise<CouncilMember[]>;
   guildProfile(): Promise<GuildProfile>;
 }
 
@@ -107,6 +111,15 @@ const demoStore: Store = {
     });
   },
   guildProfile: async () => S.GUILD_PROFILE,
+  councilVotes: async () => [
+    { itemId: 16963, voterUserId: "demo", characterId: "korvath-emberfang" },
+    { itemId: 16963, voterUserId: "seraphine-dawnmere", characterId: "brugor-ironhide" },
+    { itemId: 17068, voterUserId: "seraphine-dawnmere", characterId: "grashk-bloodhowl" },
+  ],
+  councilMembers: async () => [
+    { userId: "demo", name: "Korvath Emberfang", className: "Warrior", role: "Super Admin" },
+    { userId: "seraphine-dawnmere", name: "Seraphine Dawnmere", className: "Priest", role: "Officer" },
+  ],
 };
 
 // ---------------------------------------------------------------- D1 store
@@ -253,6 +266,25 @@ const dbStore: Store = {
     return rows.map((r) => ({
       id: r.id, battletag: r.battletag, siteRole: r.site_role, createdAt: iso(r.created_at), characterCount: r.n ?? 0, rankName: r.rank_name ?? undefined,
       main: r.name ? { name: `${r.name} ${r.surname}`.trim(), className: r.class ?? "", level: r.level ?? 0, avatarUrl: r.avatar_url ?? undefined } : undefined,
+    }));
+  },
+  async councilVotes() {
+    const rows = await sql<any>("select item_id, voter_user_id, character_id from council_votes");
+    return rows.map((r) => ({ itemId: r.item_id, voterUserId: r.voter_user_id, characterId: r.character_id }));
+  },
+  async councilMembers() {
+    // Council = anyone whose hub role or best in-guild rank can award loot.
+    const rows = await sql<any>(
+      `select u.id, u.site_role, m.name, m.surname, m.class, m.avatar_url,
+         (select r.name from characters c join guild_ranks r on r."index" = c.guild_rank where c.user_id = u.id and c.in_guild = 1 and r.can_award_loot = 1 order by c.guild_rank limit 1) as rank_name
+       from users u left join characters m on m.id = u.main_character_id
+       where u.site_role in ('super_admin','guild_leader','officer','loot_master')
+          or exists (select 1 from characters c join guild_ranks r on r."index" = c.guild_rank where c.user_id = u.id and c.in_guild = 1 and r.can_award_loot = 1)`,
+    );
+    const label: Record<string, string> = { super_admin: "Super Admin", guild_leader: "Guild Leader", officer: "Officer", loot_master: "Loot Master" };
+    return rows.map((r) => ({
+      userId: r.id, name: r.name ? `${r.name} ${r.surname}`.trim() : "Officer", className: r.class ?? "", avatarUrl: r.avatar_url ?? undefined,
+      role: label[r.site_role] ?? r.rank_name ?? "Council",
     }));
   },
   async guildProfile() {
