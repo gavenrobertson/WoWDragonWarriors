@@ -40,9 +40,9 @@ export default function DataSourcesPage() {
         </p>
       </section>
       <div className="table-wrap">
-        <table className="table">
+        <table className="table stack-sm">
           <thead><tr><th scope="col">Feature</th><th scope="col">Source</th><th scope="col">Endpoint / method</th><th scope="col">Auth</th><th scope="col">Refresh</th></tr></thead>
-          <tbody>{ROWS.map((r) => <tr key={r[0]}><td className="strong">{r[0]}</td><td>{r[1]}</td><td className="mono small">{r[2]}</td><td>{r[3]}</td><td>{r[4]}</td></tr>)}</tbody>
+          <tbody>{ROWS.map((r) => <tr key={r[0]}><td className="strong td-main">{r[0]}</td><td data-label="Source">{r[1]}</td><td className="mono small td-wide" data-label="Endpoint / method">{r[2]}</td><td data-label="Auth">{r[3]}</td><td data-label="Refresh">{r[4]}</td></tr>)}</tbody>
         </table>
       </div>
       <p className="small muted">Gotchas: characters appear only after level 10 and a logout; the account list can lag 20–40 minutes; renders can lag a day.</p>

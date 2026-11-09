@@ -222,14 +222,14 @@ export function LootHub(props: {
           <div className="row between">
             <h2>Loot history</h2>
             <div className="row">
-              <label className="row small strong" style={{ gap: 8 }}>Search
-                <input type="search" placeholder="Player or item" value={query} onChange={(e) => setQuery(e.target.value)} />
+              <label className="search-field small strong"><span className="search-label">Search</span>
+                <input type="search" aria-label="Search loot history" placeholder="Player or item" value={query} onChange={(e) => setQuery(e.target.value)} />
               </label>
               {props.canImport && <Link href="/admin?section=loot" className="btn">Import loot log</Link>}
             </div>
           </div>
           <div className="table-wrap">
-            <table className="table">
+            <table className="table stack-sm">
               <thead><tr><th scope="col">Date</th><th scope="col">Item</th><th scope="col">Awarded to</th><th scope="col">Raid · boss</th><th scope="col">Method</th></tr></thead>
               <tbody>
                 {awards.length === 0 ? (
@@ -238,11 +238,11 @@ export function LootHub(props: {
                   </td></tr>
                 ) : awards.map((a) => (
                   <tr key={a.id}>
-                    <td>{a.date}</td>
-                    <td><span className="strong" style={{ color: qualityColor(a.quality) }}>{a.itemName}</span></td>
-                    <td><span className="strong" style={{ color: classColor(a.className) }}>{a.characterName}</span></td>
-                    <td>{[raids.find((r) => r.id === a.raid)?.name, a.boss].filter(Boolean).join(" · ") || "—"}</td>
-                    <td>
+                    <td data-label="Date">{a.date}</td>
+                    <td className="td-main"><span className="strong" style={{ color: qualityColor(a.quality) }}>{a.itemName}</span></td>
+                    <td data-label="Awarded to"><span className="strong" style={{ color: classColor(a.className) }}>{a.characterName}</span></td>
+                    <td data-label="Raid · boss">{[raids.find((r) => r.id === a.raid)?.name, a.boss].filter(Boolean).join(" · ") || "—"}</td>
+                    <td data-label="Method">
                       <span className={a.method === "admin override" ? "strong" : undefined} style={a.method === "admin override" ? { color: "#ffb4a6" } : undefined}>{a.method === "admin override" ? "⚖ Admin override" : a.method}</span>
                       {a.reason && <><br /><span className="micro muted">{a.reason}</span></>}
                     </td>

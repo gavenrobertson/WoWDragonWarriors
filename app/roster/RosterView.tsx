@@ -49,13 +49,13 @@ export function RosterView({ initialTab, total, rows, profs, bank, requests, sig
       {tab === "members" && (
         <div className="stack" style={{ gap: 16 }}>
           <div className="row" style={{ gap: 8 }}>
-            <label className="row small strong" style={{ gap: 8 }}>Search<input type="search" placeholder="Name or class" value={q} onChange={(e) => setQ(e.target.value)} /></label>
+            <label className="search-field small strong"><span className="search-label">Search</span><input type="search" aria-label="Search the roster" placeholder="Name or class" value={q} onChange={(e) => setQ(e.target.value)} /></label>
             <div className="row" role="group" aria-label="Filter by role" style={{ gap: 8 }}>
               {FILTERS.map(([k, label]) => <button key={k} type="button" className="chip" aria-pressed={role === k} onClick={() => setRole(k)}>{label}</button>)}
             </div>
           </div>
           <div className="table-wrap">
-            <table className="table">
+            <table className="table stack-sm">
               <thead><tr>
                 <th scope="col">Character</th><th scope="col">Level</th><th scope="col">Rank</th><th scope="col">Role</th><th scope="col">Main / alt</th><th scope="col">Onyxia ready</th><th scope="col">Last seen</th>
               </tr></thead>
@@ -63,7 +63,7 @@ export function RosterView({ initialTab, total, rows, profs, bank, requests, sig
                 {shown.length === 0 && <tr><td colSpan={7} className="soft" style={{ textAlign: "center", padding: 28 }}>{rows.length ? "No members match." : "The roster hasn't synced yet."}</td></tr>}
                 {shown.map((m) => (
                   <tr key={m.slug}>
-                    <td>
+                    <td className="td-main">
                       <Link href={`/characters/${m.slug}`} className="row" style={{ textDecoration: "none", gap: 10, flexWrap: "nowrap" }}>
                         <Avatar name={m.name} className={m.className} size={36} url={m.avatarUrl} />
                         <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.3 }}>
@@ -72,9 +72,9 @@ export function RosterView({ initialTab, total, rows, profs, bank, requests, sig
                         </span>
                       </Link>
                     </td>
-                    <td>{m.level}</td><td>{m.rank}</td><td>{m.role}</td><td>{m.main}</td>
-                    <td><span className="row small strong" style={{ gap: 6, flexWrap: "nowrap", color: m.ready === "Ready" ? "#4CD964" : "#F2B84B" }}><StatusDot color={m.ready === "Ready" ? "#4CD964" : "#F2B84B"} />{m.ready}</span></td>
-                    <td className="muted">{m.seen}</td>
+                    <td data-label="Level">{m.level}</td><td data-label="Rank">{m.rank}</td><td data-label="Role">{m.role}</td><td data-label="Main / alt">{m.main}</td>
+                    <td data-label="Onyxia ready"><span className="row small strong" style={{ gap: 6, flexWrap: "nowrap", color: m.ready === "Ready" ? "#4CD964" : "#F2B84B" }}><StatusDot color={m.ready === "Ready" ? "#4CD964" : "#F2B84B"} />{m.ready}</span></td>
+                    <td className="muted" data-label="Last seen">{m.seen}</td>
                   </tr>
                 ))}
               </tbody>

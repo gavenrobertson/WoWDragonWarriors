@@ -242,7 +242,7 @@ export function AdminConsole(props: {
                 <div key={r.id} className="tile" style={{ padding: "12px 14px" }}><span className="strong gold">{r.label}</span><br /><span className="micro muted">{r.desc}</span></div>
               ))}
             </div>
-            <label className="row small strong" style={{ gap: 8 }}>Search<input type="search" placeholder="BattleTag or character" value={userQ} onChange={(e) => setUserQ(e.target.value)} /></label>
+            <label className="search-field small strong"><span className="search-label">Search</span><input type="search" aria-label="Search people" placeholder="BattleTag or character" value={userQ} onChange={(e) => setUserQ(e.target.value)} /></label>
             <div className="table-wrap">
               <table className="table">
                 <thead><tr><th scope="col">Account</th><th scope="col">Main character</th><th scope="col">Guild rank</th><th scope="col">Hub role</th></tr></thead>
