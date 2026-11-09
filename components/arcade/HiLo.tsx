@@ -3,20 +3,8 @@ import { useState } from "react";
 import { hiloCashout, hiloGuess, hiloStart } from "@/app/arcade/actions";
 import { BetInput, fmt, useArcade } from "./ArcadeShell";
 
-const RANK = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-const SUITS = ["♠", "♥", "♦", "♣"];
+import { PlayingCard as Card, rankLabel } from "./PlayingCard";
 type Round = { id: string; bet: number; status: string; card: number; mult: number; history: number[]; odds: { higher: number; lower: number } };
-
-function Card({ rank, flip, small }: { rank: number; flip?: number; small?: boolean }) {
-  const suit = SUITS[(rank * 7 + (flip ?? 0)) % 4], red = suit === "♥" || suit === "♦";
-  return (
-    <div key={flip} className={`hl-card${small ? " small" : ""}${red ? " red" : ""}`} aria-label={`${RANK[rank]} of ${suit}`}>
-      <span className="hl-corner">{RANK[rank]}<br />{suit}</span>
-      <span className="hl-center">{RANK[rank]}</span>
-      <span className="hl-corner br">{RANK[rank]}<br />{suit}</span>
-    </div>
-  );
-}
 
 export function HiLo() {
   const { signedIn, setBalance, flash } = useArcade();
@@ -42,7 +30,7 @@ export function HiLo() {
     setBusy(false);
     if (!r.ok) return setMsg({ text: r.error });
     setRound(r.round); setBalance(r.balance); setFlip((f) => f + 1);
-    setMsg(g === "skip" ? null : r.win ? { text: `Correct! Now ${r.round.mult}×`, good: true } : { text: `It was ${RANK[r.next]}. Lost ${fmt(round.bet)}.` });
+    setMsg(g === "skip" ? null : r.win ? { text: `Correct! Now ${r.round.mult}×`, good: true } : { text: `It was ${rankLabel(r.next)}. Lost ${fmt(round.bet)}.` });
   };
   const cashout = async () => {
     if (!round || busy) return;

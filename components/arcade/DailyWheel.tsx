@@ -37,7 +37,7 @@ export function DailyWheel({ segments, canSpin, streak, signedIn }: { segments: 
             const a0 = ((i * seg - 90) * Math.PI) / 180, a1 = (((i + 1) * seg - 90) * Math.PI) / 180, mid = ((i + 0.5) * seg);
             return (
               <g key={i}>
-                <path d={`M0 0 L${100 * Math.cos(a0)} ${100 * Math.sin(a0)} A100 100 0 0 1 ${100 * Math.cos(a1)} ${100 * Math.sin(a1)} Z`} fill={COLORS[i % COLORS.length]} stroke="#b8902f" strokeWidth="1.5" />
+                <path d={`M0 0 L${(100 * Math.cos(a0)).toFixed(2)} ${(100 * Math.sin(a0)).toFixed(2)} A100 100 0 0 1 ${(100 * Math.cos(a1)).toFixed(2)} ${(100 * Math.sin(a1)).toFixed(2)} Z`} fill={COLORS[i % COLORS.length]} stroke="#b8902f" strokeWidth="1.5" />
                 <text transform={`rotate(${mid}) translate(0 -68)`} textAnchor="middle" fill={m >= 2500 ? "#FFD100" : "#F2E8D0"} fontSize={m >= 1000 ? 13 : 14} fontFamily="Marcellus, serif">{m >= 1000 ? `${m / 1000}k` : m}</text>
               </g>
             );

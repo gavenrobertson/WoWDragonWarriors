@@ -476,3 +476,229 @@ export async function rewardCompletedRaids() {
   }
   return done;
 }
+
+// ================================================================ more games
+// ---------------------------------------------------------------- Leap of Faith (limbo)
+/** Pick a target; the leap lands somewhere 1x and up. Reach your target and it pays exactly that. P(win) = 0.97 / target. */
+export function playLimbo(target: number) {
+  const t = Math.floor(Number(target) * 100) / 100;
+  if (!(t >= 1.01 && t <= 1000)) throw new ArcadeError("Target between 1.01× and 1,000×.");
+  const u = rand();
+  const roll = Math.max(1, Math.min(1_000_000, Math.floor((EDGE / (1 - u)) * 100) / 100));
+  return { roll, win: roll >= t, mult: t, chance: EDGE / t };
+}
+
+// ---------------------------------------------------------------- Roulette (single zero)
+export const ROULETTE_RED = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+export type RouletteBet = { kind: "straight" | "red" | "black" | "odd" | "even" | "low" | "high" | "dozen" | "column"; value?: number; amount: number };
+const rouletteWins = (b: RouletteBet, n: number) => {
+  if (b.kind === "straight") return n === b.value;
+  if (n === 0) return false;
+  switch (b.kind) {
+    case "red": return ROULETTE_RED.includes(n);
+    case "black": return !ROULETTE_RED.includes(n);
+    case "odd": return n % 2 === 1;
+    case "even": return n % 2 === 0;
+    case "low": return n <= 18;
+    case "high": return n >= 19;
+    case "dozen": return Math.ceil(n / 12) === b.value;
+    case "column": return ((n - 1) % 3) + 1 === b.value;
+  }
+};
+const ROULETTE_PAYS: Record<RouletteBet["kind"], number> = { straight: 36, red: 2, black: 2, odd: 2, even: 2, low: 2, high: 2, dozen: 3, column: 3 };
+export function checkRouletteBets(bets: unknown): RouletteBet[] {
+  if (!Array.isArray(bets) || !bets.length || bets.length > 40) throw new ArcadeError("Place between 1 and 40 chips.");
+  const out = bets.map((b: any) => {
+    const kind = b?.kind as RouletteBet["kind"];
+    if (!(kind in ROULETTE_PAYS)) throw new ArcadeError("Unknown bet.");
+    const amount = Math.floor(Number(b.amount));
+    if (!(amount >= MIN_BET)) throw new ArcadeError(`Each chip is at least ${MIN_BET} marks.`);
+    const value = b.value == null ? undefined : Math.floor(Number(b.value));
+    if (kind === "straight" && !(value! >= 0 && value! <= 36)) throw new ArcadeError("Pick a number 0-36.");
+    if ((kind === "dozen" || kind === "column") && !(value! >= 1 && value! <= 3)) throw new ArcadeError("Pick 1st, 2nd or 3rd.");
+    return { kind, value, amount };
+  });
+  const total = out.reduce((a, b) => a + b.amount, 0);
+  if (total > MAX_BET) throw new ArcadeError(`Total bet is at most ${MAX_BET.toLocaleString("en-US")} marks.`);
+  return out;
+}
+export function playRoulette(bets: RouletteBet[]) {
+  const n = randInt(37);
+  const payout = bets.reduce((a, b) => a + (rouletteWins(b, n) ? b.amount * ROULETTE_PAYS[b.kind] : 0), 0);
+  return { number: n, color: n === 0 ? "green" : ROULETTE_RED.includes(n) ? "red" : "black", payout };
+}
+
+// ---------------------------------------------------------------- Rune Keno: 40 runes, pick 1-10, 10 drawn
+export const KENO_RUNES = 40, KENO_DRAWN = 10;
+/** Multiplier by hits, per number of picks. Built from the exact draw odds; ~93-96% back over time, top prize 5,000x. */
+export const KENO_PAYS: Record<number, Record<number, number>> = {
+  1: { 1: 3.8 }, 2: { 1: 1.5, 2: 6.7 }, 3: { 2: 4.3, 3: 30 }, 4: { 2: 2.1, 3: 8.1, 4: 79 }, 5: { 3: 6, 4: 33, 5: 427 },
+  6: { 3: 3.2, 4: 12, 5: 89, 6: 1560 }, 7: { 4: 9.8, 5: 50, 6: 495, 7: 5000 }, 8: { 4: 5.2, 5: 21, 6: 144, 7: 1920, 8: 5000 },
+  9: { 5: 18, 6: 95, 7: 883, 8: 5000, 9: 5000 }, 10: { 5: 9.4, 6: 41, 7: 293, 8: 3830, 9: 5000, 10: 5000 },
+};
+export function playKeno(picks: unknown) {
+  const p = Array.isArray(picks) ? [...new Set(picks.map((x) => Math.floor(Number(x))))] : [];
+  if (!(p.length >= 1 && p.length <= 10) || p.some((x) => !(x >= 1 && x <= KENO_RUNES))) throw new ArcadeError("Pick 1 to 10 runes.");
+  const pool = Array.from({ length: KENO_RUNES }, (_, i) => i + 1);
+  for (let i = pool.length - 1; i > 0; i--) { const j = randInt(i + 1); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const drawn = pool.slice(0, KENO_DRAWN);
+  const hits = p.filter((x) => drawn.includes(x)).length;
+  return { drawn, hits, mult: KENO_PAYS[p.length][hits] ?? 0 };
+}
+
+// ---------------------------------------------------------------- Treasure Scratch: 3x3 card, three matching symbols win
+export const SCRATCH_PRIZES = [
+  { id: "dragon", icon: "achievement_boss_onyxia", mult: 50, p: 0.004 },
+  { id: "gem", icon: "inv_misc_gem_01", mult: 10, p: 0.02 },
+  { id: "sword", icon: "inv_sword_04", mult: 5, p: 0.04 },
+  { id: "potion", icon: "inv_potion_51", mult: 2, p: 0.1 },
+  { id: "coin", icon: "inv_misc_coin_02", mult: 1, p: 0.15 },
+] as const;
+export const SCRATCH_FILLER = { id: "rune", icon: "inv_misc_rune_01" } as const;
+export function playScratch() {
+  let r = rand(), win: (typeof SCRATCH_PRIZES)[number] | null = null;
+  for (const s of SCRATCH_PRIZES) { r -= s.p; if (r < 0) { win = s; break; } }
+  const symbols = [...SCRATCH_PRIZES.map((s) => s.id), SCRATCH_FILLER.id];
+  const cells: string[] = win ? [win.id, win.id, win.id] : [];
+  const count = (id: string) => cells.filter((c) => c === id).length;
+  while (cells.length < 9) {
+    const choices = symbols.filter((s) => s !== win?.id && count(s) < 2); // nothing else may reach three
+    cells.push(choices[randInt(choices.length)]);
+  }
+  for (let i = cells.length - 1; i > 0; i--) { const j = randInt(i + 1); [cells[i], cells[j]] = [cells[j], cells[i]]; }
+  return { cells, win: win?.id ?? null, mult: win?.mult ?? 0 };
+}
+
+// ---------------------------------------------------------------- Dragonspire: climb 8 floors, pick a door, avoid the dragons
+export const SPIRE_FLOORS = 8;
+export const SPIRE_MODES = { easy: { doors: 4, dragons: 1 }, medium: { doors: 3, dragons: 1 }, hard: { doors: 2, dragons: 1 }, expert: { doors: 3, dragons: 2 } } as const;
+export type SpireMode = keyof typeof SPIRE_MODES;
+export const spireMult = (mode: SpireMode, floors: number) => {
+  const m = SPIRE_MODES[mode];
+  return Math.floor(EDGE * (m.doors / (m.doors - m.dragons)) ** floors * 100) / 100;
+};
+const spireView = (r: { id: string; bet: number; state: any; status: string }) => ({
+  id: r.id, bet: r.bet, status: r.status, mode: r.state.mode as SpireMode, picks: r.state.picks as number[],
+  floor: (r.state.picks as number[]).length, mult: r.state.picks.length ? spireMult(r.state.mode, r.state.picks.length) : 0,
+  next: spireMult(r.state.mode, r.state.picks.length + 1),
+  // Dragons are only revealed once the round is over.
+  dragons: r.status === "active" ? undefined : (r.state.dragons as number[][]),
+});
+export async function spireStart(userId: string, bet: number, mode: SpireMode) {
+  const existing = await activeRound(userId, "spire");
+  if (existing) return { round: spireView(existing), balance: (await wallet(userId)).marks, resumed: true };
+  if (!(mode in SPIRE_MODES)) throw new ArcadeError("Pick a difficulty.");
+  const balance = await debit(userId, bet);
+  const m = SPIRE_MODES[mode];
+  const dragons = Array.from({ length: SPIRE_FLOORS }, () => {
+    const d = Array.from({ length: m.doors }, (_, i) => i);
+    for (let i = d.length - 1; i > 0; i--) { const j = randInt(i + 1); [d[i], d[j]] = [d[j], d[i]]; }
+    return d.slice(0, m.dragons).sort();
+  });
+  const state = { mode, dragons, picks: [] as number[] };
+  const id = await newRound(userId, "spire", bet, state);
+  return { round: spireView({ id, bet, state, status: "active" }), balance, resumed: false };
+}
+export async function spirePick(userId: string, id: string, door: number) {
+  const r = await roundById(userId, id, "spire");
+  if (r.status !== "active") throw new ArcadeError("That climb is over.");
+  const m = SPIRE_MODES[r.state.mode as SpireMode];
+  const d = Math.floor(Number(door));
+  if (!(d >= 0 && d < m.doors)) throw new ArcadeError("Pick a door.");
+  const floor = r.state.picks.length;
+  const state = { ...r.state, picks: [...r.state.picks, d] };
+  if (r.state.dragons[floor].includes(d)) {
+    if (await closeRound(r.id, state, "lost")) await logPlay(userId, "spire", r.bet, 0, { mode: r.state.mode, floor });
+    return { round: spireView({ ...r, state, status: "lost" }), hit: true, balance: (await wallet(userId)).marks };
+  }
+  if (state.picks.length === SPIRE_FLOORS) return spireCashout(userId, r.id, state);
+  await saveRound(r.id, state);
+  return { round: spireView({ ...r, state }), hit: false, balance: (await wallet(userId)).marks };
+}
+export async function spireCashout(userId: string, id: string, stateOverride?: any) {
+  const r = await roundById(userId, id, "spire");
+  if (r.status !== "active") throw new ArcadeError("That climb is over.");
+  const state = stateOverride ?? r.state;
+  if (!state.picks.length) throw new ArcadeError("Climb at least one floor first.");
+  const mult = spireMult(state.mode, state.picks.length), won = pay(r.bet, mult);
+  let balance = (await wallet(userId)).marks;
+  if (await closeRound(r.id, state, "won")) { balance = await credit(userId, won); await logPlay(userId, "spire", r.bet, won, { mode: state.mode, floors: state.picks.length, mult }); }
+  return { round: spireView({ ...r, state, status: "won" }), hit: false, won, balance };
+}
+
+// ---------------------------------------------------------------- Blackjack: dealer stands on 17, blackjack pays 3:2, double on two cards
+type Card = { r: number; s: number }; // r 1..13 (Ace..King), s 0..3
+const drawCard = (): Card => ({ r: 1 + randInt(13), s: randInt(4) });
+export function handValue(h: Card[]) {
+  let total = 0, aces = 0;
+  for (const c of h) { const v = c.r === 1 ? 11 : Math.min(10, c.r); total += v; if (c.r === 1) aces++; }
+  while (total > 21 && aces) { total -= 10; aces--; }
+  return total;
+}
+const isBlackjack = (h: Card[]) => h.length === 2 && handValue(h) === 21;
+const bjView = (r: { id: string; bet: number; state: any; status: string }) => {
+  const done = r.status !== "active";
+  return {
+    id: r.id, bet: r.bet, status: r.status, outcome: r.state.outcome as string | undefined, doubled: !!r.state.doubled,
+    player: r.state.player as Card[], playerValue: handValue(r.state.player),
+    dealer: done ? (r.state.dealer as Card[]) : [r.state.dealer[0]], dealerValue: done ? handValue(r.state.dealer) : handValue([r.state.dealer[0]]),
+    hidden: !done, payout: r.state.payout ?? 0,
+  };
+};
+async function bjFinish(userId: string, r: { id: string; bet: number; state: any }, outcome: string, mult: number) {
+  const stake = r.state.doubled ? r.bet * 2 : r.bet;
+  const won = Math.floor(stake * mult);
+  const state = { ...r.state, outcome, payout: won };
+  let balance = (await wallet(userId)).marks;
+  if (await closeRound(r.id, state, mult > 0 ? "won" : "lost")) {
+    if (won) balance = await credit(userId, won);
+    await logPlay(userId, "blackjack", stake, won, { outcome, player: handValue(state.player), dealer: handValue(state.dealer) });
+  }
+  return { round: bjView({ ...r, state, status: mult > 0 ? "won" : "lost" }), won, balance };
+}
+async function bjDealerPlays(userId: string, r: { id: string; bet: number; state: any }) {
+  const dealer = [...r.state.dealer];
+  while (handValue(dealer) < 17) dealer.push(drawCard());
+  const st = { ...r.state, dealer };
+  const p = handValue(st.player), d = handValue(dealer);
+  const base = { ...r, state: st };
+  if (d > 21) return bjFinish(userId, base, "Dealer busts", 2);
+  if (p > d) return bjFinish(userId, base, "You win", 2);
+  if (p === d) return bjFinish(userId, base, "Push", 1);
+  return bjFinish(userId, base, "Dealer wins", 0);
+}
+export async function bjStart(userId: string, bet: number) {
+  const existing = await activeRound(userId, "blackjack");
+  if (existing) return { round: bjView(existing), balance: (await wallet(userId)).marks, resumed: true, won: 0 };
+  const balance = await debit(userId, bet);
+  const state = { player: [drawCard(), drawCard()], dealer: [drawCard(), drawCard()], doubled: false };
+  const id = await newRound(userId, "blackjack", bet, state);
+  const r = { id, bet, state };
+  // Naturals settle straight away (the dealer peeks).
+  if (isBlackjack(state.player) || isBlackjack(state.dealer)) {
+    const both = isBlackjack(state.player) && isBlackjack(state.dealer);
+    const res = both ? await bjFinish(userId, r, "Push: both blackjack", 1) : isBlackjack(state.player) ? await bjFinish(userId, r, "Blackjack!", 2.5) : await bjFinish(userId, r, "Dealer blackjack", 0);
+    return { ...res, resumed: false };
+  }
+  return { round: bjView({ ...r, status: "active" }), balance, resumed: false, won: 0 };
+}
+export async function bjAct(userId: string, id: string, action: "hit" | "stand" | "double") {
+  const r = await roundById(userId, id, "blackjack");
+  if (r.status !== "active") throw new ArcadeError("That hand is over.");
+  if (action === "hit") {
+    const state = { ...r.state, player: [...r.state.player, drawCard()] };
+    const v = handValue(state.player);
+    if (v > 21) return bjFinish(userId, { ...r, state }, "Bust", 0);
+    if (v === 21) return bjDealerPlays(userId, { ...r, state });
+    await saveRound(r.id, state);
+    return { round: bjView({ ...r, state }), won: 0, balance: (await wallet(userId)).marks };
+  }
+  if (action === "double") {
+    if (r.state.player.length !== 2 || r.state.doubled) throw new ArcadeError("You can only double on your first two cards.");
+    await debit(userId, r.bet);
+    const state = { ...r.state, doubled: true, player: [...r.state.player, drawCard()] };
+    if (handValue(state.player) > 21) return bjFinish(userId, { ...r, state }, "Bust", 0);
+    return bjDealerPlays(userId, { ...r, state });
+  }
+  return bjDealerPlays(userId, r);
+}

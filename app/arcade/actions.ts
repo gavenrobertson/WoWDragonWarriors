@@ -113,3 +113,59 @@ export async function equipCosmetic(input: { kind: "name" | "title" | "theme"; i
   if (r.ok) revalidatePath("/", "layout");
   return r;
 }
+
+// ---------------------------------------------------------------- newer games
+export async function limboLeap(input: { bet: number; target: number }) {
+  return play(async (u) => {
+    const bet = A.checkBet(input.bet);
+    const r = A.playLimbo(input.target);
+    await A.debit(u, bet);
+    const won = r.win ? Math.floor(bet * r.mult) : 0;
+    const balance = await A.credit(u, won);
+    await A.logPlay(u, "limbo", bet, won, { target: r.mult, roll: r.roll });
+    return { ...r, won, balance };
+  });
+}
+
+export async function rouletteSpin(input: { bets: A.RouletteBet[] }) {
+  return play(async (u) => {
+    const bets = A.checkRouletteBets(input.bets);
+    const total = bets.reduce((a, b) => a + b.amount, 0);
+    const r = A.playRoulette(bets);
+    await A.debit(u, total);
+    const balance = await A.credit(u, r.payout);
+    await A.logPlay(u, "roulette", total, r.payout, { number: r.number, bets: bets.length });
+    return { ...r, total, won: r.payout, balance };
+  });
+}
+
+export async function kenoPlay(input: { bet: number; picks: number[] }) {
+  return play(async (u) => {
+    const bet = A.checkBet(input.bet);
+    const r = A.playKeno(input.picks);
+    await A.debit(u, bet);
+    const won = Math.floor(bet * r.mult);
+    const balance = await A.credit(u, won);
+    await A.logPlay(u, "keno", bet, won, { picks: input.picks.length, hits: r.hits });
+    return { ...r, won, balance };
+  });
+}
+
+export async function scratchBuy(input: { bet: number }) {
+  return play(async (u) => {
+    const bet = A.checkBet(input.bet);
+    const r = A.playScratch();
+    await A.debit(u, bet);
+    const won = Math.floor(bet * r.mult);
+    const balance = await A.credit(u, won);
+    await A.logPlay(u, "scratch", bet, won, { win: r.win });
+    return { ...r, won, balance };
+  });
+}
+
+export async function spireStart(input: { bet: number; mode: A.SpireMode }) { return play((u) => A.spireStart(u, A.checkBet(input.bet), input.mode)); }
+export async function spirePick(input: { id: string; door: number }) { return play((u) => A.spirePick(u, input.id, input.door)); }
+export async function spireCashout(input: { id: string }) { return play((u) => A.spireCashout(u, input.id)); }
+
+export async function blackjackDeal(input: { bet: number }) { return play((u) => A.bjStart(u, A.checkBet(input.bet))); }
+export async function blackjackAct(input: { id: string; action: "hit" | "stand" | "double" }) { return play((u) => A.bjAct(u, input.id, input.action)); }

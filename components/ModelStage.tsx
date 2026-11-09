@@ -96,9 +96,24 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
             </text>
           </svg>
           <svg viewBox="0 0 400 400" className="rune-ring inner">
-            <polygon points="200,60 321,270 79,270" fill="none" stroke="#9B5DFF" strokeOpacity=".5" strokeWidth="2" />
-            <polygon points="200,340 79,130 321,130" fill="none" stroke="#9B5DFF" strokeOpacity=".5" strokeWidth="2" />
-            <circle cx="200" cy="200" r="110" fill="none" stroke="#C9A13B" strokeOpacity=".4" strokeWidth="1" />
+            <defs>
+              <radialGradient id="pedGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stopColor="#9B5DFF" stopOpacity=".28" /><stop offset=".7" stopColor="#9B5DFF" stopOpacity=".06" /><stop offset="1" stopColor="#9B5DFF" stopOpacity="0" /></radialGradient>
+            </defs>
+            <circle cx="200" cy="200" r="118" fill="url(#pedGlow)" />
+            <circle cx="200" cy="200" r="118" fill="none" stroke="#C9A13B" strokeOpacity=".45" strokeWidth="1.5" />
+            <circle cx="200" cy="200" r="96" fill="none" stroke="#9B5DFF" strokeOpacity=".45" strokeWidth="1.2" strokeDasharray="2 7" />
+            <circle cx="200" cy="200" r="62" fill="none" stroke="#C9A13B" strokeOpacity=".3" strokeWidth="1" />
+            {/* tick marks around the ring */}
+            {Array.from({ length: 24 }, (_, i) => {
+              const a = (i * 15 * Math.PI) / 180, long = i % 6 === 0, r1 = long ? 104 : 109, r2 = 118;
+              const f = (v: number) => Math.round(v * 100) / 100;
+              return <line key={i} x1={f(200 + r1 * Math.cos(a))} y1={f(200 + r1 * Math.sin(a))} x2={f(200 + r2 * Math.cos(a))} y2={f(200 + r2 * Math.sin(a))} stroke="#E3B341" strokeOpacity={long ? 0.7 : 0.35} strokeWidth={long ? 2 : 1} />;
+            })}
+            {/* gold studs at the four compass points */}
+            {[0, 90, 180, 270].map((deg) => {
+              const a = (deg * Math.PI) / 180, x = Math.round(200 + 118 * Math.cos(a)), y = Math.round(200 + 118 * Math.sin(a));
+              return <rect key={deg} x={x - 6} y={y - 6} width="12" height="12" transform={`rotate(45 ${x} ${y})`} fill="#C9A13B" stroke="#1a1206" strokeWidth="1.5" />;
+            })}
           </svg>
         </div>
 
