@@ -1335,3 +1335,27 @@ body > .admin { flex: 1 0 auto; }
 .earn-list img { width: 34px; height: 34px; border-radius: 5px; box-shadow: 0 0 0 1px #000, 0 0 0 2px #8a6a2c; flex: none; }
 .earn-list li > span { display: grid; gap: 1px; }
 .earn-list strong { font-family: var(--font-display); font-weight: 400; color: #ffe9a0; }
+
+/* ---------- brand page ---------- */
+.brand-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+.brand-art { min-width: 0; display: grid; place-items: center; }
+.brand-art .brand-crest { display: block; width: 100%; max-width: 600px; height: auto; }
+.brand-info { min-width: 0; display: grid; gap: 28px; }
+.brand-sizes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 20px; margin: 0; }
+.brand-sizes figure { margin: 0; display: grid; justify-items: center; gap: 4px; }
+.brand-sizes img { object-fit: contain; }
+.brand-palette { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.brand-palette li { display: grid; gap: 4px; min-width: 0; }
+.brand-swatch { display: block; height: 56px; border-radius: 10px; border: 1px solid var(--dw-border-3); box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); }
+@media (max-width: 860px) {
+  .brand-layout { grid-template-columns: 1fr; gap: 24px; }
+  .brand-art .brand-crest { max-width: min(420px, 100%); }
+  .brand-info { gap: 22px; }
+}
+@media (max-width: 480px) {
+  .brand-page h1 { font-size: 30px; }
+  .brand-art .brand-crest { max-width: 300px; }
+  .brand-palette { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .brand-swatch { height: 44px; }
+  .brand-sizes { gap: 12px 14px; }
+}
