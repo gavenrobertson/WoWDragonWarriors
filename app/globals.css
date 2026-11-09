@@ -1246,3 +1246,62 @@ body { display: flex; flex-direction: column; min-height: 100vh; min-height: 100
 body > main { flex: 1 0 auto; width: 100%; box-sizing: border-box; }
 body > .site-header, body > .site-footer, body > .demo-banner { flex: none; }
 .site-footer { margin-top: auto; }
+/* grid/flex children must be allowed to shrink, or wide content (the chest reel) widens the whole page */
+.arcade > *, .arcade-game > *, .arcade-lobby > *, .arcade-game .stack > * { min-width: 0; }
+.arcade-lobby { display: grid; gap: 18px; }
+
+/* chest reel: a clear landing line and window */
+.chest-reel-marker { width: 4px; z-index: 3; background: linear-gradient(180deg, #fff6c8, #FFD100 30%, #FFD100 70%, #fff6c8); box-shadow: 0 0 0 1px #000, 0 0 14px #FFD100, 0 0 34px rgba(255,209,0,.7); }
+.chest-reel-marker::before { border-width: 12px; border-top-width: 16px; top: -2px; filter: drop-shadow(0 2px 2px #000); }
+.chest-reel-marker::after { border-width: 12px; border-bottom-width: 16px; bottom: -2px; filter: drop-shadow(0 -2px 2px #000); }
+.chest-reel-window { position: absolute; z-index: 2; left: 50%; top: 12px; bottom: 12px; width: 162px; transform: translateX(-50%); border-radius: 10px; pointer-events: none;
+  box-shadow: inset 0 0 0 2px rgba(255,209,0,.55), 0 0 30px -6px rgba(255,209,0,.5); background: radial-gradient(60% 50% at 50% 50%, rgba(255,209,0,.08), transparent 70%); }
+.chest-reel-wrap.spinning .chest-reel-marker { animation: marker-pulse .5s ease-in-out infinite alternate; }
+@keyframes marker-pulse { to { box-shadow: 0 0 0 1px #000, 0 0 22px #FFD100, 0 0 50px rgba(255,209,0,.95); } }
+.drop-odds { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 8px; font-size: 11px; color: #a99a7a; font-variant-numeric: tabular-nums; }
+
+/* more name styles */
+.nx-moonlight { -webkit-text-fill-color: #d4dcff; } .nx-rosegold { -webkit-text-fill-color: #f4b6a6; } .nx-toxic { -webkit-text-fill-color: #c6ff1a; } .nx-ocean { -webkit-text-fill-color: #2fe0d0; }
+.nx-icefire, .nx-grove, .nx-bloodfang, .nx-nexus, .nx-dawn, .nx-shadowflame, .nx-lightforged, .nx-sunwell, .nx-frostmourne, .nx-ashbringer, .nx-timeways, .nx-nightmare { -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: none; }
+.nx-icefire { background-image: linear-gradient(90deg, #6fd3ff, #c6b8ff 45%, #ff7a5c 60%, #ff3d2e); }
+.nx-grove { background-image: linear-gradient(90deg, #4fdc6a, #b6e04a 55%, #ffcf4d); }
+.nx-bloodfang { background-image: linear-gradient(90deg, #8a0f1f, #ff3b3b 50%, #ff9a3d); }
+.nx-nexus { background-image: linear-gradient(90deg, #3ff0ff, #6a8bff 50%, #c06bff); }
+.nx-dawn { background-image: linear-gradient(90deg, #ff8fb6, #ffd36b 55%, #ffffff); }
+.nx-frostglow { -webkit-text-fill-color: #d8f4ff; animation: nx-pulse-frost 2.6s ease-in-out infinite; }
+.nx-bloodglow { -webkit-text-fill-color: #ff6b6b; animation: nx-pulse-blood 1.8s ease-in-out infinite; }
+.nx-emeraldglow { -webkit-text-fill-color: #a8ffcf; animation: nx-pulse-emerald 2.8s ease-in-out infinite; }
+@keyframes nx-pulse-frost { 0%, 100% { filter: drop-shadow(0 0 2px #49b6ff) drop-shadow(0 0 6px rgba(73,182,255,.6)); } 50% { filter: drop-shadow(0 0 4px #9fdcff) drop-shadow(0 0 16px rgba(73,182,255,.95)); } }
+@keyframes nx-pulse-blood { 0%, 100% { filter: drop-shadow(0 0 2px #ff1f1f) drop-shadow(0 0 5px rgba(255,31,31,.55)); } 50% { filter: drop-shadow(0 0 4px #ff1f1f) drop-shadow(0 0 14px rgba(255,31,31,.95)); } }
+@keyframes nx-pulse-emerald { 0%, 100% { filter: drop-shadow(0 0 2px #2fbf71) drop-shadow(0 0 6px rgba(47,191,113,.6)); } 50% { filter: drop-shadow(0 0 4px #5cffa8) drop-shadow(0 0 16px rgba(47,191,113,.95)); } }
+.nx-shadowflame { background-image: linear-gradient(0deg, #3a0a6b, #9b4dff 35%, #ff7a1a 70%, #ffd36b); background-size: 100% 220%; animation: nx-flame 1.6s ease-in-out infinite alternate; filter: drop-shadow(0 0 5px rgba(155,77,255,.8)) drop-shadow(0 -2px 8px rgba(255,122,26,.5)); }
+.nx-lightforged { background-image: linear-gradient(110deg, #c99a2e 0%, #fff9e0 20%, #ffd75c 35%, #ffffff 50%, #e0b84a 65%, #fffbe8 80%, #c99a2e 100%); background-size: 250% 100%; animation: nx-shine 3.4s linear infinite; filter: drop-shadow(0 0 6px rgba(255,230,140,.7)); }
+.nx-sunwell { background-image: linear-gradient(110deg, #ffd36b 0%, #ffffff 25%, #ffe9a0 45%, #ffffff 60%, #ffcf4d 80%, #ffffff 100%); background-size: 250% 100%; animation: nx-shine 2.4s linear infinite, nx-radiant 2.4s ease-in-out infinite; }
+@keyframes nx-radiant { 0%, 100% { filter: drop-shadow(0 0 6px rgba(255,236,170,.8)) drop-shadow(0 0 14px rgba(255,209,0,.5)); } 50% { filter: drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 26px rgba(255,209,0,.85)); } }
+.nx-frostmourne { background-image: linear-gradient(110deg, #5a6f86 0%, #e8f6ff 18%, #8aa4bf 32%, #bfe8ff 46%, #4d6075 60%, #ffffff 74%, #7d98b3 88%, #cde9ff 100%); background-size: 250% 100%; animation: nx-shine 3.6s linear infinite, nx-pulse-frost 2.6s ease-in-out infinite; }
+.nx-ashbringer { background-image: linear-gradient(110deg, #9aa3ad 0%, #ffffff 16%, #c4ccd4 30%, #fff6c8 44%, #8b949e 58%, #ffffff 72%, #b3bcc5 86%, #ffefb0 100%); background-size: 250% 100%; animation: nx-shine 3s linear infinite, nx-pulse-holy 2.4s ease-in-out infinite; }
+.nx-timeways { background-image: linear-gradient(100deg, #6b4a1a, #e0a84a 20%, #fff0c2 35%, #b37a2a 50%, #ffd98a 65%, #7a5420 80%, #e0a84a); background-size: 300% 100%; animation: nx-shine 6s linear infinite; filter: drop-shadow(0 0 5px rgba(224,168,74,.6)); }
+.nx-nightmare { background-image: linear-gradient(100deg, #1f4d1a, #7dff6b 22%, #2a0f3f 42%, #b06bff 62%, #1f4d1a 82%, #7dff6b); background-size: 300% 100%; animation: nx-shine 5s linear infinite; filter: drop-shadow(0 0 6px rgba(125,255,107,.55)) drop-shadow(0 0 14px rgba(60,0,90,.9)); }
+
+/* more site themes */
+.theme-swatch-darkmoon { background: linear-gradient(135deg, #1a0726, #8a2bd6 45%, #1fd1c1); }
+.theme-swatch-shadowlands { background: linear-gradient(135deg, #070a10, #5b7a99 55%, #d6e6ff); }
+.theme-swatch-bloodmoon { background: linear-gradient(135deg, #140203, #c41a24 55%, #ff8a7a); }
+.theme-swatch-bronze { background: linear-gradient(135deg, #1a1004, #c98a2e 55%, #ffe2a6); }
+.theme-swatch-nexus { background: linear-gradient(135deg, #04061a, #2f6bff 45%, #c06bff); }
+.theme-swatch-nightmare { background: linear-gradient(135deg, #040a04, #3cbf3c 40%, #6a2c9b 75%, #c9a6ff); }
+.theme-swatch-twilight { background: linear-gradient(135deg, #12051f, #6a2c9b 45%, #ff7a1a 80%, #ffd36b); }
+html[data-theme="darkmoon"] { --th-a1: #8a2bd6; --th-a2: #1fd1c1; --th-a3: #3a0a5c; --th-trim: #b77dff; --th-title: #e6ccff; --wow-gold: #7ff0e4; --dw-gold-link: #5ce6d8;
+  --th-bg: radial-gradient(1200px 650px at 20% -12%, rgba(138,43,214,.3), transparent 65%), radial-gradient(900px 600px at 100% 110%, rgba(31,209,193,.16), transparent 70%), #08040e; }
+html[data-theme="shadowlands"] { --th-a1: #5b7a99; --th-a2: #d6e6ff; --th-a3: #1d2a3a; --th-trim: #8fa6bf; --th-title: #e6f0ff; --wow-gold: #cfe0f5; --dw-gold-link: #a8c4e6;
+  --th-bg: radial-gradient(1400px 700px at 50% -12%, rgba(91,122,153,.28), transparent 65%), radial-gradient(800px 500px at 0% 110%, rgba(214,230,255,.06), transparent 70%), #05070b; }
+html[data-theme="bloodmoon"] { --th-a1: #c41a24; --th-a2: #ff8a7a; --th-a3: #4a0508; --th-trim: #d6454d; --th-title: #ffc2bb; --wow-gold: #ff9a8a; --dw-gold-link: #ff7a6b;
+  --th-bg: radial-gradient(500px 500px at 85% 8%, rgba(255,60,60,.35), transparent 60%), radial-gradient(1400px 700px at 50% -12%, rgba(196,26,36,.22), transparent 65%), #0a0203; }
+html[data-theme="bronze"] { --th-a1: #c98a2e; --th-a2: #ffe2a6; --th-a3: #5a3a0f; --th-trim: #d6a456; --th-title: #ffe9bf; --wow-gold: #ffd28a; --dw-gold-link: #f0b45c;
+  --th-bg: radial-gradient(1400px 700px at 50% -12%, rgba(201,138,46,.3), transparent 65%), radial-gradient(900px 600px at 100% 110%, rgba(255,226,166,.1), transparent 70%), #0d0803; }
+html[data-theme="nexus"] { --th-a1: #2f6bff; --th-a2: #c06bff; --th-a3: #0f1a5c; --th-trim: #7d9bff; --th-title: #dbe4ff; --wow-gold: #a8c0ff; --dw-gold-link: #b9a1ff;
+  --th-bg: radial-gradient(1200px 650px at 30% -12%, rgba(47,107,255,.3), transparent 65%), radial-gradient(900px 600px at 100% 110%, rgba(192,107,255,.2), transparent 70%), #03040e; }
+html[data-theme="nightmare"] { --th-a1: #3cbf3c; --th-a2: #b06bff; --th-a3: #2a0f3f; --th-trim: #6fd66f; --th-title: #d6ffd0; --wow-gold: #a8ff9a; --dw-gold-link: #c9a6ff;
+  --th-bg: radial-gradient(1200px 650px at 20% -12%, rgba(60,191,60,.24), transparent 65%), radial-gradient(1000px 650px at 90% 110%, rgba(106,44,155,.32), transparent 70%), #040604; }
+html[data-theme="twilight"] { --th-a1: #ff7a1a; --th-a2: #ffd36b; --th-a3: #4a1a7a; --th-trim: #e08a3d; --th-title: #ffd9a8; --wow-gold: #ffb366; --dw-gold-link: #ff9f4d;
+  --th-bg: radial-gradient(1400px 600px at 50% -14%, rgba(255,122,26,.3), transparent 60%), radial-gradient(1200px 800px at 50% 120%, rgba(106,44,155,.4), transparent 70%), #0a0410; }

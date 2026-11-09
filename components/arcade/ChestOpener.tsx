@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { equipCosmetic, openChest } from "@/app/arcade/actions";
-import { DUPLICATE_REFUND, RARITY_COLOR, RARITY_LABEL, type Chest, type Cosmetic, type Rarity } from "@/lib/cosmetics";
+import { DUPLICATE_REFUND, RARITY_COLOR, RARITY_LABEL, itemOdds, type Chest, type Cosmetic, type Rarity } from "@/lib/cosmetics";
 import { fmt, useArcade, wowIconUrl } from "./ArcadeShell";
 import { CosmeticPreview } from "./CosmeticPreview";
 
@@ -31,6 +31,7 @@ export function ChestOpener({ chests, cosmetics, owned: owned0 }: { chests: Ches
     if (spinning) return;
     setErr(null); setWon(null); setEquipped(false);
     setSpinning(true);
+    box.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     const r = await openChest({ chest: chest.id });
     if (!r.ok) { setSpinning(false); return setErr(r.error); }
     setBalance(r.balance - r.refund); // show the price leaving now; the refund lands with the reveal
@@ -59,8 +60,9 @@ export function ChestOpener({ chests, cosmetics, owned: owned0 }: { chests: Ches
 
   return (
     <div className="stack" style={{ gap: 18 }}>
-      <div ref={box} className={`chest-reel-wrap${reel ? " live" : ""}`} aria-hidden={!reel}>
+      <div ref={box} className={`chest-reel-wrap${reel ? " live" : ""}${spinning ? " spinning" : ""}`} aria-hidden={!reel}>
         <span className="chest-reel-marker" aria-hidden="true" />
+        <span className="chest-reel-window" aria-hidden="true" />
         {reel ? (
           <div className="chest-reel" style={{ transform: `translateX(-${reel.x}px)`, transition: reel.go ? "transform 6.4s cubic-bezier(.08,.62,.12,1)" : "none" }}>
             {reel.items.map((c, i) => (
@@ -114,13 +116,14 @@ export function ChestOpener({ chests, cosmetics, owned: owned0 }: { chests: Ches
       </div>
 
       <section className="panel stack" style={{ gap: 10 }} aria-labelledby="drops-h">
-        <div className="row between baseline"><h2 id="drops-h">Everything you can find</h2><span className="micro muted">{owned.length} of {cosmetics.filter((c) => c.kind !== "marks").length} collected · duplicates refund {fmt(DUPLICATE_REFUND.rare)} marks for a rare</span></div>
+        <div className="row between baseline"><h2 id="drops-h">Everything you can find</h2><span className="micro muted">Exact odds per chest shown on every item</span><span className="micro muted">{owned.length} of {cosmetics.filter((c) => c.kind !== "marks").length} collected · duplicates refund {fmt(DUPLICATE_REFUND.rare)} marks for a rare</span></div>
         <div className="drop-grid">
           {ORDER.flatMap((r) => cosmetics.filter((c) => c.rarity === r)).map((c) => (
             <div key={c.id} className={`drop-card${owned.includes(c.id) ? " owned" : ""}`} style={{ ["--r" as string]: RARITY_COLOR[c.rarity] }}>
               <CosmeticPreview c={c} />
               <span className="small strong" style={{ color: RARITY_COLOR[c.rarity] }}>{c.name}</span>
               <span className="micro muted">{owned.includes(c.id) ? "Owned" : c.blurb}</span>
+              <span className="drop-odds">{chests.map((ch) => { const o = itemOdds(ch, c); return <span key={ch.id} title={`${ch.name}: ${o ? `1 in ${Math.round(1 / o).toLocaleString("en-US")}` : "can't drop"}`}>{({ copper: "Copper", gilded: "Gilded", hoard: "Hoard" } as Record<string, string>)[ch.id] ?? ch.name} {o ? `${(o * 100).toFixed(o < 0.001 ? 3 : o < 0.01 ? 2 : 1)}%` : "—"}</span>; })}</span>
             </div>
           ))}
         </div>

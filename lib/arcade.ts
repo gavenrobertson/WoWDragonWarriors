@@ -2,7 +2,7 @@ import "server-only";
 // Arcade engine: Dragon Marks wallet and every game's outcome, decided here on the server
 // (the browser only animates the result). Marks are play money: they buy cosmetics, never anything real.
 import { sql, sqlOne, tx } from "./db";
-import { CHESTS, COSMETICS, DUPLICATE_REFUND, type Cosmetic, type Rarity } from "./cosmetics";
+import { CHESTS, COSMETICS, DUPLICATE_REFUND, rollChest, type Cosmetic } from "./cosmetics";
 
 export const START_MARKS = 0; // new players claim the welcome bonus instead
 export const WELCOME_MARKS = 2500;
@@ -344,11 +344,8 @@ export async function openChest(userId: string, chestId: string) {
   const chest = CHESTS.find((c) => c.id === chestId);
   if (!chest) throw new ArcadeError("Unknown chest.");
   await debit(userId, chest.price);
-  let r = rand(), rarity: Rarity = "common";
-  for (const k of ["legendary", "epic", "rare", "uncommon", "common"] as Rarity[]) { r -= chest.odds[k]; if (r < 0) { rarity = k; break; } }
-  if (chest.odds[rarity] === 0) rarity = "uncommon";
-  const pool = COSMETICS.filter((c) => c.rarity === rarity);
-  const item: Cosmetic = pool[randInt(pool.length)];
+  const item: Cosmetic = rollChest(chest, rand(), rand());
+  const rarity = item.rarity;
   let duplicate = false, refund = 0;
   if (item.kind === "marks") refund = item.marks ?? 0;
   else {
