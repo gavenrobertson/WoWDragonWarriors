@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MINE_TILES, PLINKO_RISKS, PLINKO_ROWS, SLOT_DRAGON_ONE, SLOT_DRAGON_TWO, SLOT_PAIR, SLOT_SYMBOLS, plinkoTable, slotsRtp } from "@/lib/arcade";
-import { GAMES } from "@/components/arcade/ArcadeShell";
+import { GAMES } from "@/lib/arcade-games";
 import { Plinko } from "@/components/arcade/Plinko";
 import { Mines } from "@/components/arcade/Mines";
 import { Dragonflight } from "@/components/arcade/Dragonflight";

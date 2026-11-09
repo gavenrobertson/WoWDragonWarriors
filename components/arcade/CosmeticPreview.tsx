@@ -1,6 +1,6 @@
 // Small visual for a cosmetic: a name sample, a title, a theme swatch or a marks pouch.
 import { RARITY_COLOR, nameClass, themeAttr, type Cosmetic } from "@/lib/cosmetics";
-import { wowIconUrl } from "./ArcadeShell";
+import { wowIconUrl } from "@/lib/arcade-games";
 
 export function CosmeticPreview({ c, sample = "Dragon" }: { c: Cosmetic; sample?: string }) {
   if (c.kind === "marks") return <span className="cp cp-marks"><img src={wowIconUrl("inv_misc_coin_02")} alt="" /><strong>+{c.marks}</strong></span>;

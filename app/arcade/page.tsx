@@ -6,7 +6,7 @@ import { CHESTS, cosmeticById, RARITY_COLOR } from "@/lib/cosmetics";
 import { PlayerName } from "@/components/PlayerName";
 import { DailyWheel } from "@/components/arcade/DailyWheel";
 import { WelcomeBonus } from "@/components/arcade/WelcomeBonus";
-import { GAMES, wowIconUrl } from "@/components/arcade/ArcadeShell";
+import { GAMES, wowIconUrl } from "@/lib/arcade-games";
 
 export const metadata: Metadata = { title: "Arcade", description: "The Dragon Warriors arcade: Plinko, Mines, Dragonflight and more. Win Dragon Marks and open chests for name styles, titles and site themes." };
 
