@@ -421,6 +421,7 @@ export async function poolSettle(itemId: number, winnerCharacterId: string) {
       await q("insert into arcade_plays (user_id, game, bet, payout, detail) values ($1,'council-pool',$2,$3,$4)", [r.user_id, r.stake, won, JSON.stringify({ itemId, status })]);
     }
   });
+  await grantMarks(rows.map((r) => ({ userId: r.user_id, marks: OBSERVER_MARKS })), "observer", { itemId });
   return { settled: rows.length, total, winners: winners.length };
 }
 
@@ -430,4 +431,48 @@ export async function poolFor(itemIds: number[]) {
     `select p.item_id, p.user_id, p.character_id, p.stake, c.name, c.surname, c.class, c.avatar_url, u.name_style
      from council_pool p join users u on u.id = p.user_id left join characters c on c.id = u.main_character_id
      where p.status = 'open' and p.item_id in (select value from json_each($1))`, [JSON.stringify(itemIds)]);
+}
+
+// ---------------------------------------------------------------- rewards for taking part
+export const RAID_MARKS = 500, BENCH_MARKS = 250, COUNCIL_VOTE_MARKS = 50, OBSERVER_MARKS = 25;
+
+/** Give marks to each user once (duplicates in the list are ignored). Never throws. */
+export async function grantMarks(grants: { userId: string; marks: number }[], reason: string, detail?: unknown) {
+  const best = new Map<string, number>();
+  for (const g of grants) if (g.userId && g.marks > 0) best.set(g.userId, Math.max(best.get(g.userId) ?? 0, g.marks));
+  for (const [userId, marks] of best) {
+    try {
+      await wallet(userId);
+      await credit(userId, marks);
+      await logPlay(userId, `reward:${reason}`, 0, marks, detail);
+    } catch (e) { console.error("grantMarks", reason, e); }
+  }
+  return best.size;
+}
+
+/** Raids that started 3+ hours ago (within the last week) pay everyone who took part, once. */
+export async function rewardCompletedRaids() {
+  const now = Date.now();
+  const events = await sql<{ id: string; name: string | null; raid: string; starts_at: string }>(
+    "select id, name, raid, starts_at from raid_events where rewarded_at is null and starts_at <= $1 and starts_at >= $2",
+    [new Date(now - 3 * 3600_000).toISOString(), new Date(now - 7 * 24 * 3600_000).toISOString()]);
+  const done: { id: string; name: string; paid: number; starts_at: string }[] = [];
+  for (const e of events) {
+    // Attendance (from logs or officers) wins; otherwise the signups stand in for it.
+    let rows = await sql<{ user_id: string | null; state: string }>(
+      "select c.user_id, a.state from attendance a join characters c on c.id = a.character_id where a.event_id = $1 and c.claimed", [e.id]);
+    if (!rows.length) rows = await sql<{ user_id: string | null; state: string }>(
+      "select c.user_id, s.status as state from signups s join characters c on c.id = s.character_id where s.event_id = $1 and c.claimed", [e.id]);
+    const grants = rows.flatMap((r) => {
+      if (!r.user_id) return [];
+      const marks = ["present", "late", "accepted"].includes(r.state) ? RAID_MARKS : r.state === "bench" ? BENCH_MARKS : 0;
+      return marks ? [{ userId: r.user_id, marks }] : [];
+    });
+    // Claim the event first so two cron runs can't both pay it.
+    const claimed = await sqlOne<{ id: string }>("update raid_events set rewarded_at = $2 where id = $1 and rewarded_at is null returning id", [e.id, new Date().toISOString()]);
+    if (!claimed) continue;
+    const paid = await grantMarks(grants, "raid", { eventId: e.id });
+    done.push({ id: e.id, name: e.name ?? e.raid, paid, starts_at: e.starts_at });
+  }
+  return done;
 }

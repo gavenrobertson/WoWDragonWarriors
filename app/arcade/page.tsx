@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getViewer } from "@/lib/auth";
-import { WELCOME_MARKS, WHEEL, canSpinToday, leaderboard, recentWins, wallet } from "@/lib/arcade";
+import { BENCH_MARKS, COUNCIL_VOTE_MARKS, OBSERVER_MARKS, RAID_MARKS, WELCOME_MARKS, WHEEL, canSpinToday, leaderboard, recentWins, wallet } from "@/lib/arcade";
 import { CHESTS, cosmeticById, RARITY_COLOR } from "@/lib/cosmetics";
 import { PlayerName } from "@/components/PlayerName";
 import { DailyWheel } from "@/components/arcade/DailyWheel";
@@ -30,6 +30,16 @@ export default async function ArcadeLobby() {
           <p className="soft" style={{ fontSize: 16, maxWidth: 620 }}>Spin the wheel every day for free Dragon Marks, play for more, then crack open chests for glowing and chrome name colours, titles and whole new looks for the site.</p>
         </div>
         <DailyWheel segments={WHEEL.map((s) => s.marks)} canSpin={!!w && canSpinToday(w.lastDaily)} streak={w?.streak ?? 0} signedIn={!!w} />
+      </section>
+
+      <section aria-labelledby="earn-h" className="panel earn-panel">
+        <h2 id="earn-h">Ways to earn Dragon Marks</h2>
+        <ul className="earn-list">
+          <li><img src={wowIconUrl("inv_misc_coin_02", 36)} alt="" /><span><strong>Daily wheel</strong><span className="micro muted">100 to 5,000, more with a streak</span></span></li>
+          <li><img src={wowIconUrl("achievement_boss_onyxia", 36)} alt="" /><span><strong>+{RAID_MARKS} per raid</strong><span className="micro muted">Sign up and show up ({BENCH_MARKS} if benched), paid after the raid</span></span></li>
+          <li><img src={wowIconUrl("inv_misc_note_06", 36)} alt="" /><span><strong>+{COUNCIL_VOTE_MARKS} per council vote</strong><span className="micro muted">Officers who vote, every item awarded</span></span></li>
+          <li><img src={wowIconUrl("inv_misc_ticket_darkmoon_01", 36)} alt="" /><span><strong>+{OBSERVER_MARKS} for observing</strong><span className="micro muted">Back a contender in the council pool, win or lose</span></span></li>
+        </ul>
       </section>
 
       <section aria-labelledby="games-h" className="stack" style={{ gap: 12 }}>

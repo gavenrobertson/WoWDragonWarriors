@@ -13,6 +13,15 @@ export function Interactions() {
   const path = usePathname();
 
   useEffect(() => {
+    // Expose the sticky header's height so other sticky bars can sit right below it.
+    const h = document.querySelector(".site-header") as HTMLElement | null;
+    if (!h) return;
+    const set = () => document.documentElement.style.setProperty("--hdr-h", `${h.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set); ro.observe(h);
+    return () => ro.disconnect();
+  }, []);
+  useEffect(() => {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const fine = matchMedia("(pointer: fine)").matches;
     let tilted: HTMLElement | null = null;

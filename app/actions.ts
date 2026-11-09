@@ -12,7 +12,7 @@ import type { ActionResult } from "@/components/useAction";
 import type { Role, SignupStatus } from "@/lib/types";
 import { assignableRoles, canChangeRoleOf, roleLabel, type SiteRole } from "@/lib/roles";
 import { BIS_PHASE, SLOTS, SOURCE_TYPES } from "@/lib/bis";
-import { poolSettle } from "@/lib/arcade";
+import { COUNCIL_VOTE_MARKS, grantMarks, poolSettle } from "@/lib/arcade";
 import { contestedCount, latestSession } from "@/lib/council";
 
 const ROLES: Role[] = ["tank", "healer", "melee", "ranged"];
@@ -586,12 +586,14 @@ export async function awardItem(input: { itemId: number; characterId: string; re
     const item = await sqlOne<{ id: number; name: string }>("select id, name from items where id = $1", [itemId]);
     if (!ch || !item) return { ok: false, error: "Item or character not found." };
     const votes = await sqlOne<{ n: number }>("select count(*) as n from council_votes where item_id = $1 and character_id = $2", [itemId, ch.id]);
+    const voters = await sql<{ voter_user_id: string }>("select distinct voter_user_id from council_votes where item_id = $1", [itemId]);
     await tx(async (q) => {
       await q("insert into loot_awards (item_id, character_id, method, reason, awarded_by, awarded_at) values ($1,$2,'council',$3,$4,$5)",
         [itemId, ch.id, str(input.reason, 300) || (votes?.n ? `Council vote (${votes.n})` : null), v.userId, nowIso()]);
       await q("delete from wishlist_items where character_id = $1 and item_id = $2", [ch.id, itemId]);
       await q("delete from council_votes where item_id = $1", [itemId]);
     });
+    await grantMarks(voters.map((x) => ({ userId: x.voter_user_id, marks: COUNCIL_VOTE_MARKS })), "council", { itemId });
     await poolSettle(item.id, ch.id).catch((e) => console.error("pool settle", e));
     await notifyAward(item.id, ch.id, votes?.n ? `Council vote (${votes.n})` : "Loot council", v);
     await maybeRecap();
@@ -672,12 +674,14 @@ export async function overrideAward(input: { itemId: number; characterId: string
     const ch = await sqlOne<{ id: string; name: string }>("select id, name from characters where id = $1 and in_guild = 1", [input.characterId]);
     const item = await sqlOne<{ id: number; name: string }>("select id, name from items where id = $1", [itemId]);
     if (!ch || !item) return { ok: false, error: "Pick a guild member and an item." };
+    const voters = await sql<{ voter_user_id: string }>("select distinct voter_user_id from council_votes where item_id = $1", [itemId]);
     await tx(async (q) => {
       await q("insert into loot_awards (item_id, character_id, method, reason, awarded_by, awarded_at) values ($1,$2,'admin override',$3,$4,$5)", [itemId, ch.id, reason, v.userId, nowIso()]);
       await q("delete from wishlist_items where character_id = $1 and item_id = $2", [ch.id, itemId]);
       await q("delete from council_votes where item_id = $1", [itemId]);
     });
     await notifyAward(itemId, ch.id, `⚖️ Admin override: ${reason}`, v);
+    await grantMarks(voters.map((x) => ({ userId: x.voter_user_id, marks: COUNCIL_VOTE_MARKS })), "council", { itemId });
     await poolSettle(itemId, ch.id).catch((e) => console.error("pool settle", e));
     await maybeRecap();
     revalidatePath("/loot");

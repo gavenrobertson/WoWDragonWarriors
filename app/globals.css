@@ -1305,3 +1305,33 @@ html[data-theme="nightmare"] { --th-a1: #3cbf3c; --th-a2: #b06bff; --th-a3: #2a0
   --th-bg: radial-gradient(1200px 650px at 20% -12%, rgba(60,191,60,.24), transparent 65%), radial-gradient(1000px 650px at 90% 110%, rgba(106,44,155,.32), transparent 70%), #040604; }
 html[data-theme="twilight"] { --th-a1: #ff7a1a; --th-a2: #ffd36b; --th-a3: #4a1a7a; --th-trim: #e08a3d; --th-title: #ffd9a8; --wow-gold: #ffb366; --dw-gold-link: #ff9f4d;
   --th-bg: radial-gradient(1400px 600px at 50% -14%, rgba(255,122,26,.3), transparent 60%), radial-gradient(1200px 800px at 50% 120%, rgba(106,44,155,.4), transparent 70%), #0a0410; }
+/* every top-level page wrapper keeps its full width and never gets squeezed by the column layout */
+body > * { flex-shrink: 0; min-width: 0; }
+body > .container { width: 100%; box-sizing: border-box; }
+body > .admin { flex: 1 0 auto; }
+
+/* header: on tablets and small laptops the menu gets its own scrollable row instead of wrapping into three */
+@media (min-width: 761px) and (max-width: 1439px) {
+  .site-header .bar-inner { gap: 10px 20px; padding-top: 10px; padding-bottom: 8px; }
+  .site-header .brand { margin-right: auto; }
+  .main-nav { order: 3; flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 0 8px; }
+  .main-nav::-webkit-scrollbar { display: none; }
+  .nav-link { white-space: nowrap; }
+}
+/* the arcade bar sticks right under the header, whatever height the header is */
+.arcade-bar { top: calc(var(--hdr-h, 86px) - 1px); }
+@media (max-width: 900px) { .arcade-bar { top: calc(var(--hdr-h, 64px) - 1px); } }
+.game-controls { top: calc(var(--hdr-h, 86px) + 72px); }
+/* wide screens: keep the whole header on one row, even with the Admin item */
+@media (min-width: 1440px) {
+  .site-header .bar-inner { column-gap: 18px; flex-wrap: nowrap; }
+  .main-nav { flex-wrap: nowrap; gap: 0; justify-content: center; }
+  .main-nav .nav-link { padding-left: 13px; padding-right: 13px; white-space: nowrap; }
+}
+.account-pill .account-name { max-width: 11em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.earn-panel { display: grid; gap: 10px; }
+.earn-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
+.earn-list li { display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 6px; background: rgba(0,0,0,.3); box-shadow: inset 0 0 0 1px #3b2f17; }
+.earn-list img { width: 34px; height: 34px; border-radius: 5px; box-shadow: 0 0 0 1px #000, 0 0 0 2px #8a6a2c; flex: none; }
+.earn-list li > span { display: grid; gap: 1px; }
+.earn-list strong { font-family: var(--font-display); font-weight: 400; color: #ffe9a0; }
