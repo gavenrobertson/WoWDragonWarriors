@@ -2,7 +2,7 @@
 // Loot council chamber: the item on a pedestal, candidates standing as their Blizzard renders,
 // council members' votes as portraits on each candidate, and an award button.
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { awardItem, castVote, overrideAward } from "@/app/actions";
 import { Avatar, ItemIcon } from "@/components/bits";
 import { GavelSlam, type GavelMoment } from "@/components/Gavel";
@@ -20,10 +20,16 @@ export interface CouncilItem {
   candidates: CouncilCandidate[]; votes: { voterUserId: string; characterId: string }[];
 }
 
-export function CouncilChamber({ items: initial, members, me, canVote, canOverride, roster }: {
+// Practice mode swaps the server actions for local ones: nothing is saved and nothing posts to Discord.
+const practiceOk = (message?: string) => async () => ({ ok: true as const, message });
+
+export function CouncilChamber({ items: initial, members, me, canVote, canOverride, roster, practice = false }: {
   items: CouncilItem[]; members: CouncilMember[]; me: string; canVote: boolean; canOverride: boolean;
-  roster: { id: string; name: string; className: string; level: number }[];
+  roster: { id: string; name: string; className: string; level: number }[]; practice?: boolean;
 }) {
+  const act = practice
+    ? { castVote: practiceOk(), awardItem: practiceOk("Practice award: not saved, nothing posted"), overrideAward: practiceOk("Practice override: not saved, nothing posted") }
+    : { castVote, awardItem, overrideAward };
   const [items, setItems] = useState(initial);
   const [sel, setSel] = useState(initial[0]?.id ?? 0);
   const [confirm, setConfirm] = useState<string | null>(null);
@@ -32,12 +38,30 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
   const [override, setOverride] = useState<{ characterId: string; reason: string } | null>(null);
   const { pending, run, toast } = useAction();
   const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
+  // Practice: simulated officers vote a moment after you do, so a majority can form.
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const simulate = (itemId: number, hint?: string) => {
+    const bots = members.filter((m) => m.userId.startsWith("bot:"));
+    bots.forEach((b, i) => {
+      timers.current.push(setTimeout(() => {
+        setItems((is) => is.map((it) => {
+          if (it.id !== itemId || it.votes.some((v) => v.voterUserId === b.userId)) return it;
+          // Mostly back the wishlist favourite or your pick, sometimes go their own way.
+          const r = Math.random();
+          const pick = r < 0.45 && hint ? hint : r < 0.8 ? it.candidates[0]?.characterId : it.candidates[Math.floor(Math.random() * it.candidates.length)]?.characterId;
+          return pick ? { ...it, votes: [...it.votes, { voterUserId: b.userId, characterId: pick }] } : it;
+        }));
+      }, 700 + i * 650 + Math.random() * 400));
+    });
+  };
+  const resetPractice = () => { timers.current.forEach(clearTimeout); timers.current = []; setItems(initial); setAwarded({}); setOverride(null); setConfirm(null); };
 
   const item = items.find((i) => i.id === sel) ?? items[0];
   if (!item) {
     return (
       <main id="main" tabIndex={-1} className="container page">
-        <ChamberHead />
+        <ChamberHead practice={practice} />
         <div className="empty">No contested loot right now. Items appear here once raiders put them on their wishlists.</div>
       </main>
     );
@@ -53,21 +77,22 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
     const prev = item.votes;
     const others = prev.filter((v) => v.voterUserId !== me);
     setVotes(item.id, myVote === c.characterId ? others : [...others, { voterUserId: me, characterId: c.characterId }]);
-    run(() => castVote({ itemId: item.id, characterId: c.characterId }).then((r) => { if (!r.ok) setVotes(item.id, prev); return r; }));
+    run(() => act.castVote({ itemId: item.id, characterId: c.characterId }).then((r) => { if (!r.ok) setVotes(item.id, prev); return r; }));
+    if (practice && myVote !== c.characterId) simulate(item.id, c.characterId);
   };
   const award = (c: CouncilCandidate) => {
     if (confirm !== c.characterId) { setConfirm(c.characterId); setTimeout(() => setConfirm((x) => (x === c.characterId ? null : x)), 4000); return; }
     setConfirm(null);
     const it = item;
-    run(() => awardItem({ itemId: it.id, characterId: c.characterId }), () => {
+    run(() => act.awardItem({ itemId: it.id, characterId: c.characterId }), () => {
       setAwarded((a) => ({ ...a, [it.id]: c.name }));
       setSlam({ key: Date.now(), item: it.name, winner: c.name, color: qualityColor(it.quality), icon: it.iconUrl });
     });
   };
 
   return (
-    <main id="main" tabIndex={-1} className="container page council">
-      <ChamberHead />
+    <main id="main" tabIndex={-1} className={`container page council${practice ? " practice" : ""}`}>
+      <ChamberHead practice={practice} onReset={resetPractice} />
 
       <div className="council-layout">
         <nav aria-label="Contested items" className="council-items">
@@ -101,6 +126,9 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
               {awarded[item.id]
                 ? <span className="pill">Awarded to {awarded[item.id]}</span>
                 : <span className="small soft">{item.votes.length} of {members.length} council vote{members.length === 1 ? "" : "s"} cast</span>}
+              {practice && !awarded[item.id] && item.votes.length < members.length && (
+                <button type="button" className="btn btn-sm" onClick={() => simulate(item.id)}>Let the council vote</button>
+              )}
               {canOverride && !awarded[item.id] && !override && (
                 <button type="button" className="btn btn-sm override-btn" onClick={() => setOverride({ characterId: item.candidates[0]?.characterId ?? "", reason: "" })}>⚖ Overrule the council</button>
               )}
@@ -112,7 +140,7 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
               e.preventDefault();
               const it = item, who = roster.find((r) => r.id === override.characterId);
               if (!who) return;
-              run(() => overrideAward({ itemId: it.id, characterId: who.id, reason: override.reason }), () => {
+              run(() => act.overrideAward({ itemId: it.id, characterId: who.id, reason: override.reason }), () => {
                 setOverride(null);
                 setAwarded((a) => ({ ...a, [it.id]: who.name }));
                 setSlam({ key: Date.now(), item: it.name, winner: who.name, color: qualityColor(it.quality), icon: it.iconUrl, word: "Overruled" });
@@ -194,7 +222,7 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
       <section className="council-bench panel" aria-label="Council members">
         <div className="row between baseline">
           <h3>The council</h3>
-          <span className="src">{canVote ? "You sit on the council. Click a contender to vote; click again to withdraw." : "Votes are visible to the whole guild."}</span>
+          <span className="src">{practice ? "Practice council: you plus four simulated officers drawn from the roster. Vote and they follow." : canVote ? "You sit on the council. Click a contender to vote; click again to withdraw." : "Votes are visible to the whole guild."}</span>
         </div>
         <div className="row" style={{ gap: 14 }}>
           {members.length === 0 && <span className="small muted">No council members yet. Officers and Loot Masters sit on the council.</span>}
@@ -219,7 +247,22 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
   );
 }
 
-function ChamberHead() {
+function ChamberHead({ practice, onReset }: { practice?: boolean; onReset?: () => void }) {
+  if (practice) {
+    return (
+      <section className="panel-royal page-head practice-head">
+        <div className="stack" style={{ gap: 8 }}>
+          <span className="eyebrow">Practice chamber · nothing is saved</span>
+          <h1>Practice council</h1>
+          <p className="soft" style={{ fontSize: 16 }}>Real guild members and raid loot, a pretend session. Vote, watch the simulated officers weigh in, award or overrule, and see the gavel fall. No loot history, no Discord posts.</p>
+        </div>
+        <div className="row" style={{ gap: 8 }}>
+          {onReset && <button type="button" className="btn" onClick={onReset}>Reset session</button>}
+          <Link href="/loot/council" className="btn">Real council</Link>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="panel-royal page-head">
       <div className="stack" style={{ gap: 8 }}>
@@ -227,7 +270,10 @@ function ChamberHead() {
         <h1>Loot council</h1>
         <p className="soft" style={{ fontSize: 16 }}>Contenders stand before the council. Officers vote, the favourite glows, and the award goes straight into loot history.</p>
       </div>
-      <div className="row"><Link href="/loot" className="btn">Back to loot hub</Link></div>
+      <div className="row" style={{ gap: 8 }}>
+        <Link href="/loot/council/practice" className="btn">Practice council</Link>
+        <Link href="/loot" className="btn">Back to loot hub</Link>
+      </div>
     </section>
   );
 }

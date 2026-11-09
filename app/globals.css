@@ -935,3 +935,7 @@ button:disabled, [aria-disabled="true"], select:disabled, input:disabled { curso
   .hero-art::before { background: linear-gradient(180deg, rgba(12,8,10,.72), rgba(12,8,10,.94) 55%), url("/assets/brand/fortress-960.webp") 60% 20% / cover no-repeat; }
 }
 @media (prefers-reduced-motion: reduce) { .home-banner, .home-banner::after { animation: none; } }
+
+/* practice council: a clear "sandbox" stripe so nobody mistakes it for the real thing */
+.practice-head { box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000, inset 0 0 0 3px #9B5DFF, inset 0 0 0 4px #000, inset 0 2px 30px rgba(0,0,0,.8), 0 0 40px -16px rgba(155,93,255,.7); }
+.council.practice .council-hall { background-image: repeating-linear-gradient(135deg, rgba(155,93,255,.05) 0 14px, transparent 14px 28px); }
