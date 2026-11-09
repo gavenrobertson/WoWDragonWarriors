@@ -6,9 +6,10 @@ import { useMemo, useState } from "react";
 import type { GuildProfile } from "@/lib/store";
 import { DISCORD_INVITE } from "@/lib/links";
 import { HallOfFame, type HallOfFameData } from "./HallOfFame";
+import { PlayerName } from "@/components/PlayerName";
 import { classColor, timeAgo } from "@/lib/ui";
 
-export interface GuildMember { slug: string; name: string; level: number; className: string; classIcon: string | null; rank: string; rankIndex: number; lastSeenMin: number | null; race: string }
+export interface GuildMember { slug: string; name: string; level: number; className: string; classIcon: string | null; rank: string; rankIndex: number; lastSeenMin: number | null; race: string; nameStyle?: string | null }
 type SortKey = "name" | "level" | "className" | "rank" | "seen";
 
 export function GuildWindow({ profile, members, motd, info, isMember, signedIn, hall }: {
@@ -80,7 +81,7 @@ export function GuildWindow({ profile, members, motd, info, isMember, signedIn, 
                   {rows.map((m) => (
                     <tr key={m.slug}>
                       <td>
-                        <Link href={`/characters/${m.slug}`} className="wow-name" style={{ color: classColor(m.className) }}>{m.name}</Link>
+                        <Link href={`/characters/${m.slug}`} className="wow-name"><PlayerName name={m.name} className={m.className} nameStyle={m.nameStyle} showTitle={false} /></Link>
                       </td>
                       <td className="num">{m.level}</td>
                       <td>

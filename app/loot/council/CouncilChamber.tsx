@@ -4,6 +4,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { awardItem, castVote, overrideAward } from "@/app/actions";
+import { backContender } from "@/app/arcade/actions";
+import { PlayerName } from "@/components/PlayerName";
+import { CouncilRecap, type RecapItem } from "@/components/CouncilRecap";
 import { Avatar, ItemIcon } from "@/components/bits";
 import { GavelSlam, type GavelMoment } from "@/components/Gavel";
 import { Toast } from "@/components/Toast";
@@ -15,6 +18,7 @@ export interface CouncilCandidate {
   characterId: string; slug: string; name: string; className: string; spec: string; race: string; level: number;
   renderUrl: string | null; avatarUrl: string | null; wishRank: number; approved: boolean; attendance: number | null; won: number;
 }
+export interface PoolEntry { itemId: number; characterId: string; stake: number; mine: boolean; name: string; className: string; avatarUrl: string | null; nameStyle: string | null }
 export interface CouncilItem {
   id: number; name: string; quality: string; iconUrl: string | null; slot: string; boss: string; raid: string;
   candidates: CouncilCandidate[]; votes: { voterUserId: string; characterId: string }[];
@@ -23,10 +27,14 @@ export interface CouncilItem {
 // Practice mode swaps the server actions for local ones: nothing is saved and nothing posts to Discord.
 const practiceOk = (message?: string) => async () => ({ ok: true as const, message });
 
-export function CouncilChamber({ items: initial, members, me, canVote, canOverride, roster, practice = false }: {
+export function CouncilChamber({ items: initial, members, me, canVote, canOverride, roster, practice = false, pool: pool0 = [], canObserve = false, marks: marks0 = 0 }: {
   items: CouncilItem[]; members: CouncilMember[]; me: string; canVote: boolean; canOverride: boolean;
   roster: { id: string; name: string; className: string; level: number }[]; practice?: boolean;
+  pool?: PoolEntry[]; canObserve?: boolean; marks?: number;
 }) {
+  const [pool, setPool] = useState(pool0);
+  const [marks, setMarks] = useState(marks0);
+  const [stake, setStake] = useState(100);
   const act = practice
     ? { castVote: practiceOk(), awardItem: practiceOk("Practice award: not saved, nothing posted"), overrideAward: practiceOk("Practice override: not saved, nothing posted") }
     : { castVote, awardItem, overrideAward };
@@ -34,6 +42,7 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
   const [sel, setSel] = useState(initial[0]?.id ?? 0);
   const [confirm, setConfirm] = useState<string | null>(null);
   const [awarded, setAwarded] = useState<Record<number, string>>({});
+  const [log, setLog] = useState<RecapItem[]>([]);
   const [slam, setSlam] = useState<GavelMoment | null>(null);
   const [override, setOverride] = useState<{ characterId: string; reason: string } | null>(null);
   const { pending, run, toast } = useAction();
@@ -62,12 +71,28 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
     return (
       <main id="main" tabIndex={-1} className="container page">
         <ChamberHead practice={practice} />
-        <div className="empty">No contested loot right now. Items appear here once raiders put them on their wishlists.</div>
+        <div className="empty">No contested loot right now. Items appear here once raiders put them on their wishlists.{!practice && <> <Link href="/loot/council/overview">See the last council session</Link>.</>}</div>
       </main>
     );
   }
 
   const tally = (cid: string) => item.votes.filter((v) => v.characterId === cid).length;
+  // Observer pool for this item
+  const itemPool = pool.filter((p) => p.itemId === item.id);
+  const pot = itemPool.reduce((a, p) => a + p.stake, 0);
+  const myPick = itemPool.find((p) => p.mine);
+  const showPool = !practice && (canObserve || itemPool.length > 0);
+  const back = (c: CouncilCandidate) => {
+    const it = item;
+    run(() => backContender({ itemId: it.id, characterId: c.characterId, stake }).then((r) => {
+      if (r.ok) {
+        setMarks(r.balance);
+        setPool((ps) => [...ps, { itemId: it.id, characterId: c.characterId, stake, mine: true, name: "You", className: "", avatarUrl: null, nameStyle: null }]);
+        return { ok: true as const, message: `You backed ${c.name.split(" ")[0]} with ${stake.toLocaleString("en-US")} marks` };
+      }
+      return r;
+    }));
+  };
   const maxVotes = Math.max(0, ...item.candidates.map((c) => tally(c.characterId)));
   const myVote = item.votes.find((v) => v.voterUserId === me)?.characterId;
   const leader = maxVotes > 0 ? item.candidates.find((c) => tally(c.characterId) === maxVotes) : item.candidates[0];
@@ -86,6 +111,9 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
     const it = item;
     run(() => act.awardItem({ itemId: it.id, characterId: c.characterId }), () => {
       setAwarded((a) => ({ ...a, [it.id]: c.name }));
+      const n = it.votes.filter((v) => v.characterId === c.characterId).length;
+      setLog((l) => [...l, { id: it.id, name: it.name, quality: it.quality, iconUrl: it.iconUrl, overruled: false, detail: n ? `Council vote (${n} of ${members.length})` : "Council decision",
+        winner: { name: c.name, className: c.className, avatarUrl: c.avatarUrl, slug: c.slug } }]);
       setSlam({ key: Date.now(), item: it.name, winner: c.name, color: qualityColor(it.quality), icon: it.iconUrl });
     });
   };
@@ -94,6 +122,16 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
     <main id="main" tabIndex={-1} className={`container page council${practice ? " practice" : ""}`}>
       <ChamberHead practice={practice} onReset={resetPractice} />
 
+      {items.length > 0 && items.every((i) => awarded[i.id]) && (
+        practice
+          ? <CouncilRecap practice data={{ date: new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }), remaining: 0, items: log }} />
+          : (
+            <div className="council-adjourned" role="status">
+              <span><strong className="gold">Council adjourned.</strong> Every contested item has been awarded.</span>
+              <Link href="/loot/council/overview" className="btn btn-primary">View the council overview</Link>
+            </div>
+          )
+      )}
       <div className="council-layout">
         <nav aria-label="Contested items" className="council-items">
           <span className="eyebrow muted" style={{ padding: "0 4px 6px" }}>Before the council</span>
@@ -143,6 +181,9 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
               run(() => act.overrideAward({ itemId: it.id, characterId: who.id, reason: override.reason }), () => {
                 setOverride(null);
                 setAwarded((a) => ({ ...a, [it.id]: who.name }));
+                const cand = it.candidates.find((x) => x.characterId === who.id);
+                setLog((l) => [...l, { id: it.id, name: it.name, quality: it.quality, iconUrl: it.iconUrl, overruled: true, detail: override.reason,
+                  winner: { name: who.name, className: who.className, avatarUrl: cand?.avatarUrl ?? null, slug: cand?.slug } }]);
                 setSlam({ key: Date.now(), item: it.name, winner: who.name, color: qualityColor(it.quality), icon: it.iconUrl, word: "Overruled" });
               });
             }}>
@@ -201,6 +242,23 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
                         {t === 0 && <span className="micro muted">No votes yet</span>}
                       </span>
                     </div>
+                    {showPool && (() => {
+                      const backers = itemPool.filter((p) => p.characterId === c.characterId);
+                      const onC = backers.reduce((a, p) => a + p.stake, 0);
+                      return (
+                        <div className="pool-line">
+                          <span className="micro">
+                            <span className="mark-coin sm" aria-hidden="true" /> {onC.toLocaleString("en-US")}
+                            <span className="muted"> · {onC ? `pays ${(pot / onC).toFixed(2)}× if picked` : "no backers yet"}</span>
+                          </span>
+                          {backers.length > 0 && <span className="row" style={{ gap: 3 }}>{backers.slice(0, 6).map((b, i) => <span key={i} title={`${b.name}: ${b.stake}`}><Avatar name={b.name} className={b.className} size={20} url={b.avatarUrl} /></span>)}</span>}
+                          {canObserve && !awarded[item.id] && !myPick && (
+                            <button type="button" className="btn btn-sm" disabled={pending || marks < stake} onClick={() => back(c)}>Back · {stake.toLocaleString("en-US")}</button>
+                          )}
+                          {myPick?.characterId === c.characterId && <span className="pool-mine">★ Your pick</span>}
+                        </div>
+                      );
+                    })()}
                     {canVote && !awarded[item.id] && (
                       <div className="row" style={{ gap: 6 }}>
                         <button type="button" className="btn btn-sm grow" aria-pressed={myVote === c.characterId} disabled={pending} onClick={() => vote(c)}>
@@ -218,6 +276,37 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
           </div>
         </section>
       </div>
+
+      {showPool && (
+        <section className="panel observer-pool" aria-label="Observer pool">
+          <div className="row between baseline" style={{ gap: 10 }}>
+            <h3>Observer pool</h3>
+            <span className="small"><span className="mark-coin sm" aria-hidden="true" /> <strong className="gold">{pot.toLocaleString("en-US")}</strong> in the pot · {itemPool.length} observer{itemPool.length === 1 ? "" : "s"}</span>
+          </div>
+          <p className="small soft" style={{ margin: 0 }}>
+            Not on the council? Back the contender you think they&apos;ll pick. When the gavel falls, everyone who called it splits the whole pot by stake.
+            If nobody called it, or the item is overruled to someone else, every stake comes back.
+          </p>
+          {canObserve && !awarded[item.id] && (myPick
+            ? <span className="small">You backed <strong>{item.candidates.find((c) => c.characterId === myPick.characterId)?.name ?? "a contender"}</strong> with {myPick.stake.toLocaleString("en-US")} marks.</span>
+            : (
+              <div className="row" style={{ gap: 10, alignItems: "flex-end" }}>
+                <label className="field" style={{ maxWidth: 200 }}>Your stake
+                  <input type="number" min={10} max={5000} step={10} value={stake} onChange={(e) => setStake(Math.max(10, Math.min(5000, Math.floor(Number(e.target.value)) || 10)))} />
+                </label>
+                <span className="small muted">You have <span className="mark-coin sm" aria-hidden="true" /> {marks.toLocaleString("en-US")} · <Link href="/arcade">get more in the arcade</Link></span>
+              </div>
+            ))}
+          {itemPool.length > 0 && (
+            <ul className="observer-list">
+              {itemPool.map((p, i) => {
+                const c = item.candidates.find((x) => x.characterId === p.characterId);
+                return <li key={i}><PlayerName name={p.name} className={p.className} nameStyle={p.nameStyle} showTitle={false} /> <span className="muted">backed</span> {c?.name.split(" ")[0] ?? "?"} <span className="gold">{p.stake.toLocaleString("en-US")}</span></li>;
+              })}
+            </ul>
+          )}
+        </section>
+      )}
 
       <section className="council-bench panel" aria-label="Council members">
         <div className="row between baseline">
@@ -271,6 +360,7 @@ function ChamberHead({ practice, onReset }: { practice?: boolean; onReset?: () =
         <p className="soft" style={{ fontSize: 16 }}>Contenders stand before the council. Officers vote, the favourite glows, and the award goes straight into loot history.</p>
       </div>
       <div className="row" style={{ gap: 8 }}>
+        <Link href="/loot/council/overview" className="btn">Council overview</Link>
         <Link href="/loot/council/practice" className="btn">Practice council</Link>
         <Link href="/loot" className="btn">Back to loot hub</Link>
       </div>

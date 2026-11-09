@@ -6,6 +6,8 @@ import { Embers } from "@/components/Embers";
 import { Interactions } from "@/components/Interactions";
 import { ItemTooltip } from "@/components/ItemTooltip";
 import { DISCORD_INVITE } from "@/lib/links";
+import { getViewer } from "@/lib/auth";
+import { themeAttr } from "@/lib/cosmetics";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -21,9 +23,11 @@ export const dynamic = "force-dynamic";
 
 export const viewport: Viewport = { themeColor: "#0b0806", colorScheme: "dark" };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const viewer = await getViewer().catch(() => null);
+  const theme = themeAttr(viewer?.cosmetics?.theme);
   return (
-    <html lang="en">
+    <html lang="en" data-theme={theme}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

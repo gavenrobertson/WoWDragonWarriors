@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getViewer } from "@/lib/auth";
 import { RAIDS, getCharacters, getItems, getWishlists, store } from "@/lib/store";
-import { CouncilChamber, type CouncilItem } from "./CouncilChamber";
+import { CouncilChamber, type CouncilItem, type PoolEntry } from "./CouncilChamber";
+import { poolFor, wallet } from "@/lib/arcade";
 
 export const metadata: Metadata = { title: "Loot council" };
 
@@ -51,8 +52,22 @@ export default async function CouncilPage() {
     .filter((i) => i.candidates.length > 0)
     .sort((a, b) => b.candidates.length - a.candidates.length || a.name.localeCompare(b.name));
 
+  // Observer pool: open stakes per item, and whether this viewer can join (signed in, not on the council).
+  const canObserve = !viewer.demo && !!viewer.userId && !viewer.perms.canAwardLoot;
+  const [poolRows, w] = await Promise.all([
+    viewer.demo ? Promise.resolve([]) : poolFor(councilItems.map((i) => i.id)).catch(() => []),
+    canObserve ? wallet(viewer.userId!).catch(() => null) : Promise.resolve(null),
+  ]);
+  const pool: PoolEntry[] = poolRows.map((r) => ({
+    itemId: r.item_id, characterId: r.character_id, stake: r.stake, mine: r.user_id === viewer.userId,
+    name: r.name ? `${r.name} ${r.surname ?? ""}`.trim() : "Guildmate", className: r.class ?? "", avatarUrl: r.avatar_url, nameStyle: r.name_style,
+  }));
+
   return (
     <CouncilChamber
+      pool={pool}
+      canObserve={canObserve}
+      marks={w?.marks ?? 0}
       items={councilItems}
       members={members}
       me={viewer.userId ?? "demo"}

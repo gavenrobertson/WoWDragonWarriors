@@ -19,7 +19,7 @@ export default async function GuildPage() {
     .filter((c) => c.inGuild)
     .map((c) => ({
       slug: c.slug, name: c.fullName, level: c.level, className: c.className, classIcon: classIcon(c.className) ?? null,
-      rank: rankName(c.rank), rankIndex: c.rank ?? 99, lastSeenMin: c.lastSeenMin, race: c.race,
+      rank: rankName(c.rank), rankIndex: c.rank ?? 99, lastSeenMin: c.lastSeenMin, race: c.race, nameStyle: c.nameStyle ?? null,
     }));
   const s = settings as Record<string, unknown>;
 

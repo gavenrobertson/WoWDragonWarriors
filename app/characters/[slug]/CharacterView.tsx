@@ -9,9 +9,10 @@ import { Toast } from "@/components/Toast";
 import { useAction } from "@/components/useAction";
 import { classColor, qualityColor, STATUS } from "@/lib/ui";
 import { wowIcon } from "@/lib/metrics";
+import { PlayerName } from "@/components/PlayerName";
 
 export interface CharacterVM {
-  slug: string; name: string; level: number; race: string; className: string; spec: string; role: string; isMain: boolean;
+  slug: string; name: string; nameStyle?: string | null; title?: string | null; level: number; race: string; className: string; spec: string; role: string; isMain: boolean;
   rank: string; attendance: string; priority: string;
   stats: { label: string; value: string }[];
   records: {
@@ -70,7 +71,7 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
       <section aria-labelledby="char-name" className="panel-royal page-head">
         <div className="stack" style={{ gap: 6 }}>
           <span className="eyebrow muted">{active.rank} of Dragon Warriors</span>
-          <h1 id="char-name" style={{ fontSize: 46, color }}>{active.name}</h1>
+          <h1 id="char-name" style={{ fontSize: 46, color }}><PlayerName name={active.name} className={active.className} nameStyle={active.nameStyle} title={active.title} /></h1>
           <span className="soft" style={{ fontSize: 16 }}>Level {active.level} {active.race} {active.className} · {active.spec} · Raid role: {active.role}</span>
           <span className="row micro muted" style={{ gap: 8 }}>
             <StatusDot color={active.syncedAt || !canSync ? STATUS.ok : STATUS.muted} live />

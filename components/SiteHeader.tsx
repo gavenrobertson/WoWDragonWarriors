@@ -4,6 +4,7 @@ import { NAV, SITE } from "@/lib/config";
 import { classColor } from "@/lib/ui";
 import { NavLinks } from "./NavLinks";
 import { IconDiscord } from "./icons";
+import { PlayerName } from "./PlayerName";
 import { DISCORD_INVITE } from "@/lib/links";
 
 export async function SiteHeader() {
@@ -34,7 +35,7 @@ export async function SiteHeader() {
           {viewer.signedIn && main ? (
             <Link href={`/characters/${main.slug}`} className="account-pill" aria-label={`Your main: ${main.name}`}>
               <span className="avatar" style={{ "--s": "32px", "--c": color } as React.CSSProperties}>{main.avatarUrl ? <img src={main.avatarUrl} alt="" /> : main.name.charAt(0)}</span>
-              <span className="account-name strong small" style={{ color }}>{main.name}</span>
+              <span className="account-name strong small"><PlayerName name={main.name} className={main.className} nameStyle={viewer.cosmetics.nameStyle} showTitle={false} /></span>
             </Link>
           ) : viewer.signedIn ? (
             <Link href="/sign-in?step=claim" className="btn btn-sm">Claim characters</Link>

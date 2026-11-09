@@ -7,8 +7,9 @@ import { Toast } from "@/components/Toast";
 import { useAction } from "@/components/useAction";
 import type { HubBank, HubCraftRequest } from "@/lib/store";
 import { classColor, qualityColor } from "@/lib/ui";
+import { PlayerName } from "@/components/PlayerName";
 
-export interface MemberVM { slug: string; avatarUrl: string | null; name: string; className: string; spec: string; level: number; rank: string; role: string; roleKey: string; main: string; ready: string; seen: string }
+export interface MemberVM { slug: string; avatarUrl: string | null; name: string; nameStyle?: string | null; title?: string | null; className: string; spec: string; level: number; rank: string; role: string; roleKey: string; main: string; ready: string; seen: string }
 type Tab = "members" | "craft" | "bank";
 const FILTERS = [["all", "Everyone"], ["tank", "Tanks"], ["healer", "Healers"], ["melee", "Melee"], ["ranged", "Ranged"]] as const;
 
@@ -66,7 +67,7 @@ export function RosterView({ initialTab, total, rows, profs, bank, requests, sig
                       <Link href={`/characters/${m.slug}`} className="row" style={{ textDecoration: "none", gap: 10, flexWrap: "nowrap" }}>
                         <Avatar name={m.name} className={m.className} size={36} url={m.avatarUrl} />
                         <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.3 }}>
-                          <span className="strong" style={{ color: classColor(m.className) }}>{m.name}</span>
+                          <PlayerName as="strong" name={m.name} className={m.className} nameStyle={m.nameStyle} title={m.title} />
                           <span className="micro muted">{m.spec} {m.className}</span>
                         </span>
                       </Link>

@@ -1,0 +1,436 @@
+import "server-only";
+// Arcade engine: Dragon Marks wallet and every game's outcome, decided here on the server
+// (the browser only animates the result). Marks are play money: they buy cosmetics, never anything real.
+import { sql, sqlOne, tx } from "./db";
+import { CHESTS, COSMETICS, DUPLICATE_REFUND, type Cosmetic, type Rarity } from "./cosmetics";
+
+export const START_MARKS = 0; // new players claim the welcome bonus instead
+export const WELCOME_MARKS = 2500;
+export const MIN_BET = 10;
+export const MAX_BET = 25_000;
+const EDGE = 0.97; // return to player on fair-priced games
+
+export class ArcadeError extends Error {}
+
+/** Uniform float in [0, 1) from the platform CSPRNG. */
+export function rand() {
+  const a = new Uint32Array(2);
+  crypto.getRandomValues(a);
+  return (a[0] * 2 ** 21 + (a[1] >>> 11)) / 2 ** 53;
+}
+const randInt = (n: number) => Math.floor(rand() * n);
+
+// ---------------------------------------------------------------- wallet
+export interface Wallet { marks: number; streak: number; lastDaily: string | null; lifetimeWon: number; lifetimeWagered: number; welcomed: boolean }
+
+export async function wallet(userId: string): Promise<Wallet> {
+  await sql("insert into arcade_wallets (user_id, marks) values ($1, $2) on conflict (user_id) do nothing", [userId, START_MARKS]);
+  const w = await sqlOne<any>("select marks, daily_streak, last_daily, lifetime_won, lifetime_wagered, welcomed from arcade_wallets where user_id = $1", [userId]);
+  return { marks: w?.marks ?? 0, streak: w?.daily_streak ?? 0, lastDaily: w?.last_daily ?? null, lifetimeWon: w?.lifetime_won ?? 0, lifetimeWagered: w?.lifetime_wagered ?? 0, welcomed: !!w?.welcomed };
+}
+
+export function checkBet(bet: unknown) {
+  const b = Math.floor(Number(bet));
+  if (!Number.isFinite(b) || b < MIN_BET) throw new ArcadeError(`Minimum bet is ${MIN_BET} marks.`);
+  if (b > MAX_BET) throw new ArcadeError(`Maximum bet is ${MAX_BET.toLocaleString("en-US")} marks.`);
+  return b;
+}
+
+/** Take marks atomically; fails if the balance is too low. */
+export async function debit(userId: string, amount: number, wager = true) {
+  await wallet(userId);
+  const r = await sqlOne<{ marks: number }>(
+    `update arcade_wallets set marks = marks - $2, lifetime_wagered = lifetime_wagered + $3 where user_id = $1 and marks >= $2 returning marks`,
+    [userId, amount, wager ? amount : 0],
+  );
+  if (!r) throw new ArcadeError("Not enough Dragon Marks. Spin the daily wheel for more.");
+  return r.marks;
+}
+export async function credit(userId: string, amount: number) {
+  if (amount <= 0) return (await wallet(userId)).marks;
+  const r = await sqlOne<{ marks: number }>(
+    "update arcade_wallets set marks = marks + $2, lifetime_won = lifetime_won + $2 where user_id = $1 returning marks", [userId, Math.floor(amount)]);
+  return r?.marks ?? 0;
+}
+export async function logPlay(userId: string, game: string, bet: number, payout: number, detail?: unknown) {
+  await sql("insert into arcade_plays (user_id, game, bet, payout, detail) values ($1,$2,$3,$4,$5)", [userId, game, bet, Math.floor(payout), detail ? JSON.stringify(detail) : null]);
+}
+const pay = (bet: number, mult: number) => Math.floor(bet * mult);
+
+// ---------------------------------------------------------------- welcome bonus
+/** One-time welcome: 2,500 marks and a free uncommon name colour. */
+export async function claimWelcome(userId: string) {
+  await wallet(userId);
+  const r = await sqlOne<{ marks: number }>(
+    "update arcade_wallets set marks = marks + $2, lifetime_won = lifetime_won + $2, welcomed = 1 where user_id = $1 and welcomed = 0 returning marks", [userId, WELCOME_MARKS]);
+  if (!r) throw new ArcadeError("You've already claimed your welcome bonus.");
+  const owned = new Set(await ownedCosmetics(userId));
+  const pool = COSMETICS.filter((c) => c.kind === "name" && c.rarity === "uncommon" && !owned.has(c.id));
+  const gift = pool.length ? pool[randInt(pool.length)] : null;
+  if (gift) await sql("insert into cosmetics_owned (user_id, cosmetic_id) values ($1,$2) on conflict do nothing", [userId, gift.id]);
+  await logPlay(userId, "welcome", 0, WELCOME_MARKS, { gift: gift?.id });
+  return { marks: WELCOME_MARKS, gift, balance: r.marks };
+}
+
+// ---------------------------------------------------------------- daily wheel
+export const WHEEL = [
+  { marks: 100, w: 26 }, { marks: 150, w: 22 }, { marks: 250, w: 19 }, { marks: 400, w: 13 },
+  { marks: 600, w: 9 }, { marks: 1000, w: 6 }, { marks: 2500, w: 3.5 }, { marks: 5000, w: 1.5 },
+];
+const dayKey = (d = new Date()) => d.toLocaleDateString("en-CA", { timeZone: "America/Chicago" }); // YYYY-MM-DD, Central
+export const canSpinToday = (lastDaily: string | null) => !lastDaily || dayKey(new Date(lastDaily)) !== dayKey();
+
+export async function spinWheel(userId: string) {
+  const w = await wallet(userId);
+  if (!canSpinToday(w.lastDaily)) throw new ArcadeError("You've spun today. The wheel resets at midnight Central.");
+  const yesterday = dayKey(new Date(Date.now() - 24 * 3600_000));
+  const streak = w.lastDaily && dayKey(new Date(w.lastDaily)) === yesterday ? w.streak + 1 : 1;
+  const total = WHEEL.reduce((a, s) => a + s.w, 0);
+  let r = rand() * total, index = 0;
+  for (; index < WHEEL.length - 1; index++) { r -= WHEEL[index].w; if (r < 0) break; }
+  const bonusPct = Math.min(50, (streak - 1) * 10);
+  const marks = Math.floor(WHEEL[index].marks * (1 + bonusPct / 100));
+  // Conditional update so a double-click can't spin twice.
+  const ok = await sqlOne<{ marks: number }>(
+    `update arcade_wallets set marks = marks + $2, lifetime_won = lifetime_won + $2, daily_streak = $3, last_daily = $4
+     where user_id = $1 and (last_daily is null or last_daily = $5) returning marks`,
+    [userId, marks, streak, new Date().toISOString(), w.lastDaily],
+  );
+  if (!ok) throw new ArcadeError("You've spun today.");
+  await logPlay(userId, "wheel", 0, marks, { index, streak, bonusPct });
+  return { index, base: WHEEL[index].marks, marks, streak, bonusPct, balance: ok.marks };
+}
+
+// ---------------------------------------------------------------- plinko
+export const PLINKO_ROWS = [8, 12, 16] as const;
+export const PLINKO_RISKS = ["low", "medium", "high"] as const;
+export type PlinkoRisk = (typeof PLINKO_RISKS)[number];
+const binom = (n: number, k: number) => { let r = 1; for (let i = 1; i <= k; i++) r = (r * (n - k + i)) / i; return r; };
+const round = (m: number) => (m >= 100 ? Math.round(m) : m >= 10 ? Math.round(m * 10) / 10 : Math.round(m * 100) / 100);
+/** Multipliers per slot: edges pay big, the middle pays little; tuned so the long-run return is ~97%. */
+export function plinkoTable(rows: number, risk: PlinkoRisk) {
+  const [base, p] = risk === "low" ? [0.5, 2] : risk === "medium" ? [0.3, 3.5] : [0.2, 6];
+  const d = (k: number) => Math.abs(k - rows / 2) / (rows / 2);
+  let e = 0;
+  for (let k = 0; k <= rows; k++) e += (binom(rows, k) / 2 ** rows) * d(k) ** p;
+  return Array.from({ length: rows + 1 }, (_, k) => round(base + ((EDGE - base) * d(k) ** p) / e));
+}
+export function playPlinko(rows: number, risk: PlinkoRisk) {
+  if (!PLINKO_ROWS.includes(rows as 8)) throw new ArcadeError("Pick 8, 12 or 16 rows.");
+  if (!PLINKO_RISKS.includes(risk)) throw new ArcadeError("Pick a risk.");
+  const path = Array.from({ length: rows }, () => (rand() < 0.5 ? 0 : 1));
+  const slot = path.reduce((a: number, b) => a + b, 0);
+  return { path, slot, mult: plinkoTable(rows, risk)[slot] };
+}
+
+// ---------------------------------------------------------------- dice, coin flip
+export function playDice(target: number, over: boolean) {
+  const t = Math.round(Number(target) * 100) / 100;
+  if (!(t >= 2 && t <= 98)) throw new ArcadeError("Target must be between 2 and 98.");
+  const chance = over ? (100 - t) / 100 : t / 100;
+  const roll = Math.floor(rand() * 10000) / 100;
+  const win = over ? roll > t : roll < t;
+  const mult = Math.floor((EDGE / chance) * 10000) / 10000;
+  return { roll, win, mult, chance };
+}
+export function playCoin(side: "alliance" | "horde") {
+  if (side !== "alliance" && side !== "horde") throw new ArcadeError("Pick a side.");
+  const landed = rand() < 0.5 ? "alliance" : "horde";
+  return { landed, win: landed === side, mult: 1.94 };
+}
+
+// ---------------------------------------------------------------- slots: "Dragon's Hoard"
+export const SLOT_SYMBOLS = [
+  { id: "dragon", icon: "achievement_boss_onyxia", w: 1, pay3: 250 },
+  { id: "gem", icon: "inv_misc_gem_01", w: 2, pay3: 60 },
+  { id: "sword", icon: "inv_sword_04", w: 3, pay3: 25 },
+  { id: "potion", icon: "inv_potion_51", w: 4, pay3: 12 },
+  { id: "rune", icon: "inv_misc_rune_01", w: 5, pay3: 8 },
+  { id: "coin", icon: "inv_misc_coin_02", w: 6, pay3: 6 },
+] as const;
+const SLOT_W = SLOT_SYMBOLS.reduce((a, s) => a + s.w, 0);
+/** Paytable: three of a kind pays its line; otherwise a pair pays 0.5x and each dragon adds (1 dragon 1x, 2 dragons 15x). */
+export const SLOT_PAIR = 0.5, SLOT_DRAGON_ONE = 1, SLOT_DRAGON_TWO = 15;
+function slotMult(r: number[]) {
+  const ids = r.map((i) => SLOT_SYMBOLS[i].id);
+  if (ids[0] === ids[1] && ids[1] === ids[2]) return SLOT_SYMBOLS[r[0]].pay3;
+  const dragons = ids.filter((x) => x === "dragon").length;
+  const pair = ids.some((x, i) => x !== "dragon" && ids.indexOf(x) !== i);
+  return (dragons === 2 ? SLOT_DRAGON_TWO : dragons === 1 ? SLOT_DRAGON_ONE : 0) + (pair ? SLOT_PAIR : 0);
+}
+/** Exact long-run return of the paytable (used by the page and to keep the table honest). */
+export function slotsRtp() {
+  let e = 0;
+  const n = SLOT_SYMBOLS.length;
+  for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) for (let c = 0; c < n; c++)
+    e += ((SLOT_SYMBOLS[a].w * SLOT_SYMBOLS[b].w * SLOT_SYMBOLS[c].w) / SLOT_W ** 3) * slotMult([a, b, c]);
+  return e;
+}
+export function playSlots() {
+  const pick = () => { let r = rand() * SLOT_W, i = 0; for (; i < SLOT_SYMBOLS.length - 1; i++) { r -= SLOT_SYMBOLS[i].w; if (r < 0) break; } return i; };
+  const reels = [pick(), pick(), pick()];
+  return { reels, mult: slotMult(reels) };
+}
+
+// ---------------------------------------------------------------- multi-step rounds (mines, hi-lo, crash)
+type Round = { id: string; game: string; bet: number; state: any; status: string; created_at: string };
+async function activeRound(userId: string, game: string) {
+  const r = await sqlOne<Round>("select id, game, bet, state, status, created_at from arcade_rounds where user_id = $1 and game = $2 and status = 'active' order by created_at desc limit 1", [userId, game]);
+  return r ? { ...r, state: JSON.parse(r.state) } : null;
+}
+async function roundById(userId: string, id: string, game: string) {
+  const r = await sqlOne<Round>("select id, game, bet, state, status, created_at from arcade_rounds where id = $1 and user_id = $2 and game = $3", [String(id).slice(0, 64), userId, game]);
+  if (!r) throw new ArcadeError("That round wasn't found.");
+  return { ...r, state: JSON.parse(r.state) };
+}
+async function newRound(userId: string, game: string, bet: number, state: unknown) {
+  const r = await sqlOne<{ id: string }>("insert into arcade_rounds (user_id, game, bet, state) values ($1,$2,$3,$4) returning id", [userId, game, bet, JSON.stringify(state)]);
+  return r!.id;
+}
+/** Settle a round exactly once: only the request that flips it from active pays. */
+async function closeRound(id: string, state: unknown, status: "won" | "lost") {
+  const r = await sqlOne<{ id: string }>("update arcade_rounds set state = $2, status = $3 where id = $1 and status = 'active' returning id", [id, JSON.stringify(state), status]);
+  return !!r;
+}
+async function saveRound(id: string, state: unknown) {
+  await sql("update arcade_rounds set state = $2 where id = $1 and status = 'active'", [id, JSON.stringify(state)]);
+}
+
+// Mines: 5x5 board, you choose how many mines.
+export const MINE_TILES = 25;
+export const minesMult = (mines: number, safe: number) => {
+  let m = EDGE;
+  for (let i = 0; i < safe; i++) m *= (MINE_TILES - i) / (MINE_TILES - mines - i);
+  return Math.floor(m * 100) / 100;
+};
+const minesView = (r: { id: string; bet: number; state: any; status: string }) => ({
+  id: r.id, bet: r.bet, mines: r.state.mines, revealed: r.state.revealed as number[], status: r.status,
+  mult: minesMult(r.state.mines, r.state.revealed.length), next: minesMult(r.state.mines, r.state.revealed.length + 1),
+  board: r.status === "active" ? undefined : (r.state.board as number[]),
+});
+export async function minesStart(userId: string, bet: number, mines: number) {
+  const existing = await activeRound(userId, "mines");
+  if (existing) return { round: minesView(existing), balance: (await wallet(userId)).marks, resumed: true };
+  const m = Math.floor(Number(mines));
+  if (!(m >= 1 && m <= 24)) throw new ArcadeError("Pick 1 to 24 mines.");
+  const balance = await debit(userId, bet);
+  const tiles = Array.from({ length: MINE_TILES }, (_, i) => i);
+  for (let i = tiles.length - 1; i > 0; i--) { const j = randInt(i + 1); [tiles[i], tiles[j]] = [tiles[j], tiles[i]]; }
+  const board = tiles.slice(0, m).sort((a, b) => a - b);
+  const id = await newRound(userId, "mines", bet, { mines: m, board, revealed: [] });
+  return { round: minesView({ id, bet, state: { mines: m, board, revealed: [] }, status: "active" }), balance, resumed: false };
+}
+export async function minesReveal(userId: string, id: string, tile: number) {
+  const r = await roundById(userId, id, "mines");
+  if (r.status !== "active") throw new ArcadeError("That round is over.");
+  const t = Math.floor(Number(tile));
+  if (!(t >= 0 && t < MINE_TILES) || r.state.revealed.includes(t)) throw new ArcadeError("Pick a hidden tile.");
+  if (r.state.board.includes(t)) {
+    const state = { ...r.state, revealed: [...r.state.revealed], hit: t };
+    if (await closeRound(r.id, state, "lost")) await logPlay(userId, "mines", r.bet, 0, { mines: r.state.mines, safe: r.state.revealed.length });
+    return { round: minesView({ ...r, state, status: "lost" }), hit: t, balance: (await wallet(userId)).marks };
+  }
+  const state = { ...r.state, revealed: [...r.state.revealed, t] };
+  if (state.revealed.length === MINE_TILES - r.state.mines) return minesCashout(userId, r.id, state);
+  await saveRound(r.id, state);
+  return { round: minesView({ ...r, state }), balance: (await wallet(userId)).marks };
+}
+export async function minesCashout(userId: string, id: string, stateOverride?: any) {
+  const r = await roundById(userId, id, "mines");
+  if (r.status !== "active") throw new ArcadeError("That round is over.");
+  const state = stateOverride ?? r.state;
+  if (!state.revealed.length) throw new ArcadeError("Reveal at least one tile first.");
+  const mult = minesMult(state.mines, state.revealed.length), won = pay(r.bet, mult);
+  let balance = (await wallet(userId)).marks;
+  if (await closeRound(r.id, state, "won")) { balance = await credit(userId, won); await logPlay(userId, "mines", r.bet, won, { mines: state.mines, safe: state.revealed.length, mult }); }
+  return { round: minesView({ ...r, state, status: "won" }), won, balance };
+}
+
+// Hi-Lo: one card at a time (Ace low, King high). "Higher" wins on same-or-higher, "Lower" on same-or-lower.
+const hiloView = (r: { id: string; bet: number; state: any; status: string }) => ({
+  id: r.id, bet: r.bet, status: r.status, card: r.state.card as number, mult: r.state.mult as number, history: r.state.history as number[],
+  odds: { higher: (14 - r.state.card) / 13, lower: r.state.card / 13 },
+});
+export async function hiloStart(userId: string, bet: number) {
+  const existing = await activeRound(userId, "hilo");
+  if (existing) return { round: hiloView(existing), balance: (await wallet(userId)).marks, resumed: true };
+  const balance = await debit(userId, bet);
+  const state = { card: 1 + randInt(13), mult: 1, history: [] as number[], steps: 0 };
+  const id = await newRound(userId, "hilo", bet, state);
+  return { round: hiloView({ id, bet, state, status: "active" }), balance, resumed: false };
+}
+export async function hiloGuess(userId: string, id: string, guess: "higher" | "lower" | "skip") {
+  const r = await roundById(userId, id, "hilo");
+  if (r.status !== "active") throw new ArcadeError("That round is over.");
+  const c = r.state.card as number, next = 1 + randInt(13);
+  const history = [...r.state.history, c].slice(-12);
+  if (guess === "skip") {
+    if ((r.state.skips ?? 0) >= 3) throw new ArcadeError("Only 3 skips per round.");
+    const state = { ...r.state, card: next, history, skips: (r.state.skips ?? 0) + 1 };
+    await saveRound(r.id, state);
+    return { round: hiloView({ ...r, state }), next, win: true, balance: (await wallet(userId)).marks };
+  }
+  const p = guess === "higher" ? (14 - c) / 13 : c / 13;
+  if (p >= 1) throw new ArcadeError(guess === "higher" ? "Everything is same-or-higher than an Ace. Guess lower or skip." : "Everything is same-or-lower than a King. Guess higher or skip.");
+  const win = guess === "higher" ? next >= c : next <= c;
+  if (!win) {
+    const state = { ...r.state, card: next, history };
+    if (await closeRound(r.id, state, "lost")) await logPlay(userId, "hilo", r.bet, 0, { steps: r.state.steps });
+    return { round: hiloView({ ...r, state, status: "lost" }), next, win: false, balance: (await wallet(userId)).marks };
+  }
+  const mult = Math.floor(r.state.mult * (EDGE / p) * 100) / 100;
+  const state = { ...r.state, card: next, mult, history, steps: r.state.steps + 1 };
+  await saveRound(r.id, state);
+  return { round: hiloView({ ...r, state }), next, win: true, balance: (await wallet(userId)).marks };
+}
+export async function hiloCashout(userId: string, id: string) {
+  const r = await roundById(userId, id, "hilo");
+  if (r.status !== "active") throw new ArcadeError("That round is over.");
+  if (!r.state.steps) throw new ArcadeError("Win at least one guess first.");
+  const won = pay(r.bet, r.state.mult);
+  let balance = (await wallet(userId)).marks;
+  if (await closeRound(r.id, r.state, "won")) { balance = await credit(userId, won); await logPlay(userId, "hilo", r.bet, won, { steps: r.state.steps, mult: r.state.mult }); }
+  return { round: hiloView({ ...r, status: "won" }), won, balance };
+}
+
+// Crash: "Dragonflight". The multiplier climbs until the dragon dives; cash out before it does.
+export const crashAt = (ms: number) => Math.floor(Math.exp(0.00011 * Math.max(0, ms)) * 100) / 100; // ~2x at 6.3s, ~10x at 21s
+const msFor = (mult: number) => Math.log(mult) / 0.00011;
+export async function crashStart(userId: string, bet: number, auto: number | null) {
+  const existing = await activeRound(userId, "crash");
+  if (existing) await crashSettle(userId, existing); // a stale round from an earlier tab: settle it first
+  const balance = await debit(userId, bet);
+  const u = rand();
+  const point = u < 0.03 ? 1 : Math.min(1000, Math.max(1, Math.floor((EDGE / (1 - u)) * 100) / 100));
+  const target = auto && auto >= 1.01 ? Math.min(1000, Math.floor(auto * 100) / 100) : null;
+  const state = { point, start: Date.now() + 1200, auto: target }; // short countdown before lift-off
+  const id = await newRound(userId, "crash", bet, state);
+  return { id, start: state.start, now: Date.now(), auto: target, balance };
+}
+async function crashSettle(userId: string, r: { id: string; bet: number; state: any; status: string }, cashoutAt?: number) {
+  const { point, start, auto } = r.state;
+  const elapsed = Date.now() - start;
+  const current = crashAt(elapsed);
+  // Auto cash-out wins if the target is reached before the dive.
+  if (auto && auto < point && current >= auto) return settleWin(userId, r, auto);
+  if (current >= point || point <= 1) {
+    if (await closeRound(r.id, { ...r.state, end: point }, "lost")) await logPlay(userId, "crash", r.bet, 0, { point });
+    return { status: "lost" as const, point, mult: point, won: 0, balance: (await wallet(userId)).marks };
+  }
+  if (cashoutAt !== undefined) return settleWin(userId, r, Math.max(1, Math.min(current, point - 0.01)));
+  return { status: "active" as const, mult: current, now: Date.now(), start };
+}
+async function settleWin(userId: string, r: { id: string; bet: number; state: any }, mult: number) {
+  const won = pay(r.bet, mult);
+  let balance = (await wallet(userId)).marks;
+  if (await closeRound(r.id, { ...r.state, cashout: mult }, "won")) { balance = await credit(userId, won); await logPlay(userId, "crash", r.bet, won, { point: r.state.point, cashout: mult }); }
+  return { status: "won" as const, point: r.state.point, mult, won, balance };
+}
+export async function crashPoll(userId: string, id: string) {
+  const r = await roundById(userId, id, "crash");
+  if (r.status !== "active") return { status: r.status as "won" | "lost", point: r.state.point, mult: r.state.cashout ?? r.state.point, won: r.state.cashout ? pay(r.bet, r.state.cashout) : 0, balance: (await wallet(userId)).marks };
+  return crashSettle(userId, r);
+}
+export async function crashCashout(userId: string, id: string) {
+  const r = await roundById(userId, id, "crash");
+  if (r.status !== "active") return crashPoll(userId, id);
+  if (Date.now() < r.state.start) throw new ArcadeError("Wait for lift-off.");
+  return crashSettle(userId, r, 0);
+}
+export const crashTimeTo = msFor;
+
+// ---------------------------------------------------------------- chests
+export async function openChest(userId: string, chestId: string) {
+  const chest = CHESTS.find((c) => c.id === chestId);
+  if (!chest) throw new ArcadeError("Unknown chest.");
+  await debit(userId, chest.price);
+  let r = rand(), rarity: Rarity = "common";
+  for (const k of ["legendary", "epic", "rare", "uncommon", "common"] as Rarity[]) { r -= chest.odds[k]; if (r < 0) { rarity = k; break; } }
+  if (chest.odds[rarity] === 0) rarity = "uncommon";
+  const pool = COSMETICS.filter((c) => c.rarity === rarity);
+  const item: Cosmetic = pool[randInt(pool.length)];
+  let duplicate = false, refund = 0;
+  if (item.kind === "marks") refund = item.marks ?? 0;
+  else {
+    const added = await sqlOne<{ cosmetic_id: string }>(
+      "insert into cosmetics_owned (user_id, cosmetic_id) values ($1,$2) on conflict do nothing returning cosmetic_id", [userId, item.id]);
+    if (!added) { duplicate = true; refund = DUPLICATE_REFUND[rarity]; }
+  }
+  const balance = refund ? await credit(userId, refund) : (await wallet(userId)).marks;
+  await logPlay(userId, `chest:${chest.id}`, chest.price, refund, { item: item.id, rarity, duplicate });
+  return { item, rarity, duplicate, refund, balance };
+}
+
+export async function ownedCosmetics(userId: string) {
+  return (await sql<{ cosmetic_id: string }>("select cosmetic_id from cosmetics_owned where user_id = $1", [userId])).map((r) => r.cosmetic_id);
+}
+
+export async function equip(userId: string, kind: "name" | "title" | "theme", id: string | null) {
+  if (id) {
+    const c = COSMETICS.find((x) => x.id === id);
+    if (!c || c.kind !== kind) throw new ArcadeError("That isn't a " + kind + " cosmetic.");
+    const own = await sqlOne("select 1 from cosmetics_owned where user_id = $1 and cosmetic_id = $2", [userId, id]);
+    if (!own) throw new ArcadeError("You don't own that yet. Open chests to find it.");
+  }
+  const col = kind === "name" ? "name_style" : kind === "title" ? "title" : "site_theme";
+  await sql(`update users set ${col} = $2 where id = $1`, [userId, id]);
+}
+
+// ---------------------------------------------------------------- lobby data
+export async function leaderboard() {
+  return sql<{ marks: number; name: string | null; surname: string | null; class: string | null; avatar_url: string | null; slug: string | null; name_style: string | null; title: string | null }>(
+    `select w.marks, c.name, c.surname, c.class, c.avatar_url, c.slug, u.name_style, u.title
+     from arcade_wallets w join users u on u.id = w.user_id left join characters c on c.id = u.main_character_id
+     order by w.marks desc limit 10`);
+}
+export async function recentWins() {
+  return sql<{ game: string; bet: number; payout: number; created_at: string; name: string | null; surname: string | null; class: string | null; name_style: string | null; detail: string | null }>(
+    `select p.game, p.bet, p.payout, p.created_at, p.detail, c.name, c.surname, c.class, u.name_style
+     from arcade_plays p join users u on u.id = p.user_id left join characters c on c.id = u.main_character_id
+     where (p.bet > 0 and p.payout >= p.bet * 3) or p.game like 'chest:%' and p.detail like '%"rarity":"legendary"%' or p.detail like '%"rarity":"epic"%'
+     order by p.created_at desc limit 12`);
+}
+
+// ---------------------------------------------------------------- council observer pool
+// Non-council guildmates back a contender with marks. When the council awards the item, everyone who
+// backed the winner splits the whole pool in proportion to their stake. If nobody called it, or the item
+// went to someone outside the contenders, every stake is refunded. No house cut.
+export const POOL_MAX = 5000;
+export async function poolStake(userId: string, itemId: number, characterId: string, stake: number) {
+  const s = Math.floor(Number(stake));
+  if (!(s >= MIN_BET && s <= POOL_MAX)) throw new ArcadeError(`Stake between ${MIN_BET} and ${POOL_MAX.toLocaleString("en-US")} marks.`);
+  const wished = await sqlOne("select 1 from wishlist_items where item_id = $1 and character_id = $2", [itemId, characterId]);
+  if (!wished) throw new ArcadeError("That player isn't a contender for this item.");
+  const mine = await sqlOne("select 1 from council_pool where item_id = $1 and user_id = $2 and status = 'open'", [itemId, userId]);
+  if (mine) throw new ArcadeError("You've already backed someone for this item.");
+  const balance = await debit(userId, s);
+  await sql("insert into council_pool (item_id, user_id, character_id, stake) values ($1,$2,$3,$4)", [itemId, userId, characterId, s]);
+  return { balance };
+}
+
+export async function poolSettle(itemId: number, winnerCharacterId: string) {
+  const rows = await sql<{ id: string; user_id: string; character_id: string; stake: number }>(
+    "select id, user_id, character_id, stake from council_pool where item_id = $1 and status = 'open'", [itemId]);
+  if (!rows.length) return { settled: 0 };
+  const total = rows.reduce((a, r) => a + r.stake, 0);
+  const winners = rows.filter((r) => r.character_id === winnerCharacterId);
+  const winStake = winners.reduce((a, r) => a + r.stake, 0);
+  await tx(async (q) => {
+    for (const r of rows) {
+      const won = winStake ? (r.character_id === winnerCharacterId ? Math.floor((r.stake / winStake) * total) : 0) : r.stake;
+      const status = winStake ? (won ? "won" : "lost") : "refunded";
+      await q("update council_pool set status = $2, payout = $3 where id = $1 and status = 'open'", [r.id, status, won]);
+      if (won) await q("update arcade_wallets set marks = marks + $2, lifetime_won = lifetime_won + $2 where user_id = $1", [r.user_id, won]);
+      await q("insert into arcade_plays (user_id, game, bet, payout, detail) values ($1,'council-pool',$2,$3,$4)", [r.user_id, r.stake, won, JSON.stringify({ itemId, status })]);
+    }
+  });
+  return { settled: rows.length, total, winners: winners.length };
+}
+
+export async function poolFor(itemIds: number[]) {
+  if (!itemIds.length) return [];
+  return sql<{ item_id: number; user_id: string; character_id: string; stake: number; name: string | null; surname: string | null; class: string | null; avatar_url: string | null; name_style: string | null }>(
+    `select p.item_id, p.user_id, p.character_id, p.stake, c.name, c.surname, c.class, c.avatar_url, u.name_style
+     from council_pool p join users u on u.id = p.user_id left join characters c on c.id = u.main_character_id
+     where p.status = 'open' and p.item_id in (select value from json_each($1))`, [JSON.stringify(itemIds)]);
+}

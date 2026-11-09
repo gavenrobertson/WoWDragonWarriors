@@ -12,6 +12,8 @@ import type { ActionResult } from "@/components/useAction";
 import type { Role, SignupStatus } from "@/lib/types";
 import { assignableRoles, canChangeRoleOf, roleLabel, type SiteRole } from "@/lib/roles";
 import { BIS_PHASE, SLOTS, SOURCE_TYPES } from "@/lib/bis";
+import { poolSettle } from "@/lib/arcade";
+import { contestedCount, latestSession } from "@/lib/council";
 
 const ROLES: Role[] = ["tank", "healer", "melee", "ranged"];
 const SIGNUP: SignupStatus[] = ["accepted", "tentative", "late", "bench", "declined"];
@@ -590,11 +592,28 @@ export async function awardItem(input: { itemId: number; characterId: string; re
       await q("delete from wishlist_items where character_id = $1 and item_id = $2", [ch.id, itemId]);
       await q("delete from council_votes where item_id = $1", [itemId]);
     });
+    await poolSettle(item.id, ch.id).catch((e) => console.error("pool settle", e));
     await notifyAward(item.id, ch.id, votes?.n ? `Council vote (${votes.n})` : "Loot council", v);
+    await maybeRecap();
     revalidatePath("/loot");
     revalidatePath("/loot/council");
     return { ok: true, message: `${item.name} awarded to ${ch.name}` };
   });
+}
+
+/** After the last contested item is awarded, post the session recap to Discord. */
+async function maybeRecap() {
+  try {
+    if ((await contestedCount()) > 0) return;
+    const r = await latestSession();
+    if (!r || !r.items.length) return;
+    const lines = r.items.slice(0, 20).map((i) => `${i.overruled ? "⚖️" : "🏆"} **${i.name}** → ${i.winner.name}`);
+    await notify("loot", {
+      title: `📜 Council adjourned: ${r.items.length} item${r.items.length === 1 ? "" : "s"} awarded`,
+      description: lines.join("\n") + (r.pool?.best ? `\n\nSharpest observer: **${r.pool.best.name}** (+${r.pool.best.profit.toLocaleString("en-US")} marks)` : ""),
+      url: hubUrl("/loot/council/overview"), color: 0xffd100,
+    });
+  } catch (e) { console.error("council recap", e); }
 }
 
 async function notifyAward(itemId: number, characterId: string, how: string, v: Viewer) {
@@ -659,6 +678,8 @@ export async function overrideAward(input: { itemId: number; characterId: string
       await q("delete from council_votes where item_id = $1", [itemId]);
     });
     await notifyAward(itemId, ch.id, `⚖️ Admin override: ${reason}`, v);
+    await poolSettle(itemId, ch.id).catch((e) => console.error("pool settle", e));
+    await maybeRecap();
     revalidatePath("/loot");
     revalidatePath("/loot/council");
     return { ok: true, message: `${item.name} given to ${ch.name} (council overruled)` };
