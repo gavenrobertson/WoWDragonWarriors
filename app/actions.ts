@@ -32,6 +32,17 @@ async function act(perm: Permission | undefined, demoMessage: string, fn: (v: Vi
 
 const str = (v: unknown, max = 2000) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
+/** Discord embed author block for the viewer's main character. */
+function authorOf(v: Viewer) {
+  const m = v.main;
+  return m ? { name: m.name, icon_url: m.avatarUrl ?? undefined, url: hubUrl(`/characters/${m.slug}`) } : undefined;
+}
+/** Icon + quality colour for an item mentioned by name, when the hub knows it. */
+async function itemLook(name: string) {
+  const it = await sqlOne<{ icon_url: string | null; quality: string | null }>("select icon_url, quality from items where lower(name) = lower($1) limit 1", [name]);
+  return { icon: it?.icon_url ?? undefined, color: it?.quality ? hexColor(qualityColor(it.quality)) : undefined };
+}
+
 /** Resolve a character the viewer owns (id or slug) → id. */
 function ownCharacterId(v: Viewer, idOrSlug: string) {
   const c = v.characters.find((c) => c.id === idOrSlug || c.slug === idOrSlug);
@@ -47,12 +58,25 @@ export async function claimCharacters(input: { claimed: string[]; main: string }
     const mine = new Map(rows.map((r) => [r.slug, r.id]));
     const mainId = mine.get(input.main);
     if (!mainId) return { ok: false, error: "That character isn't on your Battle.net account." };
+    const firstTime = !(await sqlOne<{ main_character_id: string | null }>("select main_character_id from users where id = $1", [v.userId]))?.main_character_id;
     await tx(async (q) => {
       await q("update characters set claimed = (slug in (select value from json_each($2))) where user_id = $1", [v.userId, input.claimed]);
       await q("update users set main_character_id = $2 where id = $1", [v.userId, mainId]);
     });
     // Pull fresh profiles for the claimed characters in the background of this request.
     if (configured.battlenet()) await Promise.allSettled(input.claimed.filter((s) => mine.has(s)).map((s) => syncCharacter(s)));
+    if (firstTime) {
+      const c = await sqlOne<{ name: string; surname: string; class: string | null; level: number | null; avatar_url: string | null; in_guild: number }>(
+        "select name, surname, class, level, avatar_url, in_guild from characters where id = $1", [mainId]);
+      if (c) {
+        const name = `${c.name} ${c.surname}`.trim();
+        await notify("roster", {
+          title: `🛡️ ${name} joined the guild hub`,
+          description: `${c.level ? `Level ${c.level} ` : ""}${c.class ?? ""}${c.in_guild ? "" : " · not in the guild yet"}${input.claimed.length > 1 ? ` · ${input.claimed.length - 1} alt${input.claimed.length === 2 ? "" : "s"} linked` : ""}`,
+          url: hubUrl(`/characters/${input.main}`), color: hexColor(CLASS_COLOR[c.class ?? ""] ?? null), thumbnail: c.avatar_url ?? undefined,
+        });
+      }
+    }
     revalidatePath("/", "layout");
     return { ok: true, message: "Characters linked" };
   });
@@ -207,8 +231,76 @@ export async function requestCraft(input: { itemName: string; quantity: number }
     if (!name) return { ok: false, error: "Name the item or recipe." };
     if (!v.main) return { ok: false, error: "Claim a character first." };
     await sql("insert into craft_requests (requester_id, item_name, quantity) values ($1,$2,$3)", [v.main.id, name, qty]);
+    const bank = name.startsWith("Bank request: ");
+    const item = bank ? name.slice("Bank request: ".length) : name;
+    const look = await itemLook(item);
+    await notify("crafting", {
+      title: bank ? `🏦 Guild bank request: ${item}` : `🔨 Craft request: ${qty > 1 ? `${qty}× ` : ""}${item}`,
+      description: bank
+        ? `**${v.main.name}** would like **${item}** from the guild bank.`
+        : `**${v.main.name}** needs **${qty}× ${item}**. Crafters: pick it up on the hub so others know it's covered.`,
+      author: authorOf(v), url: hubUrl("/roster?tab=craft"), color: look.color ?? 0xe0702a, thumbnail: look.icon,
+    });
     revalidatePath("/roster");
-    return { ok: true, message: "Request sent to crafters" };
+    return { ok: true, message: bank ? "Bank request sent" : "Request sent to crafters" };
+  });
+}
+
+type CraftRow = { id: string; item_name: string; quantity: number; status: string; requester_id: string | null; crafter_id: string | null; r_name: string | null; r_surname: string | null };
+async function craftRow(id: string) {
+  return sqlOne<CraftRow>(
+    `select r.id, r.item_name, r.quantity, r.status, r.requester_id, r.crafter_id, c.name as r_name, c.surname as r_surname
+     from craft_requests r left join characters c on c.id = r.requester_id where r.id = $1`, [str(id, 64)]);
+}
+const ownsCharId = (v: Viewer, id: string | null) => !!id && v.characters.some((c) => c.id === id);
+
+/** A crafter picks up an open request. */
+export async function claimCraft(id: string): Promise<ActionResult> {
+  return act(undefined, "You're on it", async (v) => {
+    if (!v.main) return { ok: false, error: "Claim a character first." };
+    const r = await craftRow(id);
+    if (!r || r.status !== "open") return { ok: false, error: "That request is no longer open." };
+    await sql("update craft_requests set crafter_id = $2, status = 'claimed' where id = $1 and status = 'open'", [r.id, v.main.id]);
+    const requester = r.r_name ? `${r.r_name} ${r.r_surname ?? ""}`.trim() : "a guildmate";
+    const look = await itemLook(r.item_name.replace(/^Bank request: /, ""));
+    await notify("crafting", {
+      title: `🛠️ ${v.main.name} is on it`,
+      description: `Crafting **${r.quantity > 1 ? `${r.quantity}× ` : ""}${r.item_name}** for **${requester}**.`,
+      author: authorOf(v), url: hubUrl("/roster?tab=craft"), color: 0xffd100, thumbnail: look.icon,
+    });
+    revalidatePath("/roster");
+    return { ok: true, message: "You're on it. The requester can see who's crafting." };
+  });
+}
+
+/** Mark a request done (the crafter, the requester or an officer). */
+export async function completeCraft(id: string): Promise<ActionResult> {
+  return act(undefined, "Marked done", async (v) => {
+    const r = await craftRow(id);
+    if (!r || (r.status !== "open" && r.status !== "claimed")) return { ok: false, error: "That request is already closed." };
+    if (!ownsCharId(v, r.crafter_id) && !ownsCharId(v, r.requester_id) && !v.perms.isAdmin) return { ok: false, error: "Only the crafter, the requester or an officer can close this." };
+    await sql("update craft_requests set status = 'done', crafter_id = coalesce(crafter_id, $2) where id = $1", [r.id, ownsCharId(v, r.requester_id) ? null : v.main?.id ?? null]);
+    const requester = r.r_name ? `${r.r_name} ${r.r_surname ?? ""}`.trim() : "a guildmate";
+    const look = await itemLook(r.item_name.replace(/^Bank request: /, ""));
+    await notify("crafting", {
+      title: `✅ Delivered: ${r.quantity > 1 ? `${r.quantity}× ` : ""}${r.item_name}`,
+      description: `**${requester}**'s request is done${v.main && !ownsCharId(v, r.requester_id) ? `, thanks to **${v.main.name}**` : ""}.`,
+      author: authorOf(v), url: hubUrl("/roster?tab=craft"), color: 0x4cd964, thumbnail: look.icon,
+    });
+    revalidatePath("/roster");
+    return { ok: true, message: "Marked done" };
+  });
+}
+
+/** Withdraw a request (the requester or an officer). Not posted to Discord. */
+export async function cancelCraft(id: string): Promise<ActionResult> {
+  return act(undefined, "Request withdrawn", async (v) => {
+    const r = await craftRow(id);
+    if (!r || (r.status !== "open" && r.status !== "claimed")) return { ok: false, error: "That request is already closed." };
+    if (!ownsCharId(v, r.requester_id) && !v.perms.isAdmin) return { ok: false, error: "Only the requester or an officer can withdraw this." };
+    await sql("update craft_requests set status = 'cancelled' where id = $1", [r.id]);
+    revalidatePath("/roster");
+    return { ok: true, message: "Request withdrawn" };
   });
 }
 
@@ -393,6 +485,12 @@ export async function importBank(json: string): Promise<ActionResult> {
     const items = Array.isArray(data.items) ? data.items.slice(0, 2000).map((i: any) => ({ name: str(i.name, 120), tab: str(i.tab, 60), qty: Number(i.qty) || 0, quality: str(i.quality, 20) || "common" })) : [];
     await sql("insert into bank_snapshots (gold, items, uploaded_by) values ($1,$2,$3)", [Number.isFinite(Number(data.gold)) ? Math.floor(Number(data.gold)) : null, JSON.stringify(items), v.userId]);
     await sql("insert into sync_runs (job, status, value, note, finished_at) values ('addon','ok',$1,'Bank export uploaded',$2)", [`Bank: ${items.length} items`, nowIso()]);
+    const gold = Number.isFinite(Number(data.gold)) ? Math.floor(Number(data.gold) / 10000) : null;
+    await notify("crafting", {
+      title: "🏦 Guild bank updated",
+      description: `${items.length} item stack${items.length === 1 ? "" : "s"}${gold != null ? ` · ${gold.toLocaleString("en-US")} gold` : ""}. Members can request items from the bank tab.`,
+      author: authorOf(v), url: hubUrl("/roster?tab=bank"), color: 0xffd100,
+    });
     revalidatePath("/roster");
     revalidatePath("/");
     return { ok: true, message: "Bank export uploaded" };
@@ -422,6 +520,15 @@ export async function setUserRole(input: { userId: string; role: SiteRole | null
       if ((supers?.n ?? 0) <= 1) return { ok: false, error: "The hub needs at least one Super Admin." };
     }
     await sql("update users set site_role = $2 where id = $1", [input.userId, role]);
+    const who = await sqlOne<{ name: string | null; surname: string | null; class: string | null; avatar_url: string | null; slug: string | null }>(
+      "select c.name, c.surname, c.class, c.avatar_url, c.slug from users u left join characters c on c.id = u.main_character_id where u.id = $1", [input.userId]);
+    if (who?.name) {
+      const name = `${who.name} ${who.surname ?? ""}`.trim();
+      await notify("roster", {
+        title: role ? `🎖️ ${name} is now ${roleLabel(role)}` : `🎖️ ${name} no longer has a hub role`,
+        url: who.slug ? hubUrl(`/characters/${who.slug}`) : undefined, color: hexColor(CLASS_COLOR[who.class ?? ""] ?? null), thumbnail: who.avatar_url ?? undefined,
+      });
+    }
     revalidatePath("/", "layout");
     return { ok: true, message: `Role set to ${roleLabel(role)}` };
   });
@@ -430,7 +537,12 @@ export async function setUserRole(input: { userId: string; role: SiteRole | null
 export async function saveGuildPage(input: { motd: string; info: string }): Promise<ActionResult> {
   return act("isAdmin", "Guild page saved", async () => {
     const pairs: [string, string][] = [["guild_motd", str(input.motd, 280)], ["guild_info", str(input.info, 4000)]];
+    const before = await sqlOne<{ value: string }>("select value from settings where key = 'guild_motd'");
+    const oldMotd = before ? String(json(before.value, before.value)) : "";
     for (const [k, val] of pairs) await sql("insert into settings (key, value) values ($1, $2) on conflict (key) do update set value = excluded.value", [k, JSON.stringify(val)]);
+    if (pairs[0][1] && pairs[0][1] !== oldMotd) {
+      await notify("announcements", { title: "📜 Guild Message of the Day", description: pairs[0][1], url: hubUrl("/guild"), color: 0x40ff40 });
+    }
     revalidatePath("/guild");
     return { ok: true, message: "Guild page saved" };
   });

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { requestCraft } from "@/app/actions";
+import { cancelCraft, claimCraft, completeCraft, requestCraft } from "@/app/actions";
 import { Avatar, StatusDot } from "@/components/bits";
 import { Toast } from "@/components/Toast";
 import { useAction } from "@/components/useAction";
@@ -12,10 +12,11 @@ export interface MemberVM { slug: string; avatarUrl: string | null; name: string
 type Tab = "members" | "craft" | "bank";
 const FILTERS = [["all", "Everyone"], ["tank", "Tanks"], ["healer", "Healers"], ["melee", "Melee"], ["ranged", "Ranged"]] as const;
 
-export function RosterView({ initialTab, total, rows, profs, bank, requests, signedIn, source, auctionNs }: {
+export function RosterView({ initialTab, total, rows, profs, bank, requests, signedIn, source, auctionNs, myCharIds = [], isAdmin = false }: {
   initialTab: Tab; total: number; rows: MemberVM[]; profs: { name: string; crafters: { name: string; className: string; skill: number }[] }[];
-  bank: HubBank; requests: HubCraftRequest[]; signedIn: boolean; source: string; auctionNs: string;
+  bank: HubBank; requests: HubCraftRequest[]; signedIn: boolean; source: string; auctionNs: string; myCharIds?: string[]; isAdmin?: boolean;
 }) {
+  const mine = (id: string | null) => !!id && myCharIds.includes(id);
   const [tab, setTab] = useState<Tab>(initialTab);
   const [role, setRole] = useState("all");
   const [q, setQ] = useState("");
@@ -106,8 +107,32 @@ export function RosterView({ initialTab, total, rows, profs, bank, requests, sig
             </form>
             {requests.length > 0 && (
               <div className="panel" style={{ gap: 10 }}>
-                <h3>Open requests</h3>
-                <ul className="divided">{requests.map((r) => <li key={r.id} className="row between small" style={{ padding: "8px 0" }}><span>{r.itemName} × {r.quantity}</span><span className="muted">{r.requester}</span></li>)}</ul>
+                <div className="row between baseline"><h3>Open requests</h3><span className="micro muted">Also posted to Discord</span></div>
+                <ul className="divided">
+                  {requests.map((r) => {
+                    const isRequester = mine(r.requesterId), isCrafter = mine(r.crafterId);
+                    return (
+                      <li key={r.id} className="stack" style={{ padding: "10px 0", gap: 6 }}>
+                        <div className="row between small" style={{ gap: 8 }}>
+                          <span className="strong">{r.itemName}{r.quantity > 1 ? ` × ${r.quantity}` : ""}</span>
+                          <span className="muted">{r.requester}</span>
+                        </div>
+                        <div className="row between" style={{ gap: 8 }}>
+                          <span className="micro" style={{ color: r.status === "claimed" ? "#FFD100" : "var(--dw-text-muted)" }}>
+                            {r.status === "claimed" ? `🛠 ${isCrafter ? "You're" : `${r.crafter ?? "A crafter"} is`} crafting` : "Waiting for a crafter"}
+                          </span>
+                          {signedIn && (
+                            <span className="row" style={{ gap: 6 }}>
+                              {r.status === "open" && !isRequester && <button type="button" className="btn btn-sm" disabled={pending} onClick={() => run(() => claimCraft(r.id))}>I&apos;ll craft it</button>}
+                              {(isCrafter || isRequester || isAdmin) && r.status === "claimed" && <button type="button" className="btn btn-sm btn-primary" disabled={pending} onClick={() => run(() => completeCraft(r.id))}>Done</button>}
+                              {(isRequester || isAdmin) && <button type="button" className="btn btn-sm btn-ghost" disabled={pending} onClick={() => run(() => cancelCraft(r.id))}>Withdraw</button>}
+                            </span>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             )}
           </aside>

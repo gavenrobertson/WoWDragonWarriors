@@ -42,6 +42,8 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
       bank={bank}
       requests={requests}
       signedIn={viewer.signedIn}
+      myCharIds={viewer.characters.map((c) => c.id)}
+      isAdmin={viewer.perms.isAdmin}
       source={`/data/wow/guild/${SITE.guildSlug}/roster · ${NS.profile}`}
       auctionNs={NS.dynamic}
     />

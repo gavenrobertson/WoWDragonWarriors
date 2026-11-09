@@ -9,14 +9,20 @@ export const DISCORD_CATEGORIES = [
   { id: "events", label: "Raid events", desc: "New raid nights and a reminder an hour before start", defaultOn: true },
   { id: "signups", label: "Signups", desc: "Who signed up, changed status or dropped", defaultOn: true },
   { id: "loot", label: "Loot", desc: "Council awards, recorded awards and loot-log imports", defaultOn: true },
-  { id: "applications", label: "Applications", desc: "New applications and officer decisions", defaultOn: true },
+  { id: "applications", label: "Applications", desc: "New guild applications and officer decisions", defaultOn: true },
+  { id: "crafting", label: "Crafting & bank", desc: "Craft requests, crafters picking them up and finishing, guild bank requests and uploads", defaultOn: true },
   { id: "announcements", label: "Announcements", desc: "Officer news posts", defaultOn: true },
-  { id: "roster", label: "Roster", desc: "Members joining or leaving, and new level 60s", defaultOn: true },
+  { id: "roster", label: "Roster", desc: "Members joining or leaving, new level 60s, hub sign-ups and role changes", defaultOn: true },
   { id: "health", label: "Hub health", desc: "A Blizzard sync failing", defaultOn: false },
 ] as const;
 export type DiscordCategory = (typeof DISCORD_CATEGORIES)[number]["id"];
 
-export interface DiscordConfig { webhooks: Partial<Record<DiscordCategory, string>>; enabled: Partial<Record<DiscordCategory, boolean>> }
+export interface DiscordConfig {
+  webhooks: Partial<Record<DiscordCategory, string>>;
+  enabled: Partial<Record<DiscordCategory, boolean>>;
+  /** Optional Discord role id to ping per category (e.g. officers on new applications). */
+  mentions?: Partial<Record<DiscordCategory, string>>;
+}
 
 /** Accept only real Discord webhook URLs (and a localhost receiver outside production, for testing). */
 export function validWebhook(url: string) {
@@ -40,7 +46,7 @@ export const hexColor = (hex?: string | null) => (hex ? parseInt(hex.replace("#"
 export const hubUrl = (path: string) => `${SITE.url}${path}`;
 
 /** Post one embed to the category's channel. Never throws: Discord being down must not break the hub. */
-export async function notify(category: DiscordCategory, embed: Embed, opts: { content?: string; force?: boolean; config?: DiscordConfig } = {}) {
+export async function notify(category: DiscordCategory, embed: Embed, opts: { content?: string; force?: boolean; config?: DiscordConfig; silent?: boolean } = {}) {
   try {
     const cfg = opts.config ?? (await discordConfig());
     const def = DISCORD_CATEGORIES.find((c) => c.id === category)!;
@@ -48,14 +54,16 @@ export async function notify(category: DiscordCategory, embed: Embed, opts: { co
     if (!on && !opts.force) return { posted: false as const, reason: "off" };
     const url = cfg.webhooks[category] || process.env.DISCORD_SIGNUPS_WEBHOOK_URL;
     if (!url || !validWebhook(url)) return { posted: false as const, reason: "no webhook" };
+    const role = cfg.mentions?.[category];
+    const ping = role && /^\d{5,25}$/.test(role) && !opts.silent ? role : null;
     const res = await fetch(url + (url.includes("?") ? "&" : "?") + "wait=true", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: SITE.name,
         avatar_url: hubUrl("/assets/crest-256.png"),
-        content: opts.content,
-        allowed_mentions: { parse: [] },
+        content: [ping ? `<@&${ping}>` : "", opts.content ?? ""].filter(Boolean).join(" ") || undefined,
+        allowed_mentions: ping ? { parse: [], roles: [ping] } : { parse: [] },
         embeds: [{
           color: 0xffd100, ...embed,
           thumbnail: embed.thumbnail ? { url: embed.thumbnail } : undefined,

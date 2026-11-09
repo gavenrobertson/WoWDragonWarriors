@@ -35,7 +35,7 @@ export interface HubAnnouncement { id: string; title: string; body: string; auth
 export interface HubAward { id: string; date: string; itemId: number; itemName: string; quality: Quality; characterName: string; className: string; raid: string; boss: string; method: string; reason?: string }
 export interface HubSyncRun { job: string; status: string; value: string; note: string; minutesAgo: number | null }
 export interface HubBank { gold: number | null; uploadedAt?: string; items: { name: string; tab: string; qty: number; quality: Quality }[] }
-export interface HubCraftRequest { id: string; itemName: string; quantity: number; requester: string; status: string }
+export interface HubCraftRequest { id: string; itemName: string; quantity: number; requester: string; requesterId: string | null; crafter: string | null; crafterId: string | null; status: string; createdAt?: string }
 
 export interface HubUser {
   id: string; battletag: string; siteRole: string | null; createdAt: string;
@@ -243,10 +243,14 @@ const dbStore: Store = {
   },
   async craftRequests() {
     const rows = await sql<any>(
-      `select r.id, r.item_name, r.quantity, r.status, c.name, c.surname from craft_requests r left join characters c on c.id = r.requester_id
-       where r.status = 'open' order by r.created_at desc limit 20`,
+      `select r.id, r.item_name, r.quantity, r.status, r.requester_id, r.crafter_id, r.created_at, c.name, c.surname, k.name as k_name, k.surname as k_surname
+       from craft_requests r left join characters c on c.id = r.requester_id left join characters k on k.id = r.crafter_id
+       where r.status in ('open', 'claimed') order by r.created_at desc limit 30`,
     );
-    return rows.map((r) => ({ id: r.id, itemName: r.item_name, quantity: r.quantity, requester: r.name ? `${r.name} ${r.surname}`.trim() : "", status: r.status }));
+    return rows.map((r) => ({
+      id: r.id, itemName: r.item_name, quantity: r.quantity, status: r.status, requesterId: r.requester_id ?? null, crafterId: r.crafter_id ?? null,
+      requester: r.name ? `${r.name} ${r.surname}`.trim() : "", crafter: r.k_name ? `${r.k_name} ${r.k_surname}`.trim() : null, createdAt: iso(r.created_at),
+    }));
   },
   async settings() {
     const rows = await sql<any>("select key, value from settings");
