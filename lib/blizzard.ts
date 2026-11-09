@@ -130,7 +130,7 @@ export function normaliseRoster(json: any): NormalCharacter[] {
     const c = m.character ?? {};
     const full = [c.name, c.surname].filter(Boolean).join(" ");
     return {
-      slug: slugify(full),
+      slug: c.slug ?? slugify(full), // Forever returns "name-surname" slugs directly
       ...splitName(full),
       level: c.level ?? 0,
       className: nameOf(c.playable_class, CLASS_BY_ID),
@@ -144,7 +144,7 @@ export function normaliseAccount(json: any): NormalCharacter[] {
   const chars = (json?.wow_accounts ?? []).flatMap((a: any) => a.characters ?? []);
   return chars.map((c: any) => {
     const full = [c.name, c.surname].filter(Boolean).join(" ");
-    return { slug: slugify(full), ...splitName(full), level: c.level ?? 0, className: nameOf(c.playable_class, CLASS_BY_ID), race: nameOf(c.playable_race, RACE_BY_ID) };
+    return { slug: c.slug ?? slugify(full), ...splitName(full), level: c.level ?? 0, className: nameOf(c.playable_class, CLASS_BY_ID), race: nameOf(c.playable_race, RACE_BY_ID) };
   });
 }
 
@@ -212,7 +212,7 @@ export function normaliseStats(json: any): { stats: { label: string; value: stri
   return { stats: rows.filter((r): r is [string, string] => !!r[1]).map(([label, value]) => ({ label, value })), fireResistance: fire };
 }
 
-/** Quest ids that complete an attunement. Onyxia (Horde): "Blood of the Black Dragon Champion" (6602). Verify for Forever. */
+/** Quest ids that complete an attunement. Onyxia: Alliance "Drakefire Amulet" (6502), Horde "Blood of the Black Dragon Champion" (6602). Verify for Forever. */
 export const ATTUNEMENT_QUESTS: Record<string, number[]> = { onyxia: [6602, 6502] };
 
 export function normaliseAttunements(json: any): string[] {

@@ -3,7 +3,7 @@ import { d1 } from "./db";
 export const SITE = {
   url: process.env.SITE_URL ?? "https://dragonwarriors.app",
   name: process.env.APP_NAME ?? "Dragon Warriors",
-  tagline: "WoW Forever · [RULESET] · Horde",
+  tagline: "WoW Forever · [RULESET] · Alliance",
   description: "Dragon Warriors guild hub for WoW Forever: characters, BiS planner, loot, raids and roster.",
   ogImage: "/og/crest-1200x630.jpg",
   favicon: "/favicon.png",

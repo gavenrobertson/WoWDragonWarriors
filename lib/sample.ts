@@ -35,7 +35,7 @@ export const RANKS = [
 
 export const CHARACTERS: SampleCharacter[] = [
   {
-    slug: "korvath-emberfang", name: "Korvath", surname: "Emberfang", level: 60, className: "Warrior", race: "Orc",
+    slug: "korvath-emberfang", name: "Korvath", surname: "Emberfang", level: 60, className: "Warrior", race: "Human",
     spec: "Protection", role: "tank", roleLabel: "Tank", rank: 1, lastSeenMin: 12, account: "demo", isMain: true, inGuild: true,
     attendancePct: 100, fireResistance: 85, attunements: ["onyxia"],
     professions: [{ name: "Blacksmithing", skill: 300 }, { name: "Mining", skill: 285 }],
@@ -44,7 +44,7 @@ export const CHARACTERS: SampleCharacter[] = [
     gear: g([["Head", "Helm of Valor", "r"], ["Neck", "Mark of Fordring", "r"], ["Shoulder", "Spaulders of Valor", "r"], ["Back", "Cape of the Black Baron", "r"], ["Chest", "Breastplate of Valor", "r"], ["Wrist", "Bracers of Valor", "r"], ["Hands", "Gauntlets of Valor", "r"], ["Waist", "Belt of Valor", "r"], ["Legs", "Legplates of Valor", "r"], ["Feet", "Boots of Valor", "r"], ["Finger", "Blackstone Ring", "r"], ["Finger", "Painweaver Band", "r"], ["Trinket", "Hand of Justice", "r"], ["Trinket", "Mark of Tyranny", "r"], ["Main hand", "Ironfoe", "e"], ["Off hand", "Draconian Deflector", "r"]]),
   },
   {
-    slug: "morwen-ashveil", name: "Morwen", surname: "Ashveil", level: 60, className: "Mage", race: "Undead",
+    slug: "morwen-ashveil", name: "Morwen", surname: "Ashveil", level: 60, className: "Mage", race: "Gnome",
     spec: "Fire", role: "ranged", roleLabel: "Ranged DPS", rank: 5, lastSeenMin: 3 * 1440, account: "demo", inGuild: true,
     attendancePct: 75, fireResistance: 40, attunements: ["onyxia"],
     professions: [{ name: "Tailoring", skill: 290 }, { name: "Enchanting", skill: 265 }],
@@ -53,23 +53,23 @@ export const CHARACTERS: SampleCharacter[] = [
     gear: g([["Head", "Magister’s Crown", "r"], ["Neck", "Tooth of Gnarr", "r"], ["Shoulder", "Magister’s Mantle", "r"], ["Back", "Archivist Cape", "r"], ["Chest", "Magister’s Robes", "r"], ["Wrist", "Magister’s Bindings", "r"], ["Hands", "Magister’s Gloves", "r"], ["Waist", "Magister’s Belt", "r"], ["Legs", "Magister’s Leggings", "r"], ["Feet", "Magister’s Boots", "r"], ["Finger", "Maiden’s Circle", "r"], ["Finger", "Band of Rumination", "r"], ["Trinket", "Briarwood Reed", "r"], ["Trinket", "Eye of the Beast", "r"], ["Main hand", "Hand of Edward the Odd", "e"], ["Ranged", "Skul’s Ghastly Touch", "r"]]),
   },
   {
-    slug: "zanjin-stormtusk", name: "Zanjin", surname: "Stormtusk", level: 47, className: "Shaman", race: "Troll",
+    slug: "zanjin-stormtusk", name: "Zanjin", surname: "Stormtusk", level: 47, className: "Shaman", race: "Dwarf",
     spec: "Enhancement", roleLabel: "Leveling", rank: 4, lastSeenMin: 2 * 1440, account: "demo", inGuild: true,
     professions: [{ name: "Herbalism", skill: 210 }, { name: "Alchemy", skill: 195 }],
     stats: [{ label: "Health", value: "2,280" }, { label: "Mana", value: "2,610" }, { label: "Strength", value: "131" }, { label: "Agility", value: "74" }, { label: "Stamina", value: "138" }, { label: "Intellect", value: "96" }, { label: "Armor", value: "2,940" }, { label: "Level", value: "47 / 60" }],
     legacy: { rank: 4, pct: 80, milestones: [{ title: "Reached level 40", when: "[DATE]" }, { title: "Earned first mount", when: "[DATE]" }] },
     gear: g([["Head", "Empty", "x"], ["Neck", "Jungle Pendant", "u"], ["Shoulder", "Ridgeback Mantle", "u"], ["Back", "Cloak of the Wild", "u"], ["Chest", "Raptorhide Hauberk", "r"], ["Wrist", "Empty", "x"], ["Hands", "Stonefist Gloves", "u"], ["Waist", "Ironbark Girdle", "u"], ["Legs", "Marsh Walker Leggings", "u"], ["Feet", "Swiftstep Boots", "u"], ["Finger", "Copper Band", "c"], ["Finger", "Empty", "x"], ["Trinket", "Empty", "x"], ["Trinket", "Empty", "x"], ["Main hand", "Earthsplitter Axe", "r"], ["Off hand", "Tidecaller Totem", "u"]]),
   },
-  { slug: "gildra-coinpurse", name: "Gildra", surname: "Coinpurse", level: 12, className: "Rogue", race: "Goblin", rank: -1, lastSeenMin: 300, account: "demo", inGuild: false },
-  { slug: "brugor-ironhide", name: "Brugor", surname: "Ironhide", level: 60, className: "Warrior", race: "Tauren", spec: "Protection", role: "tank", rank: 3, lastSeenMin: 1440, inGuild: true, isMain: true, attendancePct: 92, fireResistance: 120, attunements: ["onyxia"] },
-  { slug: "seraphine-dawnmere", name: "Seraphine", surname: "Dawnmere", level: 60, className: "Priest", race: "Undead", spec: "Holy", role: "healer", rank: 1, lastSeenMin: 40, inGuild: true, isMain: true, attendancePct: 100, attunements: ["onyxia"], professions: [{ name: "Tailoring", skill: 300 }] },
-  { slug: "zultaki-riverhorn", name: "Zultaki", surname: "Riverhorn", level: 58, className: "Shaman", race: "Tauren", spec: "Restoration", role: "healer", rank: 3, lastSeenMin: 60, inGuild: true, isMain: true, attendancePct: 88 },
-  { slug: "thornhoof-greymane", name: "Thornhoof", surname: "Greymane", level: 55, className: "Druid", race: "Tauren", spec: "Restoration", role: "healer", rank: 4, lastSeenMin: 180, inGuild: true, isMain: true, attendancePct: 83, professions: [{ name: "Leatherworking", skill: 285 }] },
-  { slug: "grashk-bloodhowl", name: "Grashk", surname: "Bloodhowl", level: 60, className: "Warrior", race: "Orc", spec: "Fury", role: "melee", rank: 3, lastSeenMin: 120, inGuild: true, isMain: true, attendancePct: 96 },
-  { slug: "kessa-nightbloom", name: "Kessa", surname: "Nightbloom", level: 60, className: "Rogue", race: "Undead", spec: "Combat", role: "melee", rank: 3, lastSeenMin: 300, inGuild: true, isMain: true, attendancePct: 90, attunements: ["onyxia"] },
-  { slug: "vexmora-duskhollow", name: "Vexmora", surname: "Duskhollow", level: 60, className: "Warlock", race: "Undead", spec: "Destruction", role: "ranged", rank: 3, lastSeenMin: 120, inGuild: true, isMain: true, attendancePct: 96, attunements: ["onyxia"], professions: [{ name: "Alchemy", skill: 300 }] },
-  { slug: "ashlynn-coldwater", name: "Ashlynn", surname: "Coldwater", level: 60, className: "Mage", race: "Troll", spec: "Frost", role: "ranged", rank: 3, lastSeenMin: 1500, inGuild: true, isMain: true, attendancePct: 100, attunements: ["onyxia"], professions: [{ name: "Enchanting", skill: 300 }] },
-  { slug: "draven-swiftarrow", name: "Draven", surname: "Swiftarrow", level: 59, className: "Hunter", race: "Orc", spec: "Marksmanship", role: "ranged", rank: 4, lastSeenMin: 360, inGuild: true, isMain: true, professions: [{ name: "Engineering", skill: 280 }] },
+  { slug: "gildra-coinpurse", name: "Gildra", surname: "Coinpurse", level: 12, className: "Rogue", race: "Gnome", rank: -1, lastSeenMin: 300, account: "demo", inGuild: false },
+  { slug: "brugor-ironhide", name: "Brugor", surname: "Ironhide", level: 60, className: "Warrior", race: "Night Elf", spec: "Protection", role: "tank", rank: 3, lastSeenMin: 1440, inGuild: true, isMain: true, attendancePct: 92, fireResistance: 120, attunements: ["onyxia"] },
+  { slug: "seraphine-dawnmere", name: "Seraphine", surname: "Dawnmere", level: 60, className: "Priest", race: "Human", spec: "Holy", role: "healer", rank: 1, lastSeenMin: 40, inGuild: true, isMain: true, attendancePct: 100, attunements: ["onyxia"], professions: [{ name: "Tailoring", skill: 300 }] },
+  { slug: "zultaki-riverhorn", name: "Zultaki", surname: "Riverhorn", level: 58, className: "Shaman", race: "Night Elf", spec: "Restoration", role: "healer", rank: 3, lastSeenMin: 60, inGuild: true, isMain: true, attendancePct: 88 },
+  { slug: "thornhoof-greymane", name: "Thornhoof", surname: "Greymane", level: 55, className: "Druid", race: "Night Elf", spec: "Restoration", role: "healer", rank: 4, lastSeenMin: 180, inGuild: true, isMain: true, attendancePct: 83, professions: [{ name: "Leatherworking", skill: 285 }] },
+  { slug: "grashk-bloodhowl", name: "Grashk", surname: "Bloodhowl", level: 60, className: "Warrior", race: "Human", spec: "Fury", role: "melee", rank: 3, lastSeenMin: 120, inGuild: true, isMain: true, attendancePct: 96 },
+  { slug: "kessa-nightbloom", name: "Kessa", surname: "Nightbloom", level: 60, className: "Rogue", race: "Human", spec: "Combat", role: "melee", rank: 3, lastSeenMin: 300, inGuild: true, isMain: true, attendancePct: 90, attunements: ["onyxia"] },
+  { slug: "vexmora-duskhollow", name: "Vexmora", surname: "Duskhollow", level: 60, className: "Warlock", race: "Human", spec: "Destruction", role: "ranged", rank: 3, lastSeenMin: 120, inGuild: true, isMain: true, attendancePct: 96, attunements: ["onyxia"], professions: [{ name: "Alchemy", skill: 300 }] },
+  { slug: "ashlynn-coldwater", name: "Ashlynn", surname: "Coldwater", level: 60, className: "Mage", race: "Dwarf", spec: "Frost", role: "ranged", rank: 3, lastSeenMin: 1500, inGuild: true, isMain: true, attendancePct: 100, attunements: ["onyxia"], professions: [{ name: "Enchanting", skill: 300 }] },
+  { slug: "draven-swiftarrow", name: "Draven", surname: "Swiftarrow", level: 59, className: "Hunter", race: "Human", spec: "Marksmanship", role: "ranged", rank: 4, lastSeenMin: 360, inGuild: true, isMain: true, professions: [{ name: "Engineering", skill: 280 }] },
 ];
 
 // Zanjin's Alchemy shows up in the crafting directory too.
@@ -102,9 +102,9 @@ export const ITEMS: SampleItem[] = [
   { id: 17078, name: "Sapphiron Drape", quality: "epic", slot: "Back", slotDetail: "Back", roles: ["ranged", "healer"], source: { ...ONY, how: "Caster cloak from Onyxia." } },
   { id: 18205, name: "Eskhandar’s Collar", quality: "epic", slot: "Neck", slotDetail: "Neck", roles: ["melee"], source: ONY },
   { id: 17067, name: "Ancient Cornerstone Grimoire", quality: "epic", slot: "Off hand", slotDetail: "Held in off hand", roles: ["ranged", "healer"], source: { ...ONY, how: "Held-in-off-hand drop from Onyxia." } },
-  { id: 18423, name: "Head of Onyxia", quality: "epic", slot: "Quest", slotDetail: "Quest item · one per kill", roles: all, source: ONY },
+  { id: 18422, name: "Head of Onyxia", quality: "epic", slot: "Quest", slotDetail: "Quest item · one per kill", roles: all, source: ONY },
   // Non-raid BiS items
-  { id: 18404, name: "Onyxia Tooth Pendant", quality: "epic", slot: "Neck", slotDetail: "Neck", roles: ["tank", "melee"], source: { type: "quest", boss: "Victory for the Horde", zone: "Orgrimmar, Durotar", mapLabel: "Orgrimmar", mapX: 33, mapY: 36, how: "Someone in the raid loots the Head of Onyxia. Whoever gets it starts the quest, and every raider can turn in the follow-up in Orgrimmar for the pendant." } },
+  { id: 18404, name: "Onyxia Tooth Pendant", quality: "epic", slot: "Neck", slotDetail: "Neck", roles: ["tank", "melee"], source: { type: "quest", boss: "The Lord of Blackrock", zone: "Stormwind City, Elwynn Forest", mapLabel: "Stormwind", mapX: 67, mapY: 78, how: "Someone in the raid loots the Head of Onyxia and turns it in to Highlord Bolvar Fordragon in Stormwind. The follow-up rewards the pendant (or the Onyxia Blood Talisman or Dragonslayer’s Signet)." } },
   { id: 13340, name: "Cape of the Black Baron", quality: "rare", slot: "Back", slotDetail: "Back", roles: ["tank", "melee"], source: { type: "dungeon", boss: "Baron Rivendare", zone: "Stratholme, Eastern Plaguelands", mapLabel: "Stratholme", mapX: 81, mapY: 22, how: "Final boss of Stratholme’s Undead side." } },
   { id: 11815, name: "Hand of Justice", quality: "rare", slot: "Trinket", slotDetail: "Trinket", roles: ["tank", "melee"], source: { type: "dungeon", boss: "Trash, rare drop", zone: "Blackrock Depths, Blackrock Mountain", mapLabel: "Blackrock Mountain", mapX: 71, mapY: 62, how: "Random drop from Blackrock Depths trash. Farm full clears." } },
   { id: 13965, name: "Blackhand’s Breadth", quality: "epic", slot: "Trinket", slotDetail: "Trinket", roles: ["tank", "melee"], source: { type: "dungeon", boss: "General Drakkisath", zone: "Upper Blackrock Spire, Blackrock Mountain", mapLabel: "Blackrock Mountain", mapX: 71, mapY: 62, how: "Final boss of Upper Blackrock Spire. Needs a 10-player group." } },
