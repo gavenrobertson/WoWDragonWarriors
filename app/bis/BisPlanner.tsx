@@ -160,7 +160,7 @@ function SlotColumn({ slots, ch, sel, onSelect, onAdd, row }: {
         const e = ch.slots[s];
         return (
           <li key={s}>
-            <button type="button" className="bis-slot" aria-pressed={sel === s} onClick={() => { onSelect(s); if (!e) onAdd(s); }}
+            <button type="button" className="bis-slot" data-item-id={e?.itemId || undefined} aria-pressed={sel === s} onClick={() => { onSelect(s); if (!e) onAdd(s); }}
               aria-label={e ? `${s}: ${e.name}` : `${s}: choose an item`}>
               {e ? <ItemIcon slot={s.replace(/ \d$/, "")} quality={e.quality} iconUrl={e.iconUrl} /> : <span className="bis-empty-icon" aria-hidden="true"><IconPlus /></span>}
               <span className="stack grow" style={{ gap: 0, lineHeight: 1.25, minWidth: 0 }}>
@@ -187,7 +187,7 @@ function EntryEditor({ entry: e, equipped, pending, onChange, onRemove, onToggle
   return (
     <div className="stack" style={{ gap: 14 }}>
       <div className="row" style={{ gap: 14, flexWrap: "nowrap" }}>
-        <ItemIcon slot="" quality={e.quality} iconUrl={e.iconUrl} size={56} />
+        <ItemIcon slot="" quality={e.quality} iconUrl={e.iconUrl} size={56} itemId={e.itemId} />
         <div className="stack" style={{ gap: 2, minWidth: 0 }}>
           <h2 style={{ fontSize: 20, color: qualityColor(e.quality), fontFamily: "var(--font-body)", fontWeight: 700 }}>{e.name}</h2>
           <span className="small muted">{e.itemLevel ? `Item level ${e.itemLevel}` : "WoW Forever item"}{type && <> · <span style={{ background: bg, color: fg, padding: "0 6px", borderRadius: 6 }}>{SOURCE_LABEL[type as SourceType]}</span></>}</span>
@@ -283,7 +283,7 @@ function ItemPicker({ slot, onClose, onChoose }: { slot: Slot; onClose: () => vo
           {!state.loading && state.searched && !state.error && sorted.length === 0 && <li className="muted small">No {slot.toLowerCase()} items match “{state.searched}”.</li>}
           {sorted.map((it) => (
             <li key={it.id}>
-              <button type="button" className="list-row picker-item" onClick={() => onChoose(it)}>
+              <button type="button" className="list-row picker-item" data-item-id={it.id} onClick={() => onChoose(it)}>
                 <ItemIcon slot="" quality={it.quality} iconUrl={it.iconUrl} />
                 <span className="stack grow" style={{ gap: 0, lineHeight: 1.3, textAlign: "left" }}>
                   <span className="strong" style={{ color: qualityColor(it.quality) }}>{it.name}</span>

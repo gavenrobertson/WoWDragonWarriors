@@ -63,13 +63,17 @@ export async function syncCharacter(slug: string) {
   if (!summary) return { ok: false as const, reason: "Not in the API yet (characters appear after level 10 and a logout)." };
   const s = bnet.normaliseSummary(summary);
   const st = bnet.normaliseStats(stats);
-  const gear = equip ? bnet.normaliseEquipment(equip) : null;
+  const gearFull = equip ? bnet.normaliseEquipment(equip) : null;
+  const gear = gearFull ? gearFull.map(({ tip: _tip, ...g }) => g) : null;
   // Cache every equipped item so the icon job can fetch its icon once for the whole guild.
-  const equipped = (gear ?? []).filter((g) => g.itemId);
+  const equipped = (gearFull ?? []).filter((g) => g.itemId);
   if (equipped.length) {
+    const at = nowIso();
     await tx(async (q) => {
       for (const g of equipped) {
         await q("insert into items (id, name, quality, slot) values ($1,$2,$3,$4) on conflict (id) do nothing", [g.itemId, g.name, g.quality, g.slot]);
+        // The equipped item carries Blizzard's full tooltip (stats, equip effects, requirements): keep the freshest copy.
+        if (g.tip) await q("update items set tooltip = $2, tooltip_at = $3 where id = $1", [g.itemId, JSON.stringify(g.tip), at]);
       }
     });
   }

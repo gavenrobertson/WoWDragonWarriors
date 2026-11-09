@@ -21,9 +21,9 @@ export function Avatar({ name, className, size = 48, url }: { name: string; clas
   );
 }
 
-export function ItemIcon({ slot, quality, iconUrl, size }: { slot: string; quality?: string | null; iconUrl?: string | null; size?: number }) {
+export function ItemIcon({ slot, quality, iconUrl, size, itemId }: { slot: string; quality?: string | null; iconUrl?: string | null; size?: number; itemId?: number | null }) {
   return (
-    <span className="item-icon" data-q={quality ?? "common"} aria-hidden="true"
+    <span className="item-icon" data-q={quality ?? "common"} aria-hidden="true" data-item-id={itemId || undefined}
       style={{ "--c": qualityColor(quality), ...(size ? { width: size, height: size } : {}) } as Vars}>
       {iconUrl ? <img src={iconUrl} alt="" loading="lazy" /> : slotAbbr(slot)}
     </span>

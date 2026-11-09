@@ -939,3 +939,28 @@ button:disabled, [aria-disabled="true"], select:disabled, input:disabled { curso
 /* practice council: a clear "sandbox" stripe so nobody mistakes it for the real thing */
 .practice-head { box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000, inset 0 0 0 3px #9B5DFF, inset 0 0 0 4px #000, inset 0 2px 30px rgba(0,0,0,.8), 0 0 40px -16px rgba(155,93,255,.7); }
 .council.practice .council-hall { background-image: repeating-linear-gradient(135deg, rgba(155,93,255,.05) 0 14px, transparent 14px 28px); }
+
+/* ---------- WoW item tooltips (components/ItemTooltip.tsx) ---------- */
+[data-item-id] { cursor: pointer; }
+.list-row[data-item-id]:focus-visible { outline: 2px solid var(--wow-gold); outline-offset: 2px; }
+.wow-tooltip { position: fixed; z-index: 2147483000; max-width: 320px; min-width: 200px; padding: 9px 11px 10px; pointer-events: none;
+  font-family: var(--font-body, sans-serif); font-size: 13.5px; line-height: 1.38; color: #fff; text-shadow: 0 1px 0 #000;
+  background: linear-gradient(180deg, rgba(14,18,40,.97), rgba(6,8,22,.97)); border: 1px solid #5f6375; border-radius: 6px;
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px rgba(255,255,255,.06), 0 14px 34px -10px #000; animation: wt-in .14s ease-out; }
+@keyframes wt-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+.wow-tooltip .wt-name { font-size: 15px; font-weight: 700; margin-bottom: 1px; }
+.wow-tooltip .wt-ilvl, .wow-tooltip .wt-gold { color: #ffd100; }
+.wow-tooltip .wt-split { display: flex; justify-content: space-between; gap: 18px; }
+.wow-tooltip .wt-green { color: #1eff00; }
+.wow-tooltip .wt-dim { color: #9d9d9d; }
+.wow-tooltip .wt-indent { padding-left: 10px; }
+.wow-tooltip .wt-set { margin-top: 8px; }
+.wow-tooltip .wt-muted { color: #9d9d9d; font-style: italic; }
+.wow-tooltip .wt-note { margin-top: 6px; font-size: 11px; color: #8f8f9f; font-style: italic; }
+.wow-tooltip .wt-sell { margin-top: 2px; }
+.wow-tooltip .coin { margin-left: 6px; }
+.wow-tooltip .coin::after { content: ""; display: inline-block; width: 10px; height: 10px; margin-left: 3px; border-radius: 50%; vertical-align: -1px; box-shadow: inset 0 -1px 0 rgba(0,0,0,.4); }
+.wow-tooltip .coin.g::after { background: radial-gradient(circle at 35% 35%, #fff3a0, #e0a100 60%, #8a5d00); }
+.wow-tooltip .coin.s::after { background: radial-gradient(circle at 35% 35%, #ffffff, #b8bcc4 60%, #6c717b); }
+.wow-tooltip .coin.c::after { background: radial-gradient(circle at 35% 35%, #ffcfa0, #c06a2b 60%, #6b3510); }
+@media (prefers-reduced-motion: reduce) { .wow-tooltip { animation: none; } }

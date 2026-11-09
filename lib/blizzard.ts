@@ -3,6 +3,7 @@ import "server-only";
 // Characters are realmless: look them up as "name-surname". Guilds sit under a ruleset, not a realm.
 // Based on the handoff's src/blizzard.ts, plus retry/backoff and response normalisers.
 import { NS, SITE } from "./config";
+import { normaliseTip } from "./tooltip";
 
 const API = `https://${SITE.region}.api.blizzard.com`;
 const OAUTH = "https://oauth.battle.net";
@@ -179,7 +180,7 @@ export function normaliseEquipment(json: any) {
   return SLOT_ORDER.map((type) => {
     const i = bySlot.get(type);
     return i
-      ? { slot: SLOT_NAMES[type], name: i.name ?? "Unknown item", quality: String(i.quality?.type ?? "common").toLowerCase(), itemId: i.item?.id }
+      ? { slot: SLOT_NAMES[type], name: i.name ?? "Unknown item", quality: String(i.quality?.type ?? "common").toLowerCase(), itemId: i.item?.id, tip: normaliseTip(i) ?? undefined }
       : { slot: SLOT_NAMES[type], name: "Empty", quality: "empty" };
   });
 }

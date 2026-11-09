@@ -59,7 +59,7 @@ export default async function CharacterPage({ params }: Props) {
       gear: c.gear.map((g) => ({ ...g, iconUrl: g.itemId ? itemById.get(g.itemId)?.iconUrl ?? null : null })),
       wishlist: wl.map((w) => {
         const it = itemById.get(w.itemId);
-        return { rank: w.rank, name: it?.name ?? `Item ${w.itemId}`, iconUrl: it?.iconUrl ?? null, slot: it?.slot ?? "", source: it ? [it.source.zone.split(",")[0], it.source.boss].filter(Boolean).join(" · ") : "", status: w.approved ? "Approved" : "Pending review" };
+        return { rank: w.rank, itemId: w.itemId, name: it?.name ?? `Item ${w.itemId}`, iconUrl: it?.iconUrl ?? null, slot: it?.slot ?? "", source: it ? [it.source.zone.split(",")[0], it.source.boss].filter(Boolean).join(" · ") : "", status: w.approved ? "Approved" : "Pending review" };
       }),
     };
   };

@@ -4,6 +4,7 @@ import { SITE } from "@/lib/config";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Embers } from "@/components/Embers";
 import { Interactions } from "@/components/Interactions";
+import { ItemTooltip } from "@/components/ItemTooltip";
 import { DISCORD_INVITE } from "@/lib/links";
 
 export const metadata: Metadata = {
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="aura" aria-hidden="true"><span /><span /><span /></div>
         <Embers />
         <Interactions />
+        <ItemTooltip />
         <a href="#main" className="skip-link">Skip to content</a>
         <SiteHeader />
         {children}

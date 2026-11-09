@@ -21,8 +21,8 @@ export interface CharacterVM {
   } | null;
   legacy: { rank: number; pct: number; milestones: { title: string; when: string }[] } | null;
   profs: { name: string; skill: number; max?: number }[];
-  gear: { slot: string; name: string; quality: string; iconUrl?: string | null }[];
-  wishlist: { rank: number; name: string; source: string; status: string; iconUrl?: string | null; slot: string }[];
+  gear: { slot: string; name: string; quality: string; iconUrl?: string | null; itemId?: number }[];
+  wishlist: { rank: number; name: string; source: string; status: string; iconUrl?: string | null; slot: string; itemId?: number }[];
   renderUrl: string | null; syncedAt: string | null;
 }
 
@@ -166,7 +166,7 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
           {tab === "loot" && (active.wishlist.length ? (
             <div className="stack" style={{ gap: 10 }}>
               {active.wishlist.map((w) => (
-                <div key={w.rank} className="tile" style={{ display: "grid", gridTemplateColumns: "40px 40px minmax(0,1fr) auto", alignItems: "center", gap: 14 }}>
+                <div key={w.rank} className="tile" data-item-id={w.itemId || undefined} style={{ display: "grid", gridTemplateColumns: "40px 40px minmax(0,1fr) auto", alignItems: "center", gap: 14 }}>
                   <span className="bold" style={{ fontSize: 20, color: "var(--dw-gold-link)", textAlign: "center" }}>#{w.rank}</span>
                   <ItemIcon slot={w.slot} quality="epic" iconUrl={w.iconUrl} />
                   <span className="stack" style={{ gap: 0, lineHeight: 1.3 }}><span className="strong" style={{ color: qualityColor("epic") }}>{w.name}</span><span className="micro muted">{w.source}</span></span>
@@ -193,14 +193,14 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
   );
 }
 
-function GearList({ label, gear }: { label: string; gear: { slot: string; name: string; quality: string; iconUrl?: string | null }[] }) {
+function GearList({ label, gear }: { label: string; gear: { slot: string; name: string; quality: string; iconUrl?: string | null; itemId?: number }[] }) {
   if (!gear.length) {
     return <div className="empty" style={{ flex: "1 1 280px", alignSelf: "flex-start" }}>Gear appears after the next profile sync.</div>;
   }
   return (
     <ul aria-label={label} className="stack" style={{ flex: "1 1 280px", minWidth: 0, gap: 8 }}>
       {gear.map((g, i) => (
-        <li key={`${g.slot}-${i}`} className="list-row">
+        <li key={`${g.slot}-${i}`} className="list-row" data-item-id={g.itemId || undefined} tabIndex={g.itemId ? 0 : undefined}>
           <ItemIcon slot={g.slot} quality={g.quality} iconUrl={g.iconUrl} />
           <span className="stack" style={{ gap: 0, lineHeight: 1.25, minWidth: 0 }}>
             <span className="strong" style={{ fontSize: 14, color: qualityColor(g.quality) }}>{g.name}</span>

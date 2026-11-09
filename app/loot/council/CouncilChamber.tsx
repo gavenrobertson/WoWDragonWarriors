@@ -100,7 +100,7 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
           {items.map((i) => {
             const v = i.votes.length;
             return (
-              <button key={i.id} type="button" className="council-item" aria-pressed={i.id === item.id} onClick={() => { setSel(i.id); setConfirm(null); }}>
+              <button key={i.id} type="button" className="council-item" data-item-id={i.id} aria-pressed={i.id === item.id} onClick={() => { setSel(i.id); setConfirm(null); }}>
                 <ItemIcon slot="" quality={i.quality} iconUrl={i.iconUrl} />
                 <span className="stack grow" style={{ gap: 0, lineHeight: 1.25, minWidth: 0, textAlign: "left" }}>
                   <span className="strong council-item-name" style={{ color: qualityColor(i.quality) }}>{i.name}</span>
@@ -117,7 +117,7 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
             <div className="council-pedestal" aria-hidden="true">
               <svg viewBox="0 0 200 200" className="council-ring"><circle cx="100" cy="100" r="92" fill="none" stroke="#FFD100" strokeOpacity=".5" strokeWidth="1.5" strokeDasharray="3 9" /><circle cx="100" cy="100" r="78" fill="none" stroke="#9B5DFF" strokeOpacity=".45" strokeWidth="1.2" /></svg>
               <div className="council-relic" style={{ ["--c" as string]: qualityColor(item.quality) }}>
-                <ItemIcon slot="" quality={item.quality} iconUrl={item.iconUrl} size={88} />
+                <ItemIcon slot="" quality={item.quality} iconUrl={item.iconUrl} size={88} itemId={item.id} />
               </div>
             </div>
             <div className="stack" style={{ gap: 4, alignItems: "center", textAlign: "center" }}>
