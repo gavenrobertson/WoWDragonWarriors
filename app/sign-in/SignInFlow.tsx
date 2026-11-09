@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { claimCharacters, submitApplication } from "@/app/actions";
-import { IconCheck, IconKey } from "@/components/icons";
+import { IconCheck, IconDiscord, IconKey } from "@/components/icons";
+import { DISCORD_INVITE } from "@/lib/links";
 import { Toast } from "@/components/Toast";
 import { useAction } from "@/components/useAction";
 import type { AccountChar } from "@/lib/account";
@@ -156,6 +157,7 @@ export function SignInFlow({ initialStep, signedIn, demo, battletag, chars }: {
               : "Your characters are linked. Your guild rank sets what you can see, and officers get the admin console."}
           </p>
           <Link href="/" className="btn btn-primary btn-lg" style={{ minHeight: 56 }}>Go to guild home</Link>
+          <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" className="btn btn-lg btn-discord"><IconDiscord /> Join the guild Discord</a>
           <button type="button" className="btn btn-lg" onClick={() => { setApplied(false); setStep("welcome"); }}>Start over</button>
         </div>
       )}

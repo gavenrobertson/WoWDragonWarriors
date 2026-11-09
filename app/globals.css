@@ -792,3 +792,11 @@ button:disabled, [aria-disabled="true"], select:disabled, input:disabled { curso
 .medallion-crest { padding: 8%; }
 .gavel-plate img { padding: 12%; }
 @media (prefers-reduced-motion: reduce) { .logo { animation: none; } }
+
+/* ---- Discord links ---- */
+.discord-link { display: inline-grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 50%; color: #b7bcf5; background: linear-gradient(180deg, #2a2012, #120d07); border: 1px solid #000; box-shadow: inset 0 0 0 1px #8a6a2c; transition: color .15s, box-shadow .15s, transform .15s; }
+.discord-link:hover, .discord-link:focus-visible { color: #fff; box-shadow: inset 0 0 0 1px #FFD100, 0 0 14px -2px rgba(88,101,242,.8); transform: translateY(-1px); }
+.btn-discord { display: inline-flex; align-items: center; gap: 8px; }
+.btn-discord svg { color: #b7bcf5; }
+.btn-discord:hover svg { color: #fff; }
+@media (max-width: 480px) { .site-header .discord-link { display: none; } }

@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { GuildProfile } from "@/lib/store";
+import { DISCORD_INVITE } from "@/lib/links";
 import { classColor, timeAgo } from "@/lib/ui";
 
 export interface GuildMember { slug: string; name: string; level: number; className: string; classIcon: string | null; rank: string; rankIndex: number; lastSeenMin: number | null; race: string }
@@ -114,11 +115,14 @@ export function GuildWindow({ profile, members, motd, info, isMember, signedIn }
 
       <div className="wow-footer">
         <span className="wow-footer-note">Roster from the Blizzard API · updated every 30 minutes</span>
-        {isMember ? (
-          <Link href="/" className="wow-button">Open the guild hub</Link>
-        ) : (
-          <Link href={signedIn ? "/sign-in?step=apply" : "/apply"} className="wow-button">Apply to join</Link>
-        )}
+        <span className="row" style={{ gap: 8 }}>
+          <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" className="wow-button">Discord</a>
+          {isMember ? (
+            <Link href="/" className="wow-button">Open the guild hub</Link>
+          ) : (
+            <Link href={signedIn ? "/sign-in?step=apply" : "/apply"} className="wow-button">Apply to join</Link>
+          )}
+        </span>
       </div>
 
 

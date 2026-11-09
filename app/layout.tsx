@@ -4,6 +4,7 @@ import { SITE } from "@/lib/config";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Embers } from "@/components/Embers";
 import { Interactions } from "@/components/Interactions";
+import { DISCORD_INVITE } from "@/lib/links";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -37,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <footer className="site-footer">
           {SITE.name} guild hub · fan-made, not affiliated with Blizzard Entertainment ·{" "}
-          <a href="/data-sources">Data sources</a> · <a href="/brand">Brand</a>
+          <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer">Discord</a> · <a href="/data-sources">Data sources</a> · <a href="/brand">Brand</a>
         </footer>
       </body>
     </html>

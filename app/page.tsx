@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Countdown } from "@/components/Countdown";
 import { Medallion } from "@/components/Medallion";
+import { IconDiscord } from "@/components/icons";
+import { DISCORD_INVITE } from "@/lib/links";
 import { Avatar, Bar, vars } from "@/components/bits";
 import { SITE, isDemo } from "@/lib/config";
 import { LEVEL_BANDS_SAMPLE, getCharacters, getEvents, store } from "@/lib/store";
@@ -57,6 +59,7 @@ export default async function HomePage() {
           <div className="row" style={{ marginTop: 6 }}>
             <Link href="/raids" className="btn btn-primary btn-lg">Sign up for raid night</Link>
             <Link href="/loot?tab=wish" className="btn btn-lg">Build your wishlist</Link>
+            <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" className="btn btn-lg btn-discord"><IconDiscord /> Join the Discord</a>
           </div>
         </div>
         <div className="inset stack countdown-card" data-tilt style={{ flex: "1 1 300px", justifyContent: "center", alignItems: "stretch", padding: 28, borderRadius: 12, "--gap": "8px" } as React.CSSProperties}>
