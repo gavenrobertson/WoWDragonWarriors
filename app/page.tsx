@@ -51,7 +51,10 @@ export default async function HomePage() {
 
   return (
     <main id="main" tabIndex={-1} className="container page" style={{ paddingTop: 40, gap: 32 }}>
-      <section aria-labelledby="hero-title" className="hero">
+      <div className="home-banner">
+        <img src="/assets/brand/banner-2000.webp" srcSet="/assets/brand/banner-1200.webp 1200w, /assets/brand/banner-2000.webp 2000w" sizes="(max-width: 1240px) 100vw, 1200px" alt="Dragon Warriors" width={2000} height={572} fetchPriority="high" />
+      </div>
+      <section aria-labelledby="hero-title" className="hero hero-art">
         <div className="stack" style={{ flex: "999 1 520px", minWidth: 0, "--gap": "18px" } as React.CSSProperties}>
           <span className="eyebrow">Phase 1 · First raid week</span>
           <h1 id="hero-title" className="title-xl">Raids open December 9</h1>

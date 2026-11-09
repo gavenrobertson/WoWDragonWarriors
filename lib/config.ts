@@ -5,7 +5,7 @@ export const SITE = {
   name: process.env.APP_NAME ?? "Dragon Warriors",
   tagline: "WoW Forever · PvP · Alliance",
   description: "Dragon Warriors guild hub for WoW Forever: characters, BiS planner, loot, raids and roster.",
-  ogImage: "/og/crest-1200x630.jpg",
+  ogImage: "/og/dragon-warriors-1200x630.jpg",
   favicon: "/favicon.png",
   guildSlug: process.env.GUILD_SLUG ?? "dragon-warriors",
   region: process.env.REGION ?? "us",
