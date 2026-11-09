@@ -8,7 +8,7 @@ The design system (royal purple and gold) comes from the design handoff: `app/st
 
 ## Hosting
 
-Runs on **Cloudflare Workers** (OpenNext adapter) with a **Cloudflare D1** database. The Worker is `dragon-warriors-hub`,
+Runs on **Cloudflare Workers** (OpenNext adapter) with a **Cloudflare D1** database. The Worker is `wowdragonwarriors` (connected to this GitHub repo with Workers Builds, so every push deploys),
 served on `dragonwarriors.app` and `www.dragonwarriors.app` (www redirects to the apex). Cron Triggers run the Blizzard
 syncs: the guild roster every 30 minutes and 7 character profiles every 10 minutes (stalest first).
 
@@ -24,7 +24,7 @@ npm run deploy                   # opennextjs-cloudflare build + deploy
 The API token needs: Account › Workers Scripts: Edit, Account › D1: Edit, Account › Account Settings: Read,
 Zone › Workers Routes: Edit and Zone › DNS: Edit (for dragonwarriors.app), User › User Details: Read.
 
-Secrets live on the Worker (Cloudflare dashboard → Workers & Pages → dragon-warriors-hub → Settings → Variables and Secrets,
+Secrets live on the Worker (Cloudflare dashboard → Workers & Pages → wowdragonwarriors → Settings → Variables and Secrets,
 or `npx wrangler secret put NAME`):
 
 | Secret | What it is |
