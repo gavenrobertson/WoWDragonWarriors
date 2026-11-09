@@ -35,6 +35,9 @@
     "REGION": "us",
     "BNET_REDIRECT_URI": "https://dragonwarriors.app/auth/battlenet/callback",
     "DISCORD_REDIRECT_URI": "https://dragonwarriors.app/auth/discord/callback",
-    "COOKIE_DOMAIN": "dragonwarriors.app"
+    "COOKIE_DOMAIN": "dragonwarriors.app",
+    // Discord server + voice channel for auto-created raid events (needs the DISCORD_BOT_TOKEN secret)
+    "DISCORD_GUILD_ID": "1553918326911275099",
+    "DISCORD_RAID_CHANNEL_ID": "1553920234161832096"
   }
 }

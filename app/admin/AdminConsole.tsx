@@ -201,7 +201,7 @@ export function AdminConsole(props: {
                 </label>
                 <label className="field">Date<input type="date" required value={ev.date} onChange={(e) => setEv({ ...ev, date: e.target.value })} /></label>
                 <label className="field">Start time (server time, US Central)<input type="time" required value={ev.time} onChange={(e) => setEv({ ...ev, time: e.target.value })} /></label>
-                <label className="check"><input type="checkbox" checked={ev.postToDiscord} onChange={(e) => setEv({ ...ev, postToDiscord: e.target.checked })} />Post signup to Discord #raid-signups</label>
+                <label className="check"><input type="checkbox" checked={ev.postToDiscord} onChange={(e) => setEv({ ...ev, postToDiscord: e.target.checked })} />Post to Discord (#hub-raids, plus a Discord server event when the bot token is set)</label>
                 <div><button type="submit" className="btn btn-primary" disabled={pending}>Create event</button></div>
               </form>
               {props.sections.includes("overview") && (

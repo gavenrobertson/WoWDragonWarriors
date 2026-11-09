@@ -4,7 +4,7 @@
 import { revalidatePath } from "next/cache";
 import { Forbidden, ownsCharacter, requirePermission, type Permission, type Viewer } from "@/lib/auth";
 import { json, nowIso, sql, sqlOne, tx } from "@/lib/db";
-import { DISCORD_CATEGORIES, discordConfig, hexColor, hubUrl, notify, validWebhook, type DiscordCategory } from "@/lib/discord";
+import { DISCORD_CATEGORIES, createDiscordEvent, discordConfig, hexColor, hubUrl, notify, validWebhook, type DiscordCategory } from "@/lib/discord";
 import { CLASS_COLOR, ROLE_LABEL, classIcon, qualityColor } from "@/lib/ui";
 import { syncAllProfiles, syncCharacter, syncRoster } from "@/lib/sync";
 import { configured } from "@/lib/config";
@@ -389,9 +389,14 @@ export async function createEvent(input: { raid: string; date: string; time: str
     );
     if (input.postToDiscord && ev) {
       const t = Math.floor(startsAt.getTime() / 1000);
+      // Also add it to the Discord server's Events list (when the bot token is configured).
+      const dEvent = await createDiscordEvent({
+        name: def.name, startsAt,
+        description: `${def.size}-player raid night. Sign up on the hub so the raid leader can build groups: ${hubUrl(`/raids?event=${ev.id}`)}\n\nNeeds: ${def.comp.map((c) => `${c.need} ${c.role}`).join(", ")}.${def.reqs.length ? `\nBring: ${def.reqs.join(", ")}.` : ""}`,
+      });
       const posted = await notify("events", {
         title: `📅 ${def.name}: signups are open`,
-        description: `<t:${t}:F> (<t:${t}:R>)\n${def.size} players. Sign up on the hub to claim your spot.`,
+        description: `<t:${t}:F> (<t:${t}:R>)\n${def.size} players. Sign up on the hub to claim your spot.${dEvent ? `\n[Mark yourself Interested on Discord](${dEvent.link})` : ""}`,
         color: 0xffd100, url: hubUrl(`/raids?event=${ev.id}`),
         fields: def.comp.map((c) => ({ name: c.role, value: `0 / ${c.need}`, inline: true })),
       }, { config: undefined });

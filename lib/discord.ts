@@ -86,3 +86,28 @@ export async function notify(category: DiscordCategory, embed: Embed, opts: { co
 export async function postToDiscord(content: string, embed?: Embed, category: DiscordCategory = "announcements") {
   return notify(category, embed ?? { title: content.replace(/\*\*/g, "").slice(0, 240) }, { content: embed ? content : undefined });
 }
+
+/**
+ * Create a Discord server event (the server's Events list, with an Interested button and reminders) for a raid night.
+ * Needs the bot token as the DISCORD_BOT_TOKEN secret and the bot's Create Events permission. Never throws.
+ */
+export async function createDiscordEvent(ev: { name: string; startsAt: Date; description: string }): Promise<{ link: string; id: string } | null> {
+  const token = process.env.DISCORD_BOT_TOKEN, guild = process.env.DISCORD_GUILD_ID, channel = process.env.DISCORD_RAID_CHANNEL_ID;
+  if (!token || !guild || !channel || ev.startsAt.getTime() < Date.now() + 60_000) return null;
+  try {
+    const res = await fetch(`https://discord.com/api/v10/guilds/${guild}/scheduled-events`, {
+      method: "POST",
+      headers: { Authorization: `Bot ${token}`, "Content-Type": "application/json", "X-Audit-Log-Reason": "Raid event created on the guild hub" },
+      body: JSON.stringify({
+        name: ev.name.slice(0, 100), privacy_level: 2, entity_type: 2, channel_id: channel,
+        scheduled_start_time: ev.startsAt.toISOString(), description: ev.description.slice(0, 1000),
+      }),
+    });
+    if (!res.ok) { console.error("discord event", res.status, await res.text().catch(() => "")); return null; }
+    const j = (await res.json()) as { id: string };
+    return { id: j.id, link: `https://discord.com/events/${guild}/${j.id}` };
+  } catch (e) {
+    console.error("discord event", e);
+    return null;
+  }
+}
