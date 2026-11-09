@@ -98,6 +98,7 @@ export const achievements = (slug: string) => get<any>(`/profile/wow/character/$
 export const quests = (slug: string) => get<any>(`/profile/wow/character/${enc(slug)}/quests/completed`, NS.profile);
 
 // --- Guild (app token) ---
+export const guildSummary = (guildSlug = SITE.guildSlug) => get<any>(`/data/wow/guild/${enc(guildSlug)}`, NS.profile);
 export const guildRoster = (guildSlug = SITE.guildSlug) => get<any>(`/data/wow/guild/${enc(guildSlug)}/roster`, NS.profile);
 export const guildActivity = (guildSlug = SITE.guildSlug) => get<any>(`/data/wow/guild/${enc(guildSlug)}/activity`, NS.profile);
 

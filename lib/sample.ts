@@ -213,4 +213,8 @@ export const SETTINGS = {
   wishlist_slots: 6,
   wishlist_lock_date: "2026-12-08",
   attendance_window: "8w",
+  guild_motd: "Raids open December 9. Hit 60, get attuned, and lock your wishlist by the 8th!",
+  guild_info: "Dragon Warriors is an Alliance guild on the WoW Forever PvP ruleset.\n\nWe raid Onyxia's Lair, Hyjal Summit and the Barrow Deeps, run dungeon nights for pre-raid gear, and help each other level. Loot is wishlist priority with loot council review.\n\nNew players and alts welcome. Apply on the hub and an officer will reach out.",
 };
+
+export const GUILD_PROFILE = { name: "Dragon Warriors", faction: "Alliance", ruleset: "PvP", createdAt: "2026-11-05T08:35:27.000Z", memberCount: 48, achievementPoints: 0 };

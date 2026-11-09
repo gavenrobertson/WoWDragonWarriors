@@ -34,6 +34,12 @@ export async function syncRoster() {
         await q('insert into guild_ranks ("index", name) values ($1, $2) on conflict do nothing', [i, i === 0 ? "Guild Master" : `Rank ${i}`]);
       }
     });
+    // Guild summary (faction, ruleset, founding date) for the public guild page.
+    const g = await bnet.guildSummary().catch(() => null);
+    if (g) {
+      const profile = { name: g.name, faction: g.faction?.name, ruleset: g.ruleset?.name, createdAt: g.created_timestamp ? new Date(g.created_timestamp).toISOString() : undefined, memberCount: g.member_count ?? members.length, achievementPoints: g.achievement_points ?? 0 };
+      await sql("insert into settings (key, value) values ('guild_profile', $1) on conflict (key) do update set value = excluded.value", [JSON.stringify(profile)]);
+    }
     await recordRun("roster", "ok", `${members.length} members`, "Synced from the guild roster", started);
     return { ok: true as const, members: members.length };
   } catch (e) {

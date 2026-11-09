@@ -5,14 +5,13 @@ import { randomBytes } from "node:crypto";
 import { isDemo } from "./config";
 import { isoIn, nowIso, sql, sqlOne } from "./db";
 import { CHARACTERS, RANKS } from "./sample";
+import { NO_PERMS, mergePerms, roleOf, type Permission, type Perms, type SiteRole } from "./roles";
+export type { Permission } from "./roles";
 
 export const SESSION_COOKIE = "dw_session";
 export const STATE_COOKIE = "dw_oauth_state";
 const SESSION_DAYS = 30;
 
-export type Permission = "canSignUp" | "canWishlist" | "canRunRaids" | "canAwardLoot" | "isAdmin";
-type Perms = Record<Permission, boolean>;
-const NO_PERMS: Perms = { canSignUp: false, canWishlist: false, canRunRaids: false, canAwardLoot: false, isAdmin: false };
 
 export interface ViewerCharacter { id: string; slug: string; name: string; className: string | null; level: number | null; isMain: boolean; inGuild: boolean; avatarUrl?: string | null }
 export interface Viewer {
@@ -21,6 +20,7 @@ export interface Viewer {
   userId?: string;
   battletag?: string;
   rankName?: string;
+  siteRole?: SiteRole | null;
   characters: ViewerCharacter[];
   main?: ViewerCharacter;
   perms: Perms;
@@ -76,8 +76,8 @@ function demoViewer(): Viewer {
   }));
   const rank = RANKS[1];
   return {
-    demo: true, signedIn: true, battletag: "Korvath#1234", rankName: rank.name, characters: chars, main: chars.find((c) => c.isMain),
-    perms: { canSignUp: rank.canSignUp, canWishlist: rank.canWishlist, canRunRaids: rank.canRunRaids, canAwardLoot: rank.canAwardLoot, isAdmin: rank.isAdmin },
+    demo: true, signedIn: true, battletag: "Korvath#1234", rankName: rank.name, siteRole: "super_admin", characters: chars, main: chars.find((c) => c.isMain),
+    perms: mergePerms(rank, roleOf("super_admin")!.perms),
   };
 }
 
@@ -87,8 +87,8 @@ export const getViewer = cache(async (): Promise<Viewer> => {
   const session = await currentSession();
   if (!session) return { demo: false, signedIn: false, characters: [], perms: NO_PERMS };
 
-  const user = await sqlOne<{ id: string; battletag: string; main_character_id: string | null }>(
-    "select id, battletag, main_character_id from users where id = $1",
+  const user = await sqlOne<{ id: string; battletag: string; main_character_id: string | null; site_role: SiteRole | null }>(
+    "select id, battletag, main_character_id, site_role from users where id = $1",
     [session.user_id],
   );
   if (!user) return { demo: false, signedIn: false, characters: [], perms: NO_PERMS };
@@ -116,11 +116,14 @@ export const getViewer = cache(async (): Promise<Viewer> => {
     userId: user.id,
     battletag: user.battletag,
     rankName: rank?.name,
+    siteRole: user.site_role,
     characters,
     main: characters.find((c) => c.isMain) ?? characters[0],
-    perms: rank
-      ? { canSignUp: !!rank.can_sign_up, canWishlist: !!rank.can_wishlist, canRunRaids: !!rank.can_run_raids, canAwardLoot: !!rank.can_award_loot, isAdmin: !!rank.is_admin }
-      : NO_PERMS,
+    // Guild rank permissions plus the hub role's (a role works even before characters are in the guild).
+    perms: mergePerms(
+      rank && { canSignUp: !!rank.can_sign_up, canWishlist: !!rank.can_wishlist, canRunRaids: !!rank.can_run_raids, canAwardLoot: !!rank.can_award_loot, isAdmin: !!rank.is_admin },
+      roleOf(user.site_role)?.perms,
+    ),
   };
 });
 

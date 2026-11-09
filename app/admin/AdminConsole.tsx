@@ -1,16 +1,19 @@
 "use client";
 import { useState } from "react";
 import {
-  createEvent, decideApplication, importBank, importLootLog, publishAnnouncement, recordAward, saveLootSettings, saveRanks, syncEverything,
+  createEvent, decideApplication, importBank, importLootLog, publishAnnouncement, recordAward, saveGuildPage, saveLootSettings, saveRanks,
+  setUserRole, syncEverything,
 } from "@/app/actions";
+import { Avatar } from "@/components/bits";
+import { ROLES, canChangeRoleOf, roleLabel, type SiteRole } from "@/lib/roles";
 import { StatusDot } from "@/components/bits";
 import { Toast } from "@/components/Toast";
 import { useAction } from "@/components/useAction";
-import type { HubApplication, HubRank } from "@/lib/store";
+import type { HubApplication, HubRank, HubUser } from "@/lib/store";
 import { ROLE_LABEL, classColor } from "@/lib/ui";
 
-export type Section = "overview" | "apps" | "loot" | "ranks" | "events" | "keys";
-const LABELS: Record<Section, string> = { overview: "Sync & health", apps: "Applications", loot: "Loot system", ranks: "Ranks & permissions", events: "Events & news", keys: "Integrations" };
+export type Section = "overview" | "apps" | "loot" | "ranks" | "events" | "guild" | "people" | "keys";
+const LABELS: Record<Section, string> = { overview: "Sync & health", apps: "Applications", loot: "Loot system", ranks: "Ranks & permissions", events: "Events & news", guild: "Guild page", people: "People & roles", keys: "Integrations" };
 const SYSTEMS = [
   ["wishlist_council", "Wishlist + loot council", "Ranked wishlists, officers decide ties"],
   ["epgp", "EPGP", "Effort points vs. gear points ratio"],
@@ -26,6 +29,8 @@ export function AdminConsole(props: {
   settings: { lootSystem: string; wishlistSlots: number; lockDate: string; attendanceWindow: string };
   integrations: { name: string; use: string; detail: string; status: [string, string]; env: string }[];
   canSyncNow: boolean;
+  users: HubUser[]; me: { userId: string; role: SiteRole | null }; assignable: (SiteRole | null)[];
+  guildText: { motd: string; info: string }; notice?: string;
 }) {
   const [sec, setSec] = useState<Section>(props.initial);
   const [apps, setApps] = useState(props.apps);
@@ -34,6 +39,9 @@ export function AdminConsole(props: {
   const [award, setAward] = useState({ itemName: "", character: "", reason: "" });
   const [ev, setEv] = useState({ raid: "onyxias-lair", date: "2026-12-09", time: "20:00", postToDiscord: true });
   const [news, setNews] = useState({ title: "", body: "" });
+  const [users, setUsers] = useState(props.users);
+  const [guildText, setGuildText] = useState(props.guildText);
+  const [userQ, setUserQ] = useState("");
   const { pending, run, toast } = useAction();
   const pendingApps = apps.filter((a) => a.status === "pending").length;
 
@@ -57,6 +65,7 @@ export function AdminConsole(props: {
       </nav>
 
       <main id="main" tabIndex={-1} className="page" style={{ flex: "999 1 640px", minWidth: 0, paddingTop: 0, gap: 20 }}>
+        {props.notice && <p role="status" className="notice" style={{ borderColor: "var(--dw-gold)" }}>{props.notice}</p>}
         {sec === "overview" && (
           <>
             <div className="row between" style={{ alignItems: "flex-end" }}>
@@ -201,6 +210,74 @@ export function AdminConsole(props: {
                 </form>
               )}
             </div>
+          </>
+        )}
+
+        {sec === "guild" && (
+          <>
+            <div className="stack" style={{ gap: 6 }}><h1 style={{ fontSize: 34 }}>Guild page</h1><p className="soft">What the public sees on <a href="/guild">/guild</a>, styled like the in-game guild window.</p></div>
+            <form className="panel" onSubmit={(e) => { e.preventDefault(); run(() => saveGuildPage(guildText)); }}>
+              <label className="field">Message of the Day
+                <input type="text" maxLength={280} value={guildText.motd} onChange={(e) => setGuildText({ ...guildText, motd: e.target.value })} placeholder="Shown in green at the top of the guild window" />
+              </label>
+              <label className="field">Guild information
+                <textarea rows={8} maxLength={4000} value={guildText.info} onChange={(e) => setGuildText({ ...guildText, info: e.target.value })} placeholder="Who you are, when you raid, how to join. Blank lines start new paragraphs." />
+              </label>
+              <div className="row"><button type="submit" className="btn btn-primary" disabled={pending}>Save guild page</button><a href="/guild" className="btn">View guild page</a></div>
+            </form>
+          </>
+        )}
+
+        {sec === "people" && (
+          <>
+            <div className="stack" style={{ gap: 6 }}>
+              <h1 style={{ fontSize: 34 }}>People &amp; roles</h1>
+              <p className="soft">Everyone who has signed in with Battle.net. Roles add hub permissions on top of in-game guild rank. Super Admins can assign any role; Guild Leaders can assign Officer, Raid Leader and Loot Master.</p>
+            </div>
+            <div className="grid-auto" style={{ ["--min" as string]: "200px", gap: 10 }}>
+              {ROLES.map((r) => (
+                <div key={r.id} className="tile" style={{ padding: "12px 14px" }}><span className="strong gold">{r.label}</span><br /><span className="micro muted">{r.desc}</span></div>
+              ))}
+            </div>
+            <label className="row small strong" style={{ gap: 8 }}>Search<input type="search" placeholder="BattleTag or character" value={userQ} onChange={(e) => setUserQ(e.target.value)} /></label>
+            <div className="table-wrap">
+              <table className="table">
+                <thead><tr><th scope="col">Account</th><th scope="col">Main character</th><th scope="col">Guild rank</th><th scope="col">Hub role</th></tr></thead>
+                <tbody>
+                  {users.length === 0 && <tr><td colSpan={4} className="soft" style={{ textAlign: "center", padding: 28 }}>Nobody has signed in yet.</td></tr>}
+                  {users.filter((u) => !userQ || `${u.battletag} ${u.main?.name ?? ""}`.toLowerCase().includes(userQ.toLowerCase())).map((u) => {
+                    const isMe = u.id === props.me.userId;
+                    const editable = canChangeRoleOf(props.me.role, u.siteRole) && !(isMe && props.me.role !== "super_admin");
+                    return (
+                      <tr key={u.id}>
+                        <td><span className="strong">{u.battletag}</span>{isMe && <span className="tag" style={{ marginLeft: 8 }}>YOU</span>}<br /><span className="micro muted">{u.characterCount} claimed character{u.characterCount === 1 ? "" : "s"}</span></td>
+                        <td>{u.main ? (
+                          <span className="row" style={{ gap: 10, flexWrap: "nowrap" }}>
+                            <Avatar name={u.main.name} className={u.main.className} size={32} url={u.main.avatarUrl} />
+                            <span><span className="strong" style={{ color: classColor(u.main.className) }}>{u.main.name}</span><br /><span className="micro muted">Level {u.main.level} {u.main.className}</span></span>
+                          </span>
+                        ) : <span className="muted">None claimed</span>}</td>
+                        <td>{u.rankName ?? <span className="muted">Not in guild</span>}</td>
+                        <td>
+                          {editable ? (
+                            <select aria-label={`Hub role for ${u.battletag}`} value={u.siteRole ?? ""} disabled={pending}
+                              onChange={(e) => {
+                                const role = (e.target.value || null) as SiteRole | null;
+                                const prev = users;
+                                setUsers(users.map((x) => (x.id === u.id ? { ...x, siteRole: role } : x)));
+                                run(() => setUserRole({ userId: u.id, role }).then((r) => { if (!r.ok) setUsers(prev); return r; }));
+                              }}>
+                              {[...new Set([u.siteRole as SiteRole | null, ...props.assignable])].map((r) => <option key={r ?? "none"} value={r ?? ""}>{roleLabel(r)}</option>)}
+                            </select>
+                          ) : <span className={u.siteRole ? "pill" : "muted"}>{roleLabel(u.siteRole)}</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="micro muted">People appear here after they sign in once. The roster&apos;s in-game ranks still apply; a hub role only adds permissions.</p>
           </>
         )}
 

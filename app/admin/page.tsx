@@ -6,6 +6,7 @@ import { NS, configured } from "@/lib/config";
 import { getRanks, getSettings, store } from "@/lib/store";
 import { timeAgo } from "@/lib/ui";
 import { AdminConsole, type Section } from "./AdminConsole";
+import { assignableRoles } from "@/lib/roles";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 
@@ -22,7 +23,7 @@ const STATE: Record<string, [string, string]> = {
   ok: ["Healthy", "#4CD964"], partial: ["Catching up", "#F2B84B"], error: ["Failing", "#FF8A7A"], waiting: ["Waiting", "#A99CC0"],
 };
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ section?: string }> }) {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ section?: string; notice?: string }> }) {
   const viewer = await getViewer();
   const p = viewer.perms;
   if (!viewer.signedIn) redirect("/sign-in");
@@ -32,6 +33,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     ...(p.isAdmin || p.canAwardLoot ? (["loot"] as const) : []),
     ...(p.isAdmin ? (["ranks"] as const) : []),
     ...(p.isAdmin || p.canRunRaids ? (["events"] as const) : []),
+    ...(p.isAdmin ? (["guild"] as const) : []),
+    ...(p.canManageRoles ? (["people"] as const) : []),
     ...(p.isAdmin ? (["keys"] as const) : []),
   ];
   if (!allowed.length) {
@@ -46,8 +49,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     );
   }
 
-  const { section } = await searchParams;
-  const [runs, apps, ranks, settings] = await Promise.all([store().syncRuns(), store().applications(), getRanks(), getSettings()]);
+  const { section, notice } = await searchParams;
+  const [runs, apps, ranks, settings, users] = await Promise.all([
+    store().syncRuns(), store().applications(), getRanks(), getSettings(), p.canManageRoles ? store().users() : Promise.resolve([]),
+  ]);
+  const s = settings as Record<string, unknown>;
   const syncs = runs.map((r) => {
     const [state, color] = r.job === "warcraftlogs" && !configured.warcraftlogs() && !viewer.demo ? ["Not set up", "#A99CC0"] : STATE[r.status] ?? STATE.waiting;
     return { ...SYNC_META[r.job], job: r.job, state, color, value: r.value, note: r.minutesAgo != null && r.job === "roster" ? `Last sync ${timeAgo(r.minutesAgo)}` : r.note };
@@ -70,6 +76,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       settings={{ lootSystem: settings.loot_system, wishlistSlots: Number(settings.wishlist_slots), lockDate: settings.wishlist_lock_date, attendanceWindow: settings.attendance_window }}
       integrations={integrations}
       canSyncNow={viewer.demo || configured.battlenet()}
+      users={users}
+      me={{ userId: viewer.userId ?? "demo", role: viewer.siteRole ?? null }}
+      assignable={assignableRoles(viewer.siteRole)}
+      guildText={{ motd: String(s.guild_motd ?? ""), info: String(s.guild_info ?? "") }}
+      notice={notice}
     />
   );
 }

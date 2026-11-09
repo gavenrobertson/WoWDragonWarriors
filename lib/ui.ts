@@ -5,6 +5,20 @@ export const CLASS_COLOR: Record<string, string> = {
   warrior: "#C69B6D", paladin: "#F48CBA", hunter: "#AAD372", rogue: "#FFF468", priest: "#F2F2F2",
   shaman: "#4A9EFF", mage: "#3FC7EB", warlock: "#9A9BF2", druid: "#FF7C0A",
 };
+// Class icons from /data/wow/media/playable-class/{id} (static-forever-us).
+export const CLASS_ICON: Record<string, string> = {
+  warrior: "https://render.worldofwarcraft.com/forever-us/icons/56/626008.jpg",
+  paladin: "https://render.worldofwarcraft.com/forever-us/icons/56/626003.jpg",
+  hunter: "https://render.worldofwarcraft.com/forever-us/icons/56/626000.jpg",
+  rogue: "https://render.worldofwarcraft.com/forever-us/icons/56/626005.jpg",
+  priest: "https://render.worldofwarcraft.com/forever-us/icons/56/626004.jpg",
+  shaman: "https://render.worldofwarcraft.com/forever-us/icons/56/626006.jpg",
+  mage: "https://render.worldofwarcraft.com/forever-us/icons/56/626001.jpg",
+  warlock: "https://render.worldofwarcraft.com/forever-us/icons/56/626007.jpg",
+  druid: "https://render.worldofwarcraft.com/forever-us/icons/56/625999.jpg",
+};
+export const classIcon = (cls?: string | null) => CLASS_ICON[(cls ?? "").toLowerCase()];
+
 export const classColor = (cls?: string | null) => CLASS_COLOR[(cls ?? "").toLowerCase()] ?? "#CEC5DD";
 
 export const QUALITY_COLOR: Record<Quality | "empty", string> = {

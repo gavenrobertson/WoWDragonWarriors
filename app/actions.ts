@@ -9,6 +9,7 @@ import { syncAllProfiles, syncCharacter, syncRoster } from "@/lib/sync";
 import { configured } from "@/lib/config";
 import type { ActionResult } from "@/components/useAction";
 import type { Role, SignupStatus } from "@/lib/types";
+import { assignableRoles, canChangeRoleOf, roleLabel, type SiteRole } from "@/lib/roles";
 
 const ROLES: Role[] = ["tank", "healer", "melee", "ranged"];
 const SIGNUP: SignupStatus[] = ["accepted", "tentative", "late", "bench", "declined"];
@@ -321,5 +322,32 @@ export async function syncEverything(): Promise<ActionResult> {
     const profiles = await syncAllProfiles();
     revalidatePath("/", "layout");
     return { ok: true, message: `Roster: ${roster.members} members · profiles: ${profiles.ok}/${profiles.total}` };
+  });
+}
+
+// ------------------------------------------------------------ roles & guild page
+export async function setUserRole(input: { userId: string; role: SiteRole | null }): Promise<ActionResult> {
+  return act("canManageRoles", `Role set to ${roleLabel(input.role)}`, async (v) => {
+    const role = input.role || null;
+    if (!assignableRoles(v.siteRole).includes(role)) return { ok: false, error: "You can't assign that role." };
+    const target = await sqlOne<{ id: string; site_role: string | null }>("select id, site_role from users where id = $1", [input.userId]);
+    if (!target) return { ok: false, error: "That account no longer exists." };
+    if (!canChangeRoleOf(v.siteRole, target.site_role)) return { ok: false, error: "You can't change the role of someone at or above your level." };
+    if (target.site_role === "super_admin" && role !== "super_admin") {
+      const supers = await sqlOne<{ n: number }>("select count(*) as n from users where site_role = 'super_admin'");
+      if ((supers?.n ?? 0) <= 1) return { ok: false, error: "The hub needs at least one Super Admin." };
+    }
+    await sql("update users set site_role = $2 where id = $1", [input.userId, role]);
+    revalidatePath("/", "layout");
+    return { ok: true, message: `Role set to ${roleLabel(role)}` };
+  });
+}
+
+export async function saveGuildPage(input: { motd: string; info: string }): Promise<ActionResult> {
+  return act("isAdmin", "Guild page saved", async () => {
+    const pairs: [string, string][] = [["guild_motd", str(input.motd, 280)], ["guild_info", str(input.info, 4000)]];
+    for (const [k, val] of pairs) await sql("insert into settings (key, value) values ($1, $2) on conflict (key) do update set value = excluded.value", [k, JSON.stringify(val)]);
+    revalidatePath("/guild");
+    return { ok: true, message: "Guild page saved" };
   });
 }

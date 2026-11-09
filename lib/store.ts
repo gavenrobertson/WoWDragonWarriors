@@ -35,6 +35,13 @@ export interface HubSyncRun { job: string; status: string; value: string; note: 
 export interface HubBank { gold: number | null; uploadedAt?: string; items: { name: string; tab: string; qty: number; quality: Quality }[] }
 export interface HubCraftRequest { id: string; itemName: string; quantity: number; requester: string; status: string }
 
+export interface HubUser {
+  id: string; battletag: string; siteRole: string | null; createdAt: string;
+  main?: { name: string; className: string; level: number; avatarUrl?: string };
+  characterCount: number; rankName?: string;
+}
+export interface GuildProfile { name: string; faction: string; ruleset: string; createdAt?: string; memberCount: number; achievementPoints: number }
+
 export interface Store {
   characters(): Promise<HubCharacter[]>;
   items(): Promise<HubItem[]>;
@@ -50,6 +57,8 @@ export interface Store {
   craftRequests(): Promise<HubCraftRequest[]>;
   settings(): Promise<typeof S.SETTINGS>;
   memberTotal(): Promise<number>;
+  users(): Promise<HubUser[]>;
+  guildProfile(): Promise<GuildProfile>;
 }
 
 // ---------------------------------------------------------------- demo store
@@ -82,6 +91,20 @@ const demoStore: Store = {
   craftRequests: async () => [],
   settings: async () => S.SETTINGS,
   memberTotal: async () => S.MEMBER_TOTAL,
+  users: async () => {
+    const chars = demoChars();
+    const accounts = [...new Set(chars.map((c) => c.userId!))];
+    return accounts.map((acc, i) => {
+      const own = chars.filter((c) => c.userId === acc);
+      const main = own.find((c) => c.isMain) ?? own[0];
+      return {
+        id: acc, battletag: acc === "demo" ? "Korvath#1234" : `${main.name}#${1100 + i}`, siteRole: acc === "demo" ? "super_admin" : main.rank === 1 ? "officer" : null,
+        createdAt: new Date(Date.now() - i * 86400000).toISOString(), characterCount: own.length,
+        main: { name: main.fullName, className: main.className, level: main.level }, rankName: S.RANKS.find((r) => r.index === main.rank)?.name,
+      };
+    });
+  },
+  guildProfile: async () => S.GUILD_PROFILE,
 };
 
 // ---------------------------------------------------------------- D1 store
@@ -205,6 +228,26 @@ const dbStore: Store = {
   },
   async memberTotal() {
     return (await sqlOne<any>("select count(*) as n from characters where in_guild = 1"))?.n ?? 0;
+  },
+  async users() {
+    const rows = await sql<any>(
+      `select u.id, u.battletag, u.site_role, u.created_at,
+         m.name, m.surname, m.class, m.level, m.avatar_url,
+         (select count(*) from characters c where c.user_id = u.id and c.claimed = 1) as n,
+         (select r.name from characters c join guild_ranks r on r."index" = c.guild_rank where c.user_id = u.id and c.in_guild = 1 order by c.guild_rank limit 1) as rank_name
+       from users u left join characters m on m.id = u.main_character_id
+       order by case u.site_role when 'super_admin' then 0 when 'guild_leader' then 1 when 'officer' then 2 when 'raid_leader' then 3 when 'loot_master' then 3 else 9 end, lower(u.battletag)`,
+    );
+    return rows.map((r) => ({
+      id: r.id, battletag: r.battletag, siteRole: r.site_role, createdAt: iso(r.created_at), characterCount: r.n ?? 0, rankName: r.rank_name ?? undefined,
+      main: r.name ? { name: `${r.name} ${r.surname}`.trim(), className: r.class ?? "", level: r.level ?? 0, avatarUrl: r.avatar_url ?? undefined } : undefined,
+    }));
+  },
+  async guildProfile() {
+    const r = await sqlOne<any>("select value from settings where key = 'guild_profile'");
+    const p = json<Partial<GuildProfile>>(r?.value, {});
+    const n = await this.memberTotal();
+    return { name: p.name ?? "Dragon Warriors", faction: p.faction ?? "Alliance", ruleset: p.ruleset ?? "PvP", createdAt: p.createdAt, memberCount: p.memberCount ?? n, achievementPoints: p.achievementPoints ?? 0 };
   },
 };
 
