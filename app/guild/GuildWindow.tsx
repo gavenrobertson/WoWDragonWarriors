@@ -41,6 +41,7 @@ export function GuildWindow({ profile, members, motd, info, isMember, signedIn }
   const classes = [...new Set(members.map((m) => m.className))].length;
 
   return (
+    <div className="wow-shell">
     <section className="wow-window" aria-labelledby="guild-name">
       <div className="wow-portrait" aria-hidden="true"><img src="/assets/crest-256.jpg" alt="" /></div>
       <div className="wow-titlebar">
@@ -120,10 +121,12 @@ export function GuildWindow({ profile, members, motd, info, isMember, signedIn }
         )}
       </div>
 
-      <div className="wow-tabs" role="tablist" aria-label="Guild window">
+
+    </section>
+    <div className="wow-tabs" role="tablist" aria-label="Guild window">
         <button type="button" role="tab" aria-selected={tab === "roster"} className="wow-tab" onClick={() => setTab("roster")}>Roster</button>
         <button type="button" role="tab" aria-selected={tab === "info"} className="wow-tab" onClick={() => setTab("info")}>Guild Info</button>
       </div>
-    </section>
+    </div>
   );
 }

@@ -773,3 +773,9 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webk
   cursor: pointer;
 }
 button:disabled, [aria-disabled="true"], select:disabled, input:disabled { cursor: not-allowed; }
+/* Guild window tabs sit in normal flow under the frame (not hanging off it), so the page height includes them */
+.wow-shell { max-width: 980px; margin: 0 auto 32px; }
+.wow-shell .wow-window { margin-bottom: 0; }
+.wow-tabs { position: relative; left: auto; bottom: auto; z-index: 1; margin: -3px 0 0 28px; }
+@media (max-width: 760px) { .wow-tabs { margin-left: 12px; } }
+.wow-shell { min-width: 0; width: 100%; box-sizing: border-box; }
