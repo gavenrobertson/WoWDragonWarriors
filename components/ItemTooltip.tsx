@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ItemTip } from "@/lib/tooltip";
 import { qualityColor } from "@/lib/ui";
 
-const HOVER_DELAY = 1500; // ms the pointer rests on an item before the tooltip shows
+const HOVER_DELAY = 800; // ms the pointer rests on an item before the tooltip shows
 const cache = new Map<number, Promise<ItemTip | null>>();
 function load(id: number) {
   if (!cache.has(id)) {
