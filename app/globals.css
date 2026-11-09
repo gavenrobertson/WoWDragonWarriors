@@ -1596,3 +1596,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; h
 .view3d-btn .micro { color: #a99a7a; font-family: var(--font-body); font-weight: 400; }
 .view3d-btn:hover { box-shadow: inset 0 0 0 1px #FFD100, 0 8px 22px -8px #000, 0 0 30px -6px rgba(255,209,0,.7); }
 .view3d-cube { color: #c08cff; font-size: 18px; line-height: 1; }
+
+/* performance: page sections rise in from 2% opacity instead of 0, so browsers count them as painted at once
+   (fully transparent content delays Largest Contentful Paint until the fade ends). Looks the same. */
+@keyframes page-in { from { opacity: .02; transform: translateY(12px); } }
+.page > * { animation: page-in .55s var(--ease-out) both; }
