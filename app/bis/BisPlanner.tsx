@@ -84,7 +84,7 @@ export function BisPlanner({ chars }: { chars: BisChar[] }) {
           <div className="bis-detail panel" aria-live="polite">
             <div className="row between baseline">
               <span className="eyebrow">{sel}</span>
-              {e && <span className="row small strong" style={{ gap: 6, color: isHave(e) ? "#4CD964" : "#A99CC0" }}><StatusDot color={isHave(e) ? "#4CD964" : "#A99CC0"} />{e.equipped ? "Equipped" : isHave(e) ? "Have" : "Need"}</span>}
+              {e && <span className="row small strong" style={{ gap: 6, color: isHave(e) ? "#4CD964" : "#A8987A" }}><StatusDot color={isHave(e) ? "#4CD964" : "#A8987A"} />{e.equipped ? "Equipped" : isHave(e) ? "Have" : "Need"}</span>}
             </div>
             {e ? (
               <EntryEditor
@@ -167,7 +167,7 @@ function SlotColumn({ slots, ch, sel, onSelect, onAdd, row }: {
                 <span className="micro muted">{s}</span>
                 <span className="small strong bis-name" style={{ color: e ? qualityColor(e.quality) : "var(--dw-text-muted)" }}>{e ? e.name : "Choose item"}</span>
               </span>
-              {e && <StatusDot color={isHave(e) ? "#4CD964" : e.wishlisted ? "#F2CF6B" : "#75698C"} />}
+              {e && <StatusDot color={isHave(e) ? "#4CD964" : e.wishlisted ? "#F2CF6B" : "#6f6656"} />}
             </button>
           </li>
         );
@@ -183,7 +183,7 @@ function EntryEditor({ entry: e, equipped, pending, onChange, onRemove, onToggle
   const [type, setType] = useState(e.sourceType ?? "");
   const [note, setNote] = useState(e.note ?? "");
   const dirty = type !== (e.sourceType ?? "") || note !== (e.note ?? "");
-  const [bg, fg] = SOURCE_COLORS[type] ?? ["#21172F", "#CEC5DD"];
+  const [bg, fg] = SOURCE_COLORS[type] ?? ["#1d160d", "#D9CCAE"];
   return (
     <div className="stack" style={{ gap: 14 }}>
       <div className="row" style={{ gap: 14, flexWrap: "nowrap" }}>
@@ -230,12 +230,12 @@ function MiniMap({ pin }: { pin: { label: string; x: number; y: number } }) {
   return (
     <div className="schematic-map" role="img" aria-label={`Map pin: ${pin.label}`} style={{ aspectRatio: "5 / 2.4" }}>
       <svg width="100%" height="100%" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M120 90 C200 40 300 70 340 130 C390 200 360 260 400 330 C430 400 390 480 330 530 C260 580 180 550 150 480 C110 400 60 360 70 280 C80 200 60 140 120 90 Z" fill="#2A1F3B" stroke="#7A5E22" strokeWidth="3" />
-        <path d="M640 70 C720 40 820 60 860 120 C900 180 860 230 880 290 C910 360 880 430 820 480 C760 540 690 520 660 460 C630 400 600 380 610 310 C620 240 580 200 600 140 C610 105 620 82 640 70 Z" fill="#2A1F3B" stroke="#7A5E22" strokeWidth="3" />
+        <path d="M120 90 C200 40 300 70 340 130 C390 200 360 260 400 330 C430 400 390 480 330 530 C260 580 180 550 150 480 C110 400 60 360 70 280 C80 200 60 140 120 90 Z" fill="#2a1f10" stroke="#7A5E22" strokeWidth="3" />
+        <path d="M640 70 C720 40 820 60 860 120 C900 180 860 230 880 290 C910 360 880 430 820 480 C760 540 690 520 660 460 C630 400 600 380 610 310 C620 240 580 200 600 140 C610 105 620 82 640 70 Z" fill="#2a1f10" stroke="#7A5E22" strokeWidth="3" />
       </svg>
       <span className="map-pin" style={{ left: `${pin.x}%`, top: `${pin.y}%`, cursor: "default" }}>
         <span className="map-pin-tag" style={{ background: "#2E2414", borderColor: "var(--dw-gold)" }}>{pin.label}</span>
-        <svg width="22" height="28" viewBox="0 0 22 28" aria-hidden="true"><path d="M11 27 C11 27 2 16 2 10 A9 9 0 0 1 20 10 C20 16 11 27 11 27 Z" fill="#E3B341" stroke="#120C1C" strokeWidth="2" /><circle cx="11" cy="10" r="3.5" fill="#120C1C" /></svg>
+        <svg width="22" height="28" viewBox="0 0 22 28" aria-hidden="true"><path d="M11 27 C11 27 2 16 2 10 A9 9 0 0 1 20 10 C20 16 11 27 11 27 Z" fill="#E3B341" stroke="#0b0806" strokeWidth="2" /><circle cx="11" cy="10" r="3.5" fill="#0b0806" /></svg>
       </span>
     </div>
   );

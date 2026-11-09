@@ -90,7 +90,7 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
             <defs><path id="runePath" d="M200,200 m-170,0 a170,170 0 1,1 340,0 a170,170 0 1,1 -340,0" /></defs>
             <circle cx="200" cy="200" r="190" fill="none" stroke="#C9A13B" strokeOpacity=".55" strokeWidth="2" />
             <circle cx="200" cy="200" r="150" fill="none" stroke="#E3B341" strokeOpacity=".35" strokeWidth="1.5" strokeDasharray="4 10" />
-            <text fill="#F5D77E" fillOpacity=".75" fontSize="19" fontFamily="Cinzel, serif" letterSpacing="3">
+            <text fill="#F5D77E" fillOpacity=".75" fontSize="19" fontFamily="Marcellus, serif" letterSpacing="3">
               <textPath href="#runePath">{RUNES + RUNES}</textPath>
             </text>
           </svg>
@@ -123,7 +123,7 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
               />
             ) : (
               <svg width="200" height="380" viewBox="0 0 200 380" aria-hidden="true" className="model-render loaded silhouette">
-                <g fill="#231D19" stroke="#6A5590" strokeWidth="2" strokeLinejoin="round">
+                <g fill="#231D19" stroke="#7a5e2a" strokeWidth="2" strokeLinejoin="round">
                   <circle cx="100" cy="52" r="30" />
                   <path d="M46 110 C58 92 78 86 100 86 C122 86 142 92 154 110 L166 196 L144 202 L136 150 L134 230 L66 230 L64 150 L56 202 L34 196 Z" />
                   <path d="M68 232 L132 232 L128 346 L106 350 L100 262 L94 350 L72 346 Z" />

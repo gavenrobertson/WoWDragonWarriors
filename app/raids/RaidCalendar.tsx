@@ -20,10 +20,10 @@ const STATUS: Record<string, { label: string; button: string; color: string }> =
   accepted: { label: "Accepted", button: "Accept", color: "#4CD964" },
   tentative: { label: "Tentative", button: "Tentative", color: "#F2B84B" },
   late: { label: "Late", button: "Late", color: "#F2B84B" },
-  bench: { label: "Bench", button: "Bench me", color: "#CEC5DD" },
+  bench: { label: "Bench", button: "Bench me", color: "#D9CCAE" },
   declined: { label: "Declined", button: "Decline", color: "#FF8A7A" },
 };
-const CHECK_COLOR = { ok: "#4CD964", warn: "#F2B84B", unknown: "#75698C" };
+const CHECK_COLOR = { ok: "#4CD964", warn: "#F2B84B", unknown: "#6f6656" };
 
 export function RaidCalendar({ events, initial, chars, canSignUp, canRunRaids, signedIn }: {
   events: EventVM[]; initial: number; chars: { slug: string; label: string; isMain: boolean }[]; canSignUp: boolean; canRunRaids: boolean; signedIn: boolean;
@@ -106,7 +106,7 @@ export function RaidCalendar({ events, initial, chars, canSignUp, canRunRaids, s
                 <div className="row" role="group" aria-label="Signup status" style={{ gap: 8 }}>
                   {Object.entries(STATUS).map(([k, s]) => (
                     <button key={k} type="button" className="chip" aria-pressed={me.status === k} disabled={pending} onClick={() => update({ status: k })}
-                      style={me.status === k ? { borderColor: s.color, color: s.color, background: "#2A1F3B" } : undefined}>{s.button}</button>
+                      style={me.status === k ? { borderColor: s.color, color: s.color, background: "#2a1f10" } : undefined}>{s.button}</button>
                   ))}
                 </div>
                 {ev.checks[me.character]?.on.some((c) => c.src.startsWith("Self-reported")) && (

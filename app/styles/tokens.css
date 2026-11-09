@@ -1,39 +1,40 @@
-/* Dragon Warriors — design tokens (royal purple & gold) */
+/* Dragon Warriors — design tokens (WoW UI: stone, wood and gold, with the crest's purple as accent) */
 :root {
   /* surfaces */
-  --dw-bg: #120C1C;            /* page */
-  --dw-header: #1C0F33;        /* header (use at 72% alpha + blur) */
-  --dw-panel-royal: #231544;   /* hero / feature panels */
-  --dw-card: #1A1229;          /* cards */
-  --dw-card-2: #21172F;        /* nested / raised */
-  --dw-input: #251A35;
-  --dw-selected: #2B2114;      /* gold-tinted selected background */
+  --dw-bg: #0b0806;            /* page */
+  --dw-header: #150f09;        /* header (use at 72% alpha + blur) */
+  --dw-panel-royal: #1c140b;   /* hero / feature panels */
+  --dw-card: #15100a;          /* cards */
+  --dw-card-2: #1d160d;        /* nested / raised */
+  --dw-input: #0e0a06;
+  --dw-selected: #2d220e;      /* gold-tinted selected background */
   /* lines */
-  --dw-border: #33264A;
-  --dw-border-2: #3E2F58;
-  --dw-border-3: #4E3C6E;
+  --dw-border: #3a2c16;
+  --dw-border-2: #574320;
+  --dw-border-3: #7a5e2a;
   /* gold */
-  --dw-gold: #E3B341;          /* primary action */
-  --dw-gold-hover: #F0C557;
-  --dw-gold-light: #F5D77E;    /* titles */
-  --dw-gold-link: #F2CF6B;
-  --dw-gold-antique: #C9A13B;  /* header trim, logo frame */
+  --dw-gold: #F0B21C;          /* primary action */
+  --dw-gold-hover: #FFD100;
+  --dw-gold-light: #FFD100;    /* titles */
+  --dw-gold-link: #FFD45C;
+  --dw-gold-antique: #B08D3C;  /* header trim, logo frame */
   --dw-on-gold: #1A1206;
   /* text */
-  --dw-text: #F3EEF8;
-  --dw-text-2: #CEC5DD;
-  --dw-text-muted: #A99CC0;
+  --dw-text: #F2E8D0;
+  --dw-text-2: #D9CCAE;
+  --dw-text-muted: #A8987A;
   /* status */
   --dw-ok: #4CD964; --dw-warn: #F2B84B; --dw-bad: #FF8A7A;
   /* item quality (lightened for dark UI contrast) */
-  --q-legendary: #FF9433; --q-epic: #C08CFF; --q-rare: #5AA6FF; --q-uncommon: #4CD964; --q-common: #E6E1D8; --q-empty: #75698C;
+  --q-legendary: #FF9433; --q-epic: #C08CFF; --q-rare: #5AA6FF; --q-uncommon: #4CD964; --q-common: #E6E1D8; --q-empty: #6f6656;
   /* class colors */
   --c-warrior: #C69B6D; --c-paladin: #F48CBA; --c-hunter: #AAD372; --c-rogue: #FFF468; --c-priest: #F2F2F2;
   --c-shaman: #4A9EFF; --c-mage: #3FC7EB; --c-warlock: #9A9BF2; --c-druid: #FF7C0A;
   /* type */
-  --font-display: "Cinzel", Georgia, serif;
-  --font-body: "Inter", system-ui, sans-serif;
-  --fs-h1: 44px; --fs-h2: 24px; --fs-body: 15px; --fs-small: 13px; --fs-micro: 12px;
+  --font-display: "Marcellus", "Friz Quadrata", Georgia, serif;   /* headings, nav, buttons (Friz Quadrata-like) */
+  --font-title: "Cinzel Decorative", "Marcellus", Georgia, serif;   /* page titles */
+  --font-body: "Alegreya Sans", system-ui, sans-serif;
+  --fs-h1: 44px; --fs-h2: 24px; --fs-body: 16px; --fs-small: 13px; --fs-micro: 12px;
   /* shape */
   --r-sm: 8px; --r-md: 10px; --r-lg: 12px; --r-xl: 16px; --r-pill: 999px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px;
@@ -41,9 +42,10 @@
   /* glow */
   --glow-gold: 0 10px 30px -12px rgba(227,179,65,.75);
   --glow-gold-strong: 0 16px 40px -10px rgba(227,179,65,.9);
-  --glow-purple: 0 18px 40px -18px rgba(122,63,224,.85);
-  --focus-ring: 0 0 0 2px #F5D77E, 0 0 0 6px rgba(227,179,65,.18);
+  --glow-purple: 0 18px 40px -18px rgba(0,0,0,.95), 0 0 30px -14px rgba(255,170,60,.45);
+  --dw-arcane: #9B5DFF;        /* crest purple, used for magic accents */
+  --focus-ring: 0 0 0 2px #FFD100, 0 0 0 6px rgba(255,209,0,.18);
   --ease-out: cubic-bezier(.2,.8,.2,1);
 }
 /* Google Fonts:
-   https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap */
+   https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Marcellus&family=Alegreya+Sans:wght@400;500;700&display=swap */

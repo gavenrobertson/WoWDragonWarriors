@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 // Every page depends on who is signed in (header, permissions), so never prerender at build time.
 export const dynamic = "force-dynamic";
 
-export const viewport: Viewport = { themeColor: "#120C1C", colorScheme: "dark" };
+export const viewport: Viewport = { themeColor: "#0b0806", colorScheme: "dark" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Marcellus&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body>
         <div className="aura" aria-hidden="true"><span /><span /><span /></div>

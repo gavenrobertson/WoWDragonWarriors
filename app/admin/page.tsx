@@ -20,7 +20,7 @@ const SYNC_META: Record<string, { name: string; src: string }> = {
   addon: { name: "Addon exports", src: "Upload: bank + loot addon" },
 };
 const STATE: Record<string, [string, string]> = {
-  ok: ["Healthy", "#4CD964"], partial: ["Catching up", "#F2B84B"], error: ["Failing", "#FF8A7A"], waiting: ["Waiting", "#A99CC0"],
+  ok: ["Healthy", "#4CD964"], partial: ["Catching up", "#F2B84B"], error: ["Failing", "#FF8A7A"], waiting: ["Waiting", "#A8987A"],
 };
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ section?: string; notice?: string }> }) {
@@ -55,15 +55,15 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   ]);
   const s = settings as Record<string, unknown>;
   const syncs = runs.map((r) => {
-    const [state, color] = r.job === "warcraftlogs" && !configured.warcraftlogs() && !viewer.demo ? ["Not set up", "#A99CC0"] : STATE[r.status] ?? STATE.waiting;
+    const [state, color] = r.job === "warcraftlogs" && !configured.warcraftlogs() && !viewer.demo ? ["Not set up", "#A8987A"] : STATE[r.status] ?? STATE.waiting;
     return { ...SYNC_META[r.job], job: r.job, state, color, value: r.value, note: r.minutesAgo != null && r.job === "roster" ? `Last sync ${timeAgo(r.minutesAgo)}` : r.note };
   });
-  const on = (b: boolean): [string, string] => (viewer.demo || b ? ["Connected", "#4CD964"] : ["Not set up", "#A99CC0"]);
+  const on = (b: boolean): [string, string] => (viewer.demo || b ? ["Connected", "#4CD964"] : ["Not set up", "#A8987A"]);
   const integrations = [
     { name: "Battle.net API", use: "Sign-in, characters, roster, gear, professions, items, auctions", detail: `OAuth client · client credentials + authorization code · ${NS.profile}`, status: on(configured.battlenet()), env: "BNET_CLIENT_ID, BNET_CLIENT_SECRET" },
     { name: "Warcraft Logs", use: "Attendance, parses and boss kills per raid night", detail: "API v2 client · guild reports", status: on(configured.warcraftlogs()), env: "WCL_CLIENT_ID, WCL_CLIENT_SECRET, WCL_GUILD_ID" },
     { name: "Discord", use: "Sign-in link, event posts, reminders, application pings", detail: "Bot token + channel webhooks", status: on(configured.discord()), env: "DISCORD_CLIENT_ID, DISCORD_SIGNUPS_WEBHOOK_URL, DISCORD_BOT_TOKEN" },
-    { name: "Guild addon uploads", use: "Guild bank contents and loot awards from raid night", detail: "RCLootCouncil / Gargul export · bank export", status: ["Upload in Loot system", "#A99CC0"] as [string, string], env: "" },
+    { name: "Guild addon uploads", use: "Guild bank contents and loot awards from raid night", detail: "RCLootCouncil / Gargul export · bank export", status: ["Upload in Loot system", "#A8987A"] as [string, string], env: "" },
   ];
 
   return (

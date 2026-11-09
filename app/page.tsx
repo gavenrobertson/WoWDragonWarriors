@@ -139,7 +139,7 @@ export default async function HomePage() {
             {recent.length === 0 ? <p className="soft small">No roster data yet. The roster sync runs every 30 minutes.</p> : (
               <ul>
                 {recent.map((m) => (
-                  <li key={m.id} className="row between" style={{ padding: "10px 0", borderBottom: "1px solid #241A33" }}>
+                  <li key={m.id} className="row between" style={{ padding: "10px 0", borderBottom: "1px solid #221a0e" }}>
                     <Link href={`/characters/${m.slug}`} className="row" style={{ textDecoration: "none", gap: 10, flexWrap: "nowrap" }}>
                       <Avatar name={m.fullName} className={m.className} size={36} url={m.avatarUrl} />
                       <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.3 }}>

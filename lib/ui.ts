@@ -19,10 +19,10 @@ export const CLASS_ICON: Record<string, string> = {
 };
 export const classIcon = (cls?: string | null) => CLASS_ICON[(cls ?? "").toLowerCase()];
 
-export const classColor = (cls?: string | null) => CLASS_COLOR[(cls ?? "").toLowerCase()] ?? "#CEC5DD";
+export const classColor = (cls?: string | null) => CLASS_COLOR[(cls ?? "").toLowerCase()] ?? "#D9CCAE";
 
 export const QUALITY_COLOR: Record<Quality | "empty", string> = {
-  legendary: "#FF9433", epic: "#C08CFF", rare: "#5AA6FF", uncommon: "#4CD964", common: "#E6E1D8", empty: "#75698C",
+  legendary: "#FF9433", epic: "#C08CFF", rare: "#5AA6FF", uncommon: "#4CD964", common: "#E6E1D8", empty: "#6f6656",
 };
 export const qualityColor = (q?: string | null) => QUALITY_COLOR[(q ?? "common") as Quality] ?? QUALITY_COLOR.common;
 
@@ -35,11 +35,11 @@ export const slotAbbr = (slot: string) => SLOT_ABBR[slot] ?? slot.slice(0, 2).to
 export const ROLE_LABEL: Record<Role, string> = { tank: "Tank", healer: "Healer", melee: "Melee", ranged: "Ranged" };
 
 export const SOURCE_COLORS: Record<string, [bg: string, fg: string]> = {
-  raid: ["#3A2C10", "#F5D77E"], dungeon: ["#2A2450", "#B9A8FF"], quest: ["#123A35", "#7FE3D2"], crafted: ["#3E2414", "#FFB27A"],
+  raid: ["#3A2C10", "#F5D77E"], dungeon: ["#262019", "#B9A8FF"], quest: ["#123A35", "#7FE3D2"], crafted: ["#3E2414", "#FFB27A"],
   reputation: ["#1F3320", "#9BE59E"], world: ["#2A2A2A", "#E6E1D8"],
 };
 
-export const STATUS = { ok: "#4CD964", warn: "#F2B84B", bad: "#FF8A7A", muted: "#A99CC0" };
+export const STATUS = { ok: "#4CD964", warn: "#F2B84B", bad: "#FF8A7A", muted: "#A8987A" };
 
 export function timeAgo(minutes: number | null | undefined): string {
   if (minutes == null) return "Unknown";

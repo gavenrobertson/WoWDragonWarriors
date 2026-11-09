@@ -4,9 +4,9 @@ import { SITE } from "@/lib/config";
 export const metadata: Metadata = { title: "Brand" };
 
 const PALETTE = [
-  ["#120C1C", "Night purple", "Page background"], ["#231544", "Royal purple", "Hero and feature panels"], ["#1A1229", "Amethyst", "Cards"],
-  ["#3E2F58", "Frame", "Borders and dividers"], ["#E3B341", "Royal gold", "Primary buttons, active states"], ["#F5D77E", "Light gold", "Page titles, highlights"],
-  ["#C9A13B", "Antique gold", "Header trim, logo frame"], ["#F3EEF8", "Lavender white", "Body text"],
+  ["#0b0806", "Night purple", "Page background"], ["#1c140b", "Royal purple", "Hero and feature panels"], ["#15100a", "Amethyst", "Cards"],
+  ["#574320", "Frame", "Borders and dividers"], ["#E3B341", "Royal gold", "Primary buttons, active states"], ["#F5D77E", "Light gold", "Page titles, highlights"],
+  ["#C9A13B", "Antique gold", "Header trim, logo frame"], ["#F2E8D0", "Lavender white", "Body text"],
 ];
 
 export default function BrandPage() {

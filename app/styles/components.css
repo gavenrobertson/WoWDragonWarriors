@@ -18,7 +18,7 @@ button:disabled,[aria-disabled="true"]{cursor:not-allowed;opacity:.5}
 .aura span:nth-child(3){width:520px;height:520px;left:30%;bottom:-260px;background:#7A3FE0;opacity:.32;animation:drift 30s ease-in-out -4s infinite alternate}
 @keyframes drift{50%{transform:translate3d(60px,40px,0) scale(1.08)}100%{transform:translate3d(-40px,70px,0) scale(.96)}}
 
-.site-header{position:sticky;top:0;z-index:30;background:rgba(28,15,51,.72);backdrop-filter:blur(16px) saturate(150%);border-top:3px solid var(--dw-gold-antique);border-bottom:1px solid #4A3A1A}
+.site-header{position:sticky;top:0;z-index:30;background:rgba(21,15,9,.9);backdrop-filter:blur(16px) saturate(150%);border-top:3px solid var(--dw-gold-antique);border-bottom:1px solid #4A3A1A}
 .nav-link{padding:10px 14px;color:var(--dw-text-muted);border-bottom:2px solid transparent;text-decoration:none;transition:color .2s,text-shadow .2s}
 .nav-link:hover{color:var(--dw-text);text-shadow:0 0 14px rgba(245,215,126,.45)}
 .nav-link[aria-current="page"]{color:var(--dw-text);font-weight:600;border-color:var(--dw-gold);text-shadow:0 0 16px rgba(245,215,126,.55)}
