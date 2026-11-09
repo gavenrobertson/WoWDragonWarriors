@@ -7,6 +7,7 @@ import { json, sql, sqlOne } from "./db";
 import * as S from "./sample";
 import type { Quality, Role, SignupStatus, SourceType } from "./types";
 import { minutesSince } from "./ui";
+import type { CharMetrics } from "./metrics";
 
 export interface HubCharacter {
   id: string; slug: string; name: string; surname: string; fullName: string; level: number; className: string; race: string;
@@ -15,6 +16,7 @@ export interface HubCharacter {
   professions: { name: string; skill: number; max?: number }[]; stats: { label: string; value: string }[];
   legacy?: { rank: number; pct: number; milestones: { title: string; when: string }[] };
   gear: { slot: string; name: string; quality: Quality | "empty"; itemId?: number }[]; renderUrl?: string; avatarUrl?: string; syncedAt?: string;
+  metrics?: CharMetrics;
 }
 export interface HubItem {
   id: number; name: string; quality: Quality; slot: string; slotDetail: string; roles: Role[]; iconUrl?: string; itemLevel?: number; requiredLevel?: number;
@@ -73,7 +75,7 @@ const demoChars = (): HubCharacter[] =>
     spec: c.spec, role: c.role, roleLabel: c.roleLabel, rank: c.rank >= 0 ? c.rank : null, lastSeenMin: c.lastSeenMin,
     userId: c.account ?? c.slug, isMain: !!c.isMain, inGuild: c.inGuild !== false, claimed: c.inGuild !== false,
     attendancePct: c.attendancePct, fireResistance: c.fireResistance, attunements: c.attunements ?? [],
-    professions: c.professions ?? [], stats: c.stats ?? [], legacy: c.legacy, gear: c.gear ?? [],
+    professions: c.professions ?? [], stats: c.stats ?? [], legacy: c.legacy, gear: c.gear ?? [], metrics: S.demoMetrics(c.slug, c.level),
   }));
 
 const demoStore: Store = {
@@ -152,6 +154,7 @@ const dbStore: Store = {
       attendancePct: r.attendance_pct ?? undefined, fireResistance: r.fire_resistance ?? undefined, attunements: json(r.attunements, []),
       professions: json(r.professions, []), stats: json(r.stats, []), legacy: json(r.legacy, undefined), gear: json(r.equipment, []),
       renderUrl: r.render_url ?? undefined, avatarUrl: r.avatar_url ?? undefined, syncedAt: iso(r.synced_at),
+      metrics: json(r.metrics, undefined),
     }));
   },
   async items() {

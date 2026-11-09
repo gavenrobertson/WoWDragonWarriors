@@ -217,3 +217,19 @@ export const SETTINGS = {
 };
 
 export const GUILD_PROFILE = { name: "Dragon Warriors", faction: "Alliance", ruleset: "PvP", createdAt: "2026-11-05T08:35:27.000Z", memberCount: 48, achievementPoints: 0 };
+
+/** Deterministic sample Hall of Fame stats for demo mode, scaled by level. */
+export function demoMetrics(slug: string, level: number) {
+  let h = 0;
+  for (const ch of slug) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const r = (max: number) => { h = (h * 1103515245 + 12345) >>> 0; return Math.round(((h >>> 8) % 1000) / 1000 * max * (level / 60)); };
+  const inst: Record<string, number> = {};
+  for (const d of ["Deadmines", "Stormwind Stockade", "Gnomeregan", "Scarlet Monastery", "Razorfen Downs", "Uldaman", "Blackrock Depths"]) { const n = r(6); if (n) inst[d] = n; }
+  const bosses = Object.values(inst).reduce((a, b) => a + b, 0);
+  return {
+    v: { quests: r(900), dungeons: r(80), bosses, raidBosses: 0, kills: r(12000), hks: r(400), killingBlows: r(6000), exalted: r(6), deaths: r(160),
+      pvpDeaths: r(90), camped: r(40), falls: r(12), dungeonDeaths: r(30), abandoned: r(60), needRolls: r(60), flights: r(120), hearths: r(80),
+      fish: r(300), drinks: r(900), food: r(300), potions: r(60), critters: r(150), greedRolls: r(300), disenchanted: r(200) },
+    inst,
+  };
+}

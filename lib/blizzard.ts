@@ -95,6 +95,7 @@ export const appearance = (slug: string) => get<any>(`/profile/wow/character/${e
 export const statistics = (slug: string) => get<any>(`/profile/wow/character/${enc(slug)}/statistics`, NS.profile);
 export const professions = (slug: string) => get<any>(`/profile/wow/character/${enc(slug)}/professions`, NS.profile);
 export const achievements = (slug: string) => get<any>(`/profile/wow/character/${enc(slug)}/achievements`, NS.profile);
+export const achievementStats = (slug: string) => get<any>(`/profile/wow/character/${enc(slug)}/achievements/statistics`, NS.profile);
 export const quests = (slug: string) => get<any>(`/profile/wow/character/${enc(slug)}/quests/completed`, NS.profile);
 
 // --- Guild (app token) ---

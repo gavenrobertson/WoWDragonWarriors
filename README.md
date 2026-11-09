@@ -34,7 +34,7 @@ or `npx wrangler secret put NAME`):
 | `SUPER_ADMIN_CLAIM_CODE` | One-time code for the first Super Admin (see Roles) |
 | `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_SIGNUPS_WEBHOOK_URL` | Optional: Discord linking and `#raid-signups` posts |
 | `WCL_CLIENT_ID`, `WCL_CLIENT_SECRET` | Optional: Warcraft Logs (import not built yet) |
-| `PROFILE_SYNC_LIMIT` | Optional: profiles per 10-minute run (default 7, fits Workers Free; raise to ~100 on Workers Paid) |
+| `PROFILE_SYNC_LIMIT` | Optional: profiles per 10-minute run (default 6, fits Workers Free; raise to ~100 on Workers Paid) |
 
 Plain settings (`SITE_URL`, `GUILD_SLUG`, `REGION`, redirect URIs, `COOKIE_DOMAIN`) are in `wrangler.jsonc` → `vars`.
 

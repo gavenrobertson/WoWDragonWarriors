@@ -3,6 +3,7 @@ import * as bnet from "./blizzard";
 import { nowIso, sql, sqlOne, tx } from "./db";
 import { hexColor, hubUrl, notify } from "./discord";
 import { CLASS_COLOR, classIcon } from "./ui";
+import { extractMetrics } from "./metrics";
 
 async function recordRun(job: string, status: string, value: string, note: string, startedAt: string) {
   await sql("insert into sync_runs (job, status, value, note, started_at, finished_at) values ($1,$2,$3,$4,$5,$6)", [job, status, value, note, startedAt, nowIso()]);
@@ -55,8 +56,9 @@ export async function syncRoster() {
 
 /** One character's profile, gear, stats, professions, render and attunements. */
 export async function syncCharacter(slug: string) {
-  const [summary, equip, stats, profs, mediaJson, questJson] = await Promise.all([
+  const [summary, equip, stats, profs, mediaJson, questJson, achStats] = await Promise.all([
     bnet.character(slug), bnet.equipment(slug), bnet.statistics(slug), bnet.professions(slug), bnet.media(slug), bnet.quests(slug),
+    bnet.achievementStats(slug).catch(() => null), // Hall of Fame stats are a bonus: never fail the profile over them
   ]);
   if (!summary) return { ok: false as const, reason: "Not in the API yet (characters appear after level 10 and a logout)." };
   const s = bnet.normaliseSummary(summary);
@@ -75,7 +77,7 @@ export async function syncCharacter(slug: string) {
     `update characters set level = coalesce($2, level), class = coalesce($3, class), race = coalesce($4, race), spec = coalesce($5, spec),
        last_login_at = coalesce($6, last_login_at), equipment = coalesce($7, equipment), stats = coalesce($8, stats),
        professions = coalesce($9, professions), render_url = coalesce($10, render_url), attunements = coalesce($11, attunements),
-       fire_resistance = coalesce($12, fire_resistance), synced_at = $13, avatar_url = coalesce($14, avatar_url)
+       fire_resistance = coalesce($12, fire_resistance), synced_at = $13, avatar_url = coalesce($14, avatar_url), metrics = coalesce($15, metrics)
      where slug = $1`,
     [
       slug, s.level ?? null, s.className ?? null, s.race ?? null, s.spec ?? null, s.lastLoginAt ?? null,
@@ -87,15 +89,16 @@ export async function syncCharacter(slug: string) {
       st.fireResistance ?? null,
       nowIso(),
       bnet.avatarUrl(mediaJson) ?? null,
+      extractMetrics(achStats, questJson?.quests?.length) ?? null,
     ],
   );
   return { ok: true as const, hasRender: !!bnet.renderUrl(mediaJson) };
 }
 
 /** Profiles for guild members, a few at a time to stay under the rate limit. Stalest first. */
-// Each profile is 6 Blizzard calls. Workers Free allows 50 outbound requests per invocation, so the default is 7 per run;
+// Each profile is 7 Blizzard calls. Workers Free allows 50 outbound requests per invocation, so the default is 6 per run;
 // on Workers Paid set PROFILE_SYNC_LIMIT higher (e.g. 100).
-export async function syncAllProfiles({ batch = 4, limit = Number(process.env.PROFILE_SYNC_LIMIT) || 7 }: { batch?: number; limit?: number } = {}) {
+export async function syncAllProfiles({ batch = 4, limit = Number(process.env.PROFILE_SYNC_LIMIT) || 6 }: { batch?: number; limit?: number } = {}) {
   const started = nowIso();
   // Each run handles the `limit` stalest profiles; the scheduled job rotates through everyone.
   const rows = await sql<{ slug: string }>("select slug from characters where in_guild = 1 order by synced_at nulls first limit $1", [limit]);

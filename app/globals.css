@@ -800,3 +800,69 @@ button:disabled, [aria-disabled="true"], select:disabled, input:disabled { curso
 .btn-discord svg { color: #b7bcf5; }
 .btn-discord:hover svg { color: #fff; }
 @media (max-width: 480px) { .site-header .discord-link { display: none; } }
+
+/* ---------- guild Hall of Fame ---------- */
+.hof { display: grid; gap: 18px; padding-bottom: 6px; }
+.hof-wait { text-align: center; color: #d8cdb4; }
+.hof-totals { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.hof-total { display: grid; justify-items: center; gap: 2px; padding: 12px 6px 10px; text-align: center; border: 1px solid #000; border-radius: 4px;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(255,209,0,.10), transparent 60%), linear-gradient(180deg, #1d150b, #0c0806);
+  box-shadow: inset 0 0 0 1px #5e4720, inset 0 1px 0 1px rgba(255,226,154,.06); }
+.hof-total-glyph { font-size: 18px; filter: saturate(.85); }
+.hof-total strong { font-family: var(--font-display); font-size: 24px; line-height: 1.1; color: var(--wow-gold); text-shadow: 0 0 12px rgba(255,209,0,.35), 0 1px 0 #000; }
+.hof-total span:last-child { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a99a7a; }
+.hof-note { margin: -8px 0 0; font-size: 12px; color: #8f846e; text-align: center; }
+.hof-group { display: grid; gap: 10px; }
+.hof-group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding-bottom: 6px; border-bottom: 1px solid #3b2f17; box-shadow: 0 1px 0 rgba(255,209,0,.08); }
+.hof-group-head h2 { margin: 0; font-family: var(--font-display); font-size: 20px; color: var(--wow-gold); text-shadow: 0 1px 0 #000; }
+.hof-group-head span { font-size: 13px; color: #a99a7a; font-style: italic; }
+.hof-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.hof-card { position: relative; display: grid; gap: 10px; align-content: start; padding: 12px 14px 14px; border: 1px solid #000; border-radius: 6px;
+  background: linear-gradient(180deg, rgba(43,32,16,.92), rgba(12,8,6,.96)); box-shadow: inset 0 0 0 1px #4d3a1a, 0 6px 18px -10px #000;
+  animation: hof-rise .5s var(--ease-out, ease-out) both; animation-delay: calc(var(--i, 0) * 35ms); transition: box-shadow .2s, transform .2s; }
+.hof-card:hover { box-shadow: inset 0 0 0 1px #b8902f, 0 10px 24px -12px rgba(255,209,0,.35); transform: translateY(-2px); }
+.hof-wide { grid-column: 1 / -1; }
+@keyframes hof-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.hof-card-head { display: flex; align-items: center; gap: 10px; }
+.hof-glyph { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; font-size: 17px;
+  background: radial-gradient(circle at 40% 35%, #3a2a12, #0d0905); box-shadow: inset 0 0 0 1px #8a6a2c, 0 0 0 2px #000; }
+.hof-card-titles { display: grid; min-width: 0; }
+.hof-card-titles h3 { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 400; color: #ffe9a0; text-shadow: 0 1px 0 #000; }
+.hof-card-titles span { font-size: 12px; color: #a99a7a; }
+.hof-champ { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 12px; align-items: center;
+  padding: 10px 10px 10px 12px; border-radius: 4px; text-decoration: none; color: inherit;
+  background: radial-gradient(90% 120% at 0% 50%, rgba(255,209,0,.14), transparent 70%), rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px #5e4720; }
+.hof-champ .hof-face { grid-row: 1 / 3; }
+.hof-champ-name { font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 0 #000; }
+.hof-champ-val { font-family: var(--font-display); font-size: 22px; line-height: 1.1; color: var(--wow-gold); text-shadow: 0 1px 0 #000; }
+.hof-champ-val small { font-family: var(--font-body, inherit); font-size: 12px; color: #a99a7a; }
+.hof-crown { position: absolute; left: 26px; top: -9px; font-size: 18px; color: #FFD100; text-shadow: 0 0 8px rgba(255,209,0,.7), 0 1px 0 #000; z-index: 1; animation: hof-crown 3s ease-in-out infinite; }
+@keyframes hof-crown { 50% { transform: translateY(-2px) rotate(-6deg); text-shadow: 0 0 14px rgba(255,209,0,.95), 0 1px 0 #000; } }
+.hof-face { position: relative; display: inline-grid; place-items: center; flex: none; border-radius: 50%; overflow: hidden; background: #120d07;
+  box-shadow: 0 0 0 2px var(--c, #b8902f), 0 0 0 3px #000, 0 0 12px -2px var(--c, #b8902f); font-weight: 700; color: var(--c); }
+.hof-face img { width: 100%; height: 100%; object-fit: cover; }
+.hof-runners { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.hof-runners li { display: grid; grid-template-columns: 20px 26px minmax(0, 1fr) auto; align-items: center; gap: 8px; font-size: 14px; }
+.hof-runners a { font-weight: 600; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 0 #000; }
+.hof-runners a:hover { text-decoration: underline; }
+.hof-medal { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700; color: #1a1206; box-shadow: 0 0 0 1px #000; }
+.hof-medal.m2 { background: linear-gradient(180deg, #f2f2f2, #9da3ab); }
+.hof-medal.m3 { background: linear-gradient(180deg, #f0b37a, #8c5426); }
+.hof-run-val { font-variant-numeric: tabular-nums; color: #e9dfc6; }
+.hof-empty { margin: 0; padding: 14px 10px; border-radius: 4px; text-align: center; font-size: 13px; font-style: italic; color: #a99a7a; background: rgba(0,0,0,.3); box-shadow: inset 0 0 0 1px #3b2f17; }
+.hof-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.hof-bars li { display: grid; grid-template-columns: minmax(120px, 220px) minmax(0, 1fr) 48px; align-items: center; gap: 12px; font-size: 14px; color: #e9dfc6; }
+.hof-bar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hof-bar { height: 10px; border-radius: 5px; background: rgba(0,0,0,.55); box-shadow: inset 0 0 0 1px #3b2f17; overflow: hidden; }
+.hof-bar span { display: block; height: 100%; border-radius: 5px; background: linear-gradient(90deg, #7a5200, #e0a100 60%, #fff1a8); box-shadow: 0 0 10px rgba(255,209,0,.45);
+  animation: hof-grow .9s var(--ease-out, ease-out) both; transform-origin: left; }
+@keyframes hof-grow { from { transform: scaleX(0); } }
+.hof-bar-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--wow-gold); }
+@media (max-width: 760px) {
+  .hof-totals { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hof-total strong { font-size: 20px; }
+  .hof-bars li { grid-template-columns: minmax(0, 1fr) 40px; }
+  .hof-bar { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (prefers-reduced-motion: reduce) { .hof-card, .hof-bar span, .hof-crown { animation: none; } }
+.hof-wait.wow-scroll { min-height: 0; padding: 32px 20px; }

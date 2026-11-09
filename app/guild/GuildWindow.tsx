@@ -5,15 +5,16 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { GuildProfile } from "@/lib/store";
 import { DISCORD_INVITE } from "@/lib/links";
+import { HallOfFame, type HallOfFameData } from "./HallOfFame";
 import { classColor, timeAgo } from "@/lib/ui";
 
 export interface GuildMember { slug: string; name: string; level: number; className: string; classIcon: string | null; rank: string; rankIndex: number; lastSeenMin: number | null; race: string }
 type SortKey = "name" | "level" | "className" | "rank" | "seen";
 
-export function GuildWindow({ profile, members, motd, info, isMember, signedIn }: {
-  profile: GuildProfile; members: GuildMember[]; motd: string; info: string; isMember: boolean; signedIn: boolean;
+export function GuildWindow({ profile, members, motd, info, isMember, signedIn, hall }: {
+  profile: GuildProfile; members: GuildMember[]; motd: string; info: string; isMember: boolean; signedIn: boolean; hall: HallOfFameData;
 }) {
-  const [tab, setTab] = useState<"roster" | "info">("roster");
+  const [tab, setTab] = useState<"roster" | "fame" | "info">("roster");
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "rank", dir: 1 });
   const [q, setQ] = useState("");
 
@@ -96,6 +97,8 @@ export function GuildWindow({ profile, members, motd, info, isMember, signedIn }
               </table>
             </div>
           </>
+        ) : tab === "fame" ? (
+          <HallOfFame data={hall} />
         ) : (
           <div className="wow-info">
             <div className="wow-scroll">
@@ -129,6 +132,7 @@ export function GuildWindow({ profile, members, motd, info, isMember, signedIn }
     </section>
     <div className="wow-tabs" role="tablist" aria-label="Guild window">
         <button type="button" role="tab" aria-selected={tab === "roster"} className="wow-tab" onClick={() => setTab("roster")}>Roster</button>
+        <button type="button" role="tab" aria-selected={tab === "fame"} className="wow-tab" onClick={() => setTab("fame")}>Hall of Fame</button>
         <button type="button" role="tab" aria-selected={tab === "info"} className="wow-tab" onClick={() => setTab("info")}>Guild Info</button>
       </div>
     </div>
