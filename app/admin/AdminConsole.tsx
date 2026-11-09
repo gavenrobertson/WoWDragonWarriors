@@ -2,7 +2,7 @@
 import { useState } from "react";
 import {
   createEvent, decideApplication, importBank, importLootLog, publishAnnouncement, recordAward, saveGuildPage, saveLootSettings, saveRanks,
-  setUserRole, syncEverything,
+  saveDiscordSettings, setUserRole, syncEverything, testDiscord,
 } from "@/app/actions";
 import { Avatar } from "@/components/bits";
 import { ROLES, canChangeRoleOf, roleLabel, type SiteRole } from "@/lib/roles";
@@ -31,6 +31,7 @@ export function AdminConsole(props: {
   canSyncNow: boolean;
   users: HubUser[]; me: { userId: string; role: SiteRole | null }; assignable: (SiteRole | null)[];
   guildText: { motd: string; info: string }; notice?: string;
+  discord: { id: string; label: string; desc: string; connected: boolean; hint: string; enabled: boolean }[]; discordFallback: boolean;
 }) {
   const [sec, setSec] = useState<Section>(props.initial);
   const [apps, setApps] = useState(props.apps);
@@ -42,6 +43,8 @@ export function AdminConsole(props: {
   const [users, setUsers] = useState(props.users);
   const [guildText, setGuildText] = useState(props.guildText);
   const [userQ, setUserQ] = useState("");
+  const [discord, setDiscord] = useState(() => props.discord.map((d) => ({ ...d, url: d.connected ? "__keep__" : "" })));
+  const setD = (id: string, patch: Partial<(typeof discord)[number]>) => setDiscord((ds) => ds.map((d) => (d.id === id ? { ...d, ...patch } : d)));
   const { pending, run, toast } = useAction();
   const pendingApps = apps.filter((a) => a.status === "pending").length;
 
@@ -284,6 +287,33 @@ export function AdminConsole(props: {
         {sec === "keys" && (
           <>
             <div className="stack" style={{ gap: 6 }}><h1 style={{ fontSize: 34 }}>Integrations</h1><p className="soft">API credentials are stored server-side as environment variables and never shown to members.</p></div>
+            <form className="panel" onSubmit={(e) => { e.preventDefault(); run(() => saveDiscordSettings({ webhooks: Object.fromEntries(discord.map((d) => [d.id, d.url])), enabled: Object.fromEntries(discord.map((d) => [d.id, d.enabled])) }), () => setDiscord((ds) => ds.map((d) => ({ ...d, connected: !!d.url, url: d.url ? "__keep__" : "" })))); }}>
+              <div className="stack" style={{ gap: 6 }}>
+                <h2>Discord</h2>
+                <p className="soft small">Send hub activity to Discord. For each channel: Discord channel settings → Integrations → Webhooks → New Webhook → Copy Webhook URL, then paste it here. One webhook can serve several categories, or give each its own channel.{props.discordFallback ? " Categories without a webhook use the DISCORD_SIGNUPS_WEBHOOK_URL channel." : ""}</p>
+              </div>
+              <div className="stack" style={{ gap: 10 }}>
+                {discord.map((d) => (
+                  <div key={d.id} className="tile discord-row">
+                    <label className="check" style={{ minWidth: 190 }}>
+                      <input type="checkbox" checked={d.enabled} onChange={(e) => setD(d.id, { enabled: e.target.checked })} aria-label={`Send ${d.label} to Discord`} />
+                      <span className="stack" style={{ gap: 0 }}><span className="strong">{d.label}</span><span className="micro muted">{d.desc}</span></span>
+                    </label>
+                    {d.url === "__keep__" ? (
+                      <span className="row grow" style={{ gap: 8 }}>
+                        <span className="pill">Connected · …{d.hint}</span>
+                        <button type="button" className="btn btn-sm" onClick={() => setD(d.id, { url: "" })}>Replace</button>
+                      </span>
+                    ) : (
+                      <input type="url" className="grow" placeholder="https://discord.com/api/webhooks/…" value={d.url} aria-label={`${d.label} webhook URL`}
+                        onChange={(e) => setD(d.id, { url: e.target.value })} />
+                    )}
+                    <button type="button" className="btn btn-sm" disabled={pending || (!d.connected && !props.discordFallback)} onClick={() => run(() => testDiscord(d.id))}>Send test</button>
+                  </div>
+                ))}
+              </div>
+              <div><button type="submit" className="btn btn-primary" disabled={pending}>Save Discord settings</button></div>
+            </form>
             <div className="grid-auto" style={{ ["--min" as string]: "300px" }}>
               {props.integrations.map((g) => (
                 <article key={g.name} className="panel" style={{ gap: 8 }}>

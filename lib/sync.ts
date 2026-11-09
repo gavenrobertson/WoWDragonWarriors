@@ -1,9 +1,12 @@
 import "server-only";
 import * as bnet from "./blizzard";
 import { nowIso, sql, sqlOne, tx } from "./db";
+import { hexColor, hubUrl, notify } from "./discord";
+import { CLASS_COLOR, classIcon } from "./ui";
 
 async function recordRun(job: string, status: string, value: string, note: string, startedAt: string) {
   await sql("insert into sync_runs (job, status, value, note, started_at, finished_at) values ($1,$2,$3,$4,$5,$6)", [job, status, value, note, startedAt, nowIso()]);
+  if (status === "error") await notify("health", { title: `⚠️ ${job} sync failed`, description: note.slice(0, 500), color: 0xff8a7a, url: hubUrl("/admin") });
 }
 
 /** Guild roster → characters (every 30 min). Marks members in_guild and stores their rank number. */
@@ -17,6 +20,7 @@ export async function syncRoster() {
     }
     const members = bnet.normaliseRoster(json);
     const now = nowIso();
+    const before = await sql<{ slug: string; level: number | null }>("select slug, level from characters where in_guild = 1");
     await tx(async (q) => {
       for (const m of members) {
         await q(
@@ -34,6 +38,7 @@ export async function syncRoster() {
         await q('insert into guild_ranks ("index", name) values ($1, $2) on conflict do nothing', [i, i === 0 ? "Guild Master" : `Rank ${i}`]);
       }
     });
+    await announceRosterChanges(before, members);
     // Guild summary (faction, ruleset, founding date) for the public guild page.
     const g = await bnet.guildSummary().catch(() => null);
     if (g) {
@@ -156,4 +161,50 @@ export async function upsertUser(bnetId: string, battletag: string) {
      on conflict (bnet_id) do update set battletag = excluded.battletag returning id, main_character_id`,
     [bnetId, battletag],
   );
+}
+
+/** Roster diff → Discord: joins, departures and new level 60s (batched; skipped on the very first sync). */
+async function announceRosterChanges(before: { slug: string; level: number | null }[], after: bnet.NormalCharacter[]) {
+  if (!before.length) return;
+  const prev = new Map(before.map((b) => [b.slug, b.level ?? 0]));
+  const now = new Set(after.map((m) => m.slug));
+  const joined = after.filter((m) => !prev.has(m.slug));
+  const left = before.filter((b) => !now.has(b.slug));
+  const dinged = after.filter((m) => prev.has(m.slug) && (prev.get(m.slug) ?? 0) < 60 && m.level >= 60);
+  const line = (m: bnet.NormalCharacter) => `**${m.name} ${m.surname}** · ${m.level} ${m.className ?? ""}`.trim();
+  if (joined.length) {
+    await notify("roster", {
+      title: joined.length === 1 ? `🛡️ ${joined[0].name} ${joined[0].surname} joined the guild` : `🛡️ ${joined.length} new members joined`,
+      description: joined.slice(0, 20).map(line).join("\n"), color: 0x4cd964, url: hubUrl("/guild"),
+      thumbnail: joined.length === 1 ? classIcon(joined[0].className) : undefined,
+    });
+  }
+  if (left.length) {
+    await notify("roster", { title: `👋 ${left.length} member${left.length === 1 ? "" : "s"} left the guild`, description: left.slice(0, 20).map((l) => l.slug).join(", "), color: 0xa8987a, url: hubUrl("/guild") });
+  }
+  for (const m of dinged.slice(0, 10)) {
+    await notify("roster", {
+      title: `🎉 ${m.name} ${m.surname} reached level 60!`, description: `Congratulations, ${m.name}! Time to get attuned and build that wishlist.`,
+      color: hexColor(CLASS_COLOR[(m.className ?? "").toLowerCase()]), thumbnail: classIcon(m.className), url: hubUrl(`/characters/${m.slug}`),
+    });
+  }
+}
+
+/** Post a reminder for raid nights starting within the next hour (once per event). Runs from the 10-minute job. */
+export async function remindUpcomingEvents() {
+  const now = Date.now();
+  const rows = await sql<{ id: string; name: string | null; raid: string; starts_at: string; n: number }>(
+    `select e.id, e.name, e.raid, e.starts_at, (select count(*) from signups s where s.event_id = e.id and s.status in ('accepted','late','tentative')) as n
+     from raid_events e where e.reminded_at is null and e.starts_at > $1 and e.starts_at <= $2`,
+    [new Date(now).toISOString(), new Date(now + 65 * 60_000).toISOString()],
+  );
+  for (const e of rows) {
+    const t = Math.floor(new Date(e.starts_at).getTime() / 1000);
+    const r = await notify("events", {
+      title: `⏰ ${e.name ?? e.raid} starts <t:${t}:R>`, description: `${e.n} signed up. Flasks, potions, repairs, and see you at the summoning stone!`,
+      color: 0xffd100, url: hubUrl(`/raids?event=${e.id}`),
+    });
+    if (r.posted || r.reason === "off" || r.reason === "no webhook") await sql("update raid_events set reminded_at = $2 where id = $1", [e.id, nowIso()]);
+  }
+  return rows.length;
 }

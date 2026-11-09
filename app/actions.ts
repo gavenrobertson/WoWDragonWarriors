@@ -4,7 +4,8 @@
 import { revalidatePath } from "next/cache";
 import { Forbidden, ownsCharacter, requirePermission, type Permission, type Viewer } from "@/lib/auth";
 import { json, nowIso, sql, sqlOne, tx } from "@/lib/db";
-import { postToDiscord } from "@/lib/discord";
+import { DISCORD_CATEGORIES, discordConfig, hexColor, hubUrl, notify, validWebhook, type DiscordCategory } from "@/lib/discord";
+import { CLASS_COLOR, ROLE_LABEL, classIcon, qualityColor } from "@/lib/ui";
 import { syncAllProfiles, syncCharacter, syncRoster } from "@/lib/sync";
 import { configured } from "@/lib/config";
 import type { ActionResult } from "@/components/useAction";
@@ -72,6 +73,18 @@ export async function submitApplication(input: { characterSlug: string; role: st
       "insert into applications (user_id, character_slug, role, logs_url, availability, about) values ($1,$2,$3,$4,$5,$6)",
       [v.userId, input.characterSlug, input.role, logs || null, str(input.availability, 200), str(input.about, 2000)],
     );
+    const ac = await sqlOne<{ name: string; surname: string; level: number | null; class: string | null; avatar_url: string | null }>("select name, surname, level, class, avatar_url from characters where slug = $1", [input.characterSlug]);
+    await notify("applications", {
+      title: `📜 New application: ${ac ? `${ac.name} ${ac.surname}` : input.characterSlug}`,
+      description: str(input.about, 600),
+      color: hexColor(CLASS_COLOR[(ac?.class ?? "").toLowerCase()]), thumbnail: ac?.avatar_url ?? classIcon(ac?.class) ?? undefined, url: hubUrl("/admin?section=apps"),
+      fields: [
+        { name: "Character", value: ac ? `Level ${ac.level ?? "?"} ${ac.class ?? ""}` : input.characterSlug, inline: true },
+        { name: "Wants to raid as", value: ROLE_LABEL[input.role as Role] ?? input.role, inline: true },
+        { name: "Available", value: str(input.availability, 200) || "—", inline: true },
+        ...(logs ? [{ name: "Warcraft Logs", value: logs }] : []),
+      ],
+    });
     revalidatePath("/admin");
     return { ok: true, message: "Application sent" };
   });
@@ -93,6 +106,20 @@ export async function setSignup(input: { eventId: string; character: string; sta
         [input.eventId, characterId, input.status, !!input.consumables, nowIso()],
       );
     });
+    const info = await sqlOne<{ ename: string; starts_at: string; cname: string; surname: string; class: string | null; spec: string | null; avatar_url: string | null }>(
+      "select e.name as ename, e.starts_at, c.name as cname, c.surname, c.class, c.spec, c.avatar_url from raid_events e, characters c where e.id = $1 and c.id = $2",
+      [input.eventId, characterId],
+    );
+    if (info) {
+      const icon: Record<string, string> = { accepted: "✅", tentative: "❔", late: "⏰", bench: "🪑", declined: "❌" };
+      await notify("signups", {
+        title: `${icon[input.status] ?? "•"} ${info.cname} ${info.surname}: ${input.status[0].toUpperCase() + input.status.slice(1)}`,
+        description: `**${info.ename}** · <t:${Math.floor(new Date(info.starts_at).getTime() / 1000)}:F>`,
+        color: hexColor(CLASS_COLOR[(info.class ?? "").toLowerCase()]), thumbnail: info.avatar_url ?? classIcon(info.class) ?? undefined,
+        fields: [{ name: "As", value: [info.spec, info.class].filter(Boolean).join(" ") || "—", inline: true }, ...(input.consumables ? [{ name: "Consumables", value: "Bringing them", inline: true }] : [])],
+        url: hubUrl(`/raids?event=${input.eventId}`),
+      });
+    }
     revalidatePath("/raids");
     return { ok: true, message: "Signup updated" };
   });
@@ -206,7 +233,13 @@ export async function decideApplication(input: { id: string; status: "accepted" 
       [input.id, input.status, input.status === "pending" ? null : v.userId],
     );
     if (!app) return { ok: false, error: "Application not found." };
-    if (input.status === "accepted") await postToDiscord(`✅ Application accepted: **${app.character_slug}**. An officer will send the in-game invite.`).catch(() => {});
+    if (input.status !== "pending") {
+      await notify("applications", {
+        title: input.status === "accepted" ? `✅ Application accepted: ${app.character_slug}` : `Application declined: ${app.character_slug}`,
+        description: input.status === "accepted" ? "Welcome aboard! An officer will send the in-game invite." : undefined,
+        color: input.status === "accepted" ? 0x4cd964 : 0xff8a7a, url: hubUrl("/admin?section=apps"),
+      });
+    }
     revalidatePath("/admin");
     return { ok: true, message: input.status === "pending" ? "Decision undone" : `Application ${input.status}` };
   });
@@ -263,8 +296,14 @@ export async function createEvent(input: { raid: string; date: string; time: str
       [input.raid, def.name, startsAt, def.size, v.main?.id ?? null, JSON.stringify(def.comp), JSON.stringify(def.reqs)],
     );
     if (input.postToDiscord && ev) {
-      const posted = await postToDiscord(`📅 **${def.name}** signups are open`, { title: def.name, description: `${def.size} players · sign up on the hub`, timestamp: startsAt.toISOString() });
-      if (posted.messageId) await sql("update raid_events set discord_message_id = $2 where id = $1", [ev.id, posted.messageId]);
+      const t = Math.floor(startsAt.getTime() / 1000);
+      const posted = await notify("events", {
+        title: `📅 ${def.name}: signups are open`,
+        description: `<t:${t}:F> (<t:${t}:R>)\n${def.size} players. Sign up on the hub to claim your spot.`,
+        color: 0xffd100, url: hubUrl(`/raids?event=${ev.id}`),
+        fields: def.comp.map((c) => ({ name: c.role, value: `0 / ${c.need}`, inline: true })),
+      }, { config: undefined });
+      if (posted.posted && posted.messageId) await sql("update raid_events set discord_message_id = $2 where id = $1", [ev.id, posted.messageId]);
     }
     revalidatePath("/raids");
     revalidatePath("/");
@@ -278,8 +317,11 @@ export async function publishAnnouncement(input: { title: string; body: string; 
     if (!title || !body) return { ok: false, error: "Add a title and a message." };
     const row = await sqlOne<{ id: string }>("insert into announcements (title, body, author_id) values ($1,$2,$3) returning id", [title, body, v.userId]);
     if (input.postToDiscord !== false && row) {
-      const r = await postToDiscord(`📣 **${title}**\n${body}`).catch(() => ({ posted: false }));
-      if (r.posted) await sql("update announcements set posted_to_discord = true where id = $1", [row.id]);
+      const r = await notify("announcements", {
+        title: `📣 ${title}`, description: body.slice(0, 3800), color: 0xffd100, url: hubUrl("/"),
+        author: v.main ? { name: v.main.name, icon_url: v.main.avatarUrl ?? undefined } : undefined,
+      });
+      if (r.posted) await sql("update announcements set posted_to_discord = 1 where id = $1", [row.id]);
     }
     revalidatePath("/");
     return { ok: true, message: "Announcement published" };
@@ -299,6 +341,7 @@ export async function recordAward(input: { itemName: string; character: string; 
       await q("insert into loot_awards (item_id, character_id, method, reason, awarded_by) values ($1,$2,'council',$3,$4)", [item.id, ch.id, str(input.reason, 300) || null, v.userId]);
       await q("delete from wishlist_items where character_id = $1 and item_id = $2", [ch.id, item.id]);
     });
+    await notifyAward(item.id, ch.id, str(input.reason, 300) || "Recorded by an officer", v);
     revalidatePath("/loot");
     return { ok: true, message: "Award recorded" };
   });
@@ -335,6 +378,7 @@ export async function importLootLog(csv: string): Promise<ActionResult> {
       }
     });
     await sql("insert into sync_runs (job, status, value, note, finished_at) values ('addon','ok',$1,$2,$3)", [`Loot: ${imported} awards`, skipped ? `${skipped} rows skipped (unknown item or character)` : "Loot export imported", nowIso()]);
+    if (imported) await notify("loot", { title: `📦 Loot log imported: ${imported} award${imported === 1 ? "" : "s"}`, description: skipped ? `${skipped} rows skipped (unknown item or character).` : undefined, url: hubUrl("/loot?tab=history") });
     revalidatePath("/loot");
     revalidatePath("/admin");
     return { ok: true, message: `Imported ${imported} awards${skipped ? `, skipped ${skipped}` : ""}` };
@@ -429,9 +473,56 @@ export async function awardItem(input: { itemId: number; characterId: string; re
       await q("delete from wishlist_items where character_id = $1 and item_id = $2", [ch.id, itemId]);
       await q("delete from council_votes where item_id = $1", [itemId]);
     });
-    await postToDiscord(`🏆 **${item.name}** awarded to **${ch.name} ${ch.surname}** by the loot council.`).catch(() => {});
+    await notifyAward(item.id, ch.id, votes?.n ? `Council vote (${votes.n})` : "Loot council", v);
     revalidatePath("/loot");
     revalidatePath("/loot/council");
     return { ok: true, message: `${item.name} awarded to ${ch.name}` };
+  });
+}
+
+async function notifyAward(itemId: number, characterId: string, how: string, v: Viewer) {
+  const r = await sqlOne<{ iname: string; quality: string | null; icon_url: string | null; cname: string; surname: string; class: string | null; avatar_url: string | null }>(
+    "select i.name as iname, i.quality, i.icon_url, c.name as cname, c.surname, c.class, c.avatar_url from items i, characters c where i.id = $1 and c.id = $2",
+    [itemId, characterId],
+  );
+  if (!r) return;
+  await notify("loot", {
+    title: `🏆 ${r.iname}`, description: `Awarded to **${r.cname} ${r.surname}**`,
+    color: hexColor(qualityColor(r.quality)), thumbnail: r.icon_url ?? undefined, url: hubUrl("/loot?tab=history"),
+    fields: [{ name: "How", value: how, inline: true }, ...(v.main ? [{ name: "By", value: v.main.name, inline: true }] : [])],
+    author: { name: `${r.cname} ${r.surname}`, icon_url: r.avatar_url ?? classIcon(r.class) ?? undefined },
+  });
+}
+
+// ------------------------------------------------------------ Discord settings
+export async function saveDiscordSettings(input: { webhooks: Record<string, string>; enabled: Record<string, boolean> }): Promise<ActionResult> {
+  return act("isAdmin", "Discord settings saved", async () => {
+    const ids = DISCORD_CATEGORIES.map((c) => c.id) as string[];
+    const cur = await discordConfig();
+    const webhooks: Record<string, string> = {};
+    for (const id of ids) {
+      const raw = (input.webhooks[id] ?? "").trim();
+      if (raw === "__keep__") { if (cur.webhooks[id as DiscordCategory]) webhooks[id] = cur.webhooks[id as DiscordCategory]!; continue; }
+      if (!raw) continue;
+      if (!validWebhook(raw)) return { ok: false, error: `That ${DISCORD_CATEGORIES.find((c) => c.id === id)!.label} link isn't a Discord webhook URL.` };
+      webhooks[id] = raw;
+    }
+    const enabled = Object.fromEntries(ids.map((id) => [id, !!input.enabled[id]]));
+    await sql("insert into settings (key, value) values ('discord', $1) on conflict (key) do update set value = excluded.value", [JSON.stringify({ webhooks, enabled })]);
+    revalidatePath("/admin");
+    return { ok: true, message: "Discord settings saved" };
+  });
+}
+
+export async function testDiscord(category: string): Promise<ActionResult> {
+  return act("isAdmin", "Test sent", async (v) => {
+    const def = DISCORD_CATEGORIES.find((c) => c.id === category);
+    if (!def) return { ok: false, error: "Unknown category." };
+    const r = await notify(def.id, {
+      title: `🐉 Test from the ${def.label} channel`,
+      description: `This channel will receive: ${def.desc.toLowerCase()}.`,
+      color: 0xffd100, url: hubUrl("/"), fields: v.main ? [{ name: "Sent by", value: v.main.name, inline: true }] : undefined,
+    }, { force: true });
+    return r.posted ? { ok: true, message: `Test posted to Discord (${def.label})` } : { ok: false, error: `Not posted: ${r.reason}` };
   });
 }

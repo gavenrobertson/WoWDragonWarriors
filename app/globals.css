@@ -688,3 +688,5 @@ h1, .title-xl, .wow-title, .countdown-num { font-feature-settings: "liga" 0, "dl
 .contender-figure img { height: 215%; transform: translate(-50%, -47%); }
 .contender:hover .contender-figure img { transform: translate(-50%, -49%) scale(1.04); }
 @media (max-width: 900px) { .contender { flex-basis: 165px; } }
+.discord-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 14px; }
+.discord-row input[type="url"] { min-width: 240px; }

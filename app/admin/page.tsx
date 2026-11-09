@@ -7,6 +7,7 @@ import { getRanks, getSettings, store } from "@/lib/store";
 import { timeAgo } from "@/lib/ui";
 import { AdminConsole, type Section } from "./AdminConsole";
 import { assignableRoles } from "@/lib/roles";
+import { DISCORD_CATEGORIES, discordConfig } from "@/lib/discord";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 
@@ -54,6 +55,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     store().syncRuns(), store().applications(), getRanks(), getSettings(), p.canManageRoles ? store().users() : Promise.resolve([]),
   ]);
   const s = settings as Record<string, unknown>;
+  const dc = p.isAdmin ? await discordConfig() : { webhooks: {}, enabled: {} };
+  // Never send webhook URLs to the browser: only whether one is set and its last characters.
+  const discord = DISCORD_CATEGORIES.map((c) => {
+    const url = dc.webhooks[c.id];
+    return { id: c.id, label: c.label, desc: c.desc, connected: !!url, hint: url ? url.slice(-4) : "", enabled: dc.enabled[c.id] ?? c.defaultOn };
+  });
   const syncs = runs.map((r) => {
     const [state, color] = r.job === "warcraftlogs" && !configured.warcraftlogs() && !viewer.demo ? ["Not set up", "#A8987A"] : STATE[r.status] ?? STATE.waiting;
     return { ...SYNC_META[r.job], job: r.job, state, color, value: r.value, note: r.minutesAgo != null && r.job === "roster" ? `Last sync ${timeAgo(r.minutesAgo)}` : r.note };
@@ -81,6 +88,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       assignable={assignableRoles(viewer.siteRole)}
       guildText={{ motd: String(s.guild_motd ?? ""), info: String(s.guild_info ?? "") }}
       notice={notice}
+      discord={discord}
+      discordFallback={!!process.env.DISCORD_SIGNUPS_WEBHOOK_URL}
     />
   );
 }
