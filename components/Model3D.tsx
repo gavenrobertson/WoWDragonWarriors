@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 
 type ModelConfig = { modelId: number; options: { optionId: number; choiceId: number }[]; items: [number, number][]; missing: number };
-type Viewer = { renderer?: { azimuth: number; zenith: number; distance: number; actors?: { setAnimation?: (n: string) => void }[] }; destroy?: () => void };
+type Viewer = { renderer?: { azimuth: number; zenith: number; distance: number; actors?: { setAnimation?: (n: string) => void; getNumAnimations?: () => number }[] }; destroy?: () => void };
 
 declare global {
   interface Window { ZamModelViewer?: new (opts: unknown) => Viewer; jQuery?: (el: Element) => unknown; WH?: Record<string, unknown>; CONTENT_PATH?: string }
@@ -91,14 +91,21 @@ export function Model3D({ slug, onState, handleRef, autoRotate }: {
         if (cancelled) return;
         // Handy for debugging in the browser console: document.querySelector('.model3d-canvas').__viewer
         (el as HTMLElement & { __viewer?: Viewer }).__viewer = viewer.current ?? undefined;
-        // Wait for the first rendered frame before revealing.
-        let tries = 0;
+        // Reveal only once the character model has actually loaded (its animations are parsed from the
+        // ~12 MB model file), so first-time visitors keep seeing the 2D render instead of an empty stage.
+        const started = Date.now();
         const check = () => {
           if (cancelled) return;
-          const canvas = el.querySelector("canvas");
-          if (canvas && viewer.current?.renderer) { onState("ready", { missing: model.missing }); setMounted((m) => m + 1); return; }
-          if (++tries > 80) { onState("failed"); return; }
-          setTimeout(check, 150);
+          const actor = viewer.current?.renderer?.actors?.[0] as { getNumAnimations?: () => number } | undefined;
+          let loaded = false;
+          try { loaded = !!actor && (actor.getNumAnimations?.() ?? 0) > 0; } catch { loaded = false; }
+          if (loaded && el.querySelector("canvas")) {
+            // One more beat so textures finish binding before the fade-in.
+            setTimeout(() => { if (!cancelled) { onState("ready", { missing: model.missing }); setMounted((m) => m + 1); } }, 400);
+            return;
+          }
+          if (Date.now() - started > 90_000) { onState("failed"); return; }
+          setTimeout(check, 250);
         };
         check();
       } catch {
