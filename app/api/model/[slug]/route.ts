@@ -14,6 +14,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ slug: stri
   if (!known) return NextResponse.json({ model: null, reason: "Unknown character." }, { status: 404 });
   try {
     const model = await modelConfig(slug);
+    if (model && !model.supported) {
+      return NextResponse.json({ model: null, reason: `${model.raceName ?? "This race"} isn't in the 3D viewer yet` }, { headers: { "cache-control": "private, max-age=300" } });
+    }
+    if (!model) return NextResponse.json({ model: null, reason: "Not in Blizzard's API yet (characters appear after level 10)" });
     return NextResponse.json({ model }, { headers: { "cache-control": "private, max-age=300" } });
   } catch (e) {
     console.error("model config", e);

@@ -15,6 +15,7 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
   const [dragging, setDragging] = useState(false);
   const [mode3d, setMode3d] = useState<"off" | "loading" | "ready" | "failed">(slug ? "loading" : "off");
   const [missing, setMissing] = useState(0);
+  const [why2d, setWhy2d] = useState<string | null>(null);
   const [anim, setAnim] = useState("Stand");
   const handle = useRef<Model3DHandle | null>(null);
   const is3d = mode3d === "ready";
@@ -104,7 +105,7 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
         {slug && mode3d !== "failed" && (
           <div className={`model3d-layer${is3d ? " ready" : ""}`}>
             <Model3D slug={slug} handleRef={handle} autoRotate={auto && is3d}
-              onState={(st, info) => { setMode3d(st); if (info) setMissing(info.missing); }} />
+              onState={(st, info) => { setMode3d(st); if (info?.missing != null) setMissing(info.missing); if (st === "failed") setWhy2d(info?.reason ?? null); }} />
           </div>
         )}
 
@@ -137,7 +138,7 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
           <span className="small strong" style={{ color }}>{name}</span>
           <span className="micro muted">
             {is3d ? `Live 3D model${missing ? ` · ${missing} item${missing === 1 ? "" : "s"} not shown yet` : ""}`
-              : showRender ? "Official Battle.net render · /character-media" : "Render appears after the next profile sync (Blizzard can take a day)"}
+              : showRender ? `Official Battle.net render${why2d ? ` · ${why2d}` : ""}` : "Render appears after the next profile sync (Blizzard can take a day)"}
           </span>
         </div>
       </div>

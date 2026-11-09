@@ -64,7 +64,7 @@ export type Model3DHandle = { rotate: (rad: number) => void; reset: () => void; 
 
 export function Model3D({ slug, onState, handleRef, autoRotate }: {
   slug: string;
-  onState: (s: "loading" | "ready" | "failed", info?: { missing: number }) => void;
+  onState: (s: "loading" | "ready" | "failed", info?: { missing?: number; reason?: string }) => void;
   handleRef?: React.MutableRefObject<Model3DHandle | null>;
   autoRotate?: boolean;
 }) {
@@ -78,8 +78,8 @@ export function Model3D({ slug, onState, handleRef, autoRotate }: {
     (async () => {
       try {
         const res = await fetch(`/api/model/${encodeURIComponent(slug)}`);
-        const { model } = (await res.json()) as { model: ModelConfig | null };
-        if (!model) throw new Error("no model");
+        const { model, reason } = (await res.json()) as { model: ModelConfig | null; reason?: string };
+        if (!model) { if (!cancelled) onState("failed", { reason }); return; }
         await loadViewer();
         if (cancelled || !box.current || !window.ZamModelViewer || !window.jQuery) throw new Error("viewer unavailable");
         box.current.innerHTML = "";
