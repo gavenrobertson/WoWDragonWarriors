@@ -435,3 +435,11 @@ label.btn:focus-within { box-shadow: var(--focus-ring); }
   .bis-sheet { grid-template-columns: 1fr; grid-template-areas: "center" "left" "right" "weapons"; }
   .bis-row { grid-template-columns: 1fr; }
 }
+
+/* ---------- real 3D model (Wowhead viewer) ---------- */
+.model3d-layer { position: absolute; inset: 40px 0 0 0; z-index: 1; opacity: 0; transition: opacity .8s ease; pointer-events: none; }
+.model3d-layer.ready { opacity: 1; pointer-events: auto; }
+.model3d, .model3d-canvas { position: absolute; inset: 0; }
+.model3d canvas { width: 100% !important; height: 100% !important; display: block; cursor: grab; }
+.model3d canvas:active { cursor: grabbing; }
+.turntable.hidden-3d { opacity: 0; pointer-events: none; }

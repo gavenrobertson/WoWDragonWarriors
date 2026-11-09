@@ -3,27 +3,33 @@
 // The API has no 3D models, so the render turns on a turntable (CSS 3D), mirrored when facing away.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IconRotL, IconRotR } from "./icons";
+import { Model3D, type Model3DHandle } from "./Model3D";
 
 const RUNES = "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛊ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛞ ᛟ · DRAGON WARRIORS · ";
 
-export function ModelStage({ name, color, renderUrl }: { name: string; color: string; renderUrl: string | null }) {
+export function ModelStage({ name, color, renderUrl, slug }: { name: string; color: string; renderUrl: string | null; slug?: string }) {
   const [angle, setAngle] = useState(0);
   const [auto, setAuto] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [mode3d, setMode3d] = useState<"off" | "loading" | "ready" | "failed">(slug ? "loading" : "off");
+  const [missing, setMissing] = useState(0);
+  const [anim, setAnim] = useState("Stand");
+  const handle = useRef<Model3DHandle | null>(null);
+  const is3d = mode3d === "ready";
   const drag = useRef<{ x: number; a: number } | null>(null);
   const stage = useRef<HTMLDivElement>(null);
   const img = useRef<HTMLImageElement>(null);
 
   // Auto-rotate (off under reduced motion).
   useEffect(() => {
-    if (!auto || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (is3d || !auto || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let raf = 0, last = performance.now();
     const tick = (t: number) => { setAngle((a) => a + (t - last) * 0.03); last = t; raf = requestAnimationFrame(tick); };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [auto]);
+  }, [auto, is3d]);
 
   useEffect(() => {
     setFailed(false);
@@ -33,20 +39,23 @@ export function ModelStage({ name, color, renderUrl }: { name: string; color: st
   }, [renderUrl]);
 
   const onDown = useCallback((e: React.PointerEvent) => {
+    if (is3d) { setAuto(false); return; } // the 3D viewer handles its own drag/zoom
     drag.current = { x: e.clientX, a: angle };
     setDragging(true);
     setAuto(false);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  }, [angle]);
+  }, [angle, is3d]);
   const onMove = useCallback((e: React.PointerEvent) => {
     if (drag.current) setAngle(drag.current.a + (e.clientX - drag.current.x) * 0.6);
   }, []);
   const onUp = useCallback(() => { drag.current = null; setDragging(false); }, []);
   const onKey = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowLeft") { setAngle((a) => a - 15); e.preventDefault(); }
-    if (e.key === "ArrowRight") { setAngle((a) => a + 15); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { turn(-1); e.preventDefault(); }
+    if (e.key === "ArrowRight") { turn(1); e.preventDefault(); }
   };
 
+  const turn = (dir: number) => { setAuto(false); if (is3d) handle.current?.rotate(dir * Math.PI / 4); else setAngle((a) => a + dir * 45); };
+  const reset = () => { setAuto(false); if (is3d) handle.current?.reset(); else setAngle(0); };
   const norm = ((Math.round(angle) % 360) + 360) % 360;
   const facingAway = norm > 90 && norm < 270;
   const showRender = !!renderUrl && !failed;
@@ -55,7 +64,9 @@ export function ModelStage({ name, color, renderUrl }: { name: string; color: st
     <div className="model-stage" style={{ "--cls": color } as React.CSSProperties}>
       <div className="row between" style={{ padding: "12px 16px", borderBottom: "1px solid var(--dw-border)", position: "relative", zIndex: 2 }}>
         <span className="small strong soft">Character model</span>
-        <span className="micro muted">Facing {norm}° · drag to turn</span>
+        <span className="micro muted">
+          {is3d ? "3D model · drag to turn, scroll to zoom" : mode3d === "loading" ? "Loading 3D model…" : `Facing ${norm}° · drag to turn`}
+        </span>
       </div>
 
       <div
@@ -90,7 +101,14 @@ export function ModelStage({ name, color, renderUrl }: { name: string; color: st
           </svg>
         </div>
 
-        <div className="turntable" style={{ transform: `rotateY(${angle}deg)` }}>
+        {slug && mode3d !== "failed" && (
+          <div className={`model3d-layer${is3d ? " ready" : ""}`}>
+            <Model3D slug={slug} handleRef={handle} autoRotate={auto && is3d}
+              onState={(st, info) => { setMode3d(st); if (info) setMissing(info.missing); }} />
+          </div>
+        )}
+
+        <div className={`turntable${is3d ? " hidden-3d" : ""}`} style={{ transform: `rotateY(${angle}deg)` }}>
           <div className="float">
             {showRender ? (
               <img
@@ -118,18 +136,29 @@ export function ModelStage({ name, color, renderUrl }: { name: string; color: st
         <div className="model-caption">
           <span className="small strong" style={{ color }}>{name}</span>
           <span className="micro muted">
-            {showRender ? "Official Battle.net render · /character-media" : "Render appears after the next profile sync (Blizzard can take a day)"}
+            {is3d ? `Live 3D model${missing ? ` · ${missing} item${missing === 1 ? "" : "s"} not shown yet` : ""}`
+              : showRender ? "Official Battle.net render · /character-media" : "Render appears after the next profile sync (Blizzard can take a day)"}
           </span>
         </div>
       </div>
 
       <div className="row" style={{ justifyContent: "center", gap: 8, padding: "12px 16px", borderTop: "1px solid var(--dw-border)", position: "relative", zIndex: 2 }}>
-        <button type="button" className="icon-btn" aria-label="Turn left" onClick={() => { setAuto(false); setAngle(angle - 45); }}><IconRotL /></button>
-        <button type="button" className="btn btn-sm" onClick={() => { setAuto(false); setAngle(0); }}>Reset</button>
-        <button type="button" className="icon-btn" aria-label="Turn right" onClick={() => { setAuto(false); setAngle(angle + 45); }}><IconRotR /></button>
+        <button type="button" className="icon-btn" aria-label="Turn left" onClick={() => turn(-1)}><IconRotL /></button>
+        <button type="button" className="btn btn-sm" onClick={reset}>Reset</button>
+        <button type="button" className="icon-btn" aria-label="Turn right" onClick={() => turn(1)}><IconRotR /></button>
         <button type="button" className="btn btn-sm" aria-pressed={auto} onClick={() => setAuto(!auto)} style={auto ? { borderColor: "var(--dw-gold)" } : undefined}>
           Auto-rotate
         </button>
+        {is3d && (
+          <label className="row small strong" style={{ gap: 6 }}>
+            <span className="visually-hidden">Animation</span>
+            <select value={anim} onChange={(e) => { setAnim(e.target.value); handle.current?.animate(e.target.value); }} style={{ minHeight: 40 }}>
+              {["Stand", "Walk", "Run", "EmoteDance", "EmoteWave", "EmoteCheer", "EmoteSalute", "EmoteRoar", "EmoteFlex", "EmoteBow", "EmoteLaugh", "EmoteKneel", "SpellCastDirected", "ReadySpellDirected"].map((a) => (
+                <option key={a} value={a}>{a.replace(/^Emote/, "").replace(/([a-z])([A-Z])/g, "$1 $2")}</option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
     </div>
   );

@@ -85,7 +85,7 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
 
       <section aria-label="Equipment and model" className="row" style={{ alignItems: "stretch", gap: 16 }}>
         <GearList label="Equipped, left" gear={gearLeft} />
-        <ModelStage name={active.name} color={color} renderUrl={active.renderUrl} />
+        <ModelStage name={active.name} color={color} renderUrl={active.renderUrl} slug={active.slug} />
         <GearList label="Equipped, right" gear={gearRight} />
       </section>
 

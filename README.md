@@ -73,7 +73,7 @@ secret); the link stops working once a Super Admin exists.
 | `/guild` | Public guild page styled like the in-game guild window: roster with class icons, ranks, MOTD, guild info |
 | `/` | Countdown to raid unlock, raid readiness, Road to 60, officer news, recently active, guild bank, crafters |
 | `/sign-in`, `/apply` | Battle.net OAuth → claim characters → pick a main; guild application form |
-| `/characters/[slug]` | Account character switcher, paperdoll, model stage (render or placeholder), stats / Legacy / wishlist / professions tabs, "Sync from Armory" |
+| `/characters/[slug]` | Account character switcher, paperdoll, **real 3D model** (Wowhead's model viewer fed by Blizzard `/appearance`: race, gender, customization choices, equipped item display IDs; animations; falls back to the 2D render), stats / Legacy / wishlist / professions tabs |
 | `/bis` | Self-service BiS planner: every member picks their own item per slot (17 slots) from Blizzard's item search, sets where it drops, tracks have/need; equipped items count as Have |
 | `/loot` | Raid loot pools with role filter and priority queue, wishlist with reorder, loot history |
 | `/raids` | Event list, signup with status and character, comp bars, signups, readiness checks; `/raids/calendar.ics` iCal feed |
@@ -98,8 +98,6 @@ scripts/seed-sql.mts writes seeds/base.sql (ranks, settings, loot table) and see
 ## Not built yet
 
 - **Warcraft Logs attendance import.** `attendance_pct` is a cached column ready for it; the GraphQL client isn't written.
-- **3D model viewer.** The stage shows the `/character-media` render when available, or a placeholder silhouette. Plug a
-  third-party viewer into `CharacterView.tsx` fed by `/appearance` + `/equipment`.
 - **Item icons.** `items.icon_url` exists; a job that caches `/data/wow/media/item/{id}` isn't written yet.
 - **Discord bot.** Only webhooks are wired: event and announcement posts, application pings.
 
@@ -111,6 +109,12 @@ are the Classic ones; verify them once Blizzard publishes docs. Characters appea
 the account list can lag 20–40 minutes, and renders can lag a day.
 
 ## Content rules
+
+3D models: `lib/models.ts` resolves item display IDs from Blizzard (`item` → `item-appearance`, Forever data first, then retail) and
+caches them in `item_displays`. Wowhead's viewer and model files load through `/modelviewer/live/*`, a same-origin relay
+(Wowhead's CDN sends no CORS headers) cached at Cloudflare's edge. The files are Wowhead's copies of Blizzard models: fine for a
+small guild site, but Wowhead could block the relay; the character page then falls back to the official 2D render.
+
 
 Don't rip or rehost Blizzard's textures, models, map art or logos. Item icons and character renders come from the API,
 which its terms permit. The map is the original schematic. The footer says the site is fan-made and not affiliated with
