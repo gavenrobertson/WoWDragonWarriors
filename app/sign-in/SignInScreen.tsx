@@ -12,7 +12,7 @@ export async function SignInScreen({ initialStep, error, discord }: { initialSte
     <main id="main" tabIndex={-1} className="signin">
       <section aria-label={SITE.name} className="signin-brand">
         <div className="row" style={{ gap: 14 }}>
-          <img src="/assets/crest-256.jpg" alt="" width={64} height={64} className="logo" style={{ width: 64, height: 64, objectFit: "cover", display: "block" }} />
+          <img src="/assets/crest-256.png" alt="" width={64} height={64} className="logo" style={{ width: 64, height: 64, objectFit: "cover", display: "block" }} />
           <span className="brand-name" style={{ fontSize: 24 }}>{SITE.name}</span>
         </div>
         <div className="stack" style={{ maxWidth: 520, gap: 16 } as React.CSSProperties}>

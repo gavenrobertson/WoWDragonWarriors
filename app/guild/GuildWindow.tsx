@@ -43,7 +43,7 @@ export function GuildWindow({ profile, members, motd, info, isMember, signedIn }
   return (
     <div className="wow-shell">
     <section className="wow-window" aria-labelledby="guild-name">
-      <div className="wow-portrait" aria-hidden="true"><img src="/assets/crest-256.jpg" alt="" /></div>
+      <div className="wow-portrait" aria-hidden="true"><img src="/assets/crest-256.png" alt="" /></div>
       <div className="wow-titlebar">
         <h1 id="guild-name" className="wow-title">{profile.name}</h1>
       </div>

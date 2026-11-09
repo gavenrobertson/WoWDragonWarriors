@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: { default: `${SITE.name} — Guild Hub`, template: `%s · ${SITE.name}` },
   description: SITE.description,
-  icons: { icon: SITE.favicon, apple: "/assets/crest-256.jpg" },
+  icons: { icon: SITE.favicon, apple: "/assets/apple-touch-icon.png" },
   openGraph: { title: SITE.name, description: SITE.description, url: SITE.url, siteName: SITE.name, images: [{ url: SITE.ogImage, width: 1200, height: 630 }], type: "website" },
   twitter: { card: "summary_large_image", images: [SITE.ogImage] },
 };

@@ -12,7 +12,7 @@ export function Medallion({ size = 132 }: { size?: number }) {
       <svg viewBox="0 0 200 200" className="medallion-ring reverse">
         <circle cx="100" cy="100" r="74" fill="none" stroke="#9B5DFF" strokeOpacity=".55" strokeWidth="1.5" strokeDasharray="2 7" />
       </svg>
-      <img src="/assets/crest-256.jpg" alt="" className="medallion-crest" />
+      <img src="/assets/crest-256.png" alt="" className="medallion-crest" />
     </div>
   );
 }

@@ -779,3 +779,16 @@ button:disabled, [aria-disabled="true"], select:disabled, input:disabled { curso
 .wow-tabs { position: relative; left: auto; bottom: auto; z-index: 1; margin: -3px 0 0 28px; }
 @media (max-width: 760px) { .wow-tabs { margin-left: 12px; } }
 .wow-shell { min-width: 0; width: 100%; box-sizing: border-box; }
+
+/* ---------- new crest (transparent, spiked gold silhouette) ---------- */
+.logo { border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; object-fit: contain !important;
+  filter: drop-shadow(0 2px 2px #000) drop-shadow(0 0 8px rgba(255,190,60,.35)); animation: crestBreath 5s ease-in-out infinite; }
+@keyframes crestBreath { 50% { filter: drop-shadow(0 2px 2px #000) drop-shadow(0 0 14px rgba(155,93,255,.65)); } }
+.brand:hover .logo { transform: scale(1.08) rotate(-3deg); }
+.brand-crest { filter: drop-shadow(0 20px 30px rgba(0,0,0,.8)) drop-shadow(0 0 40px rgba(155,93,255,.35)); }
+/* round frames show the whole crest instead of cropping it */
+.medallion-crest, .wow-portrait img, .gavel-plate img { object-fit: contain !important; padding: 10%;
+  background: radial-gradient(circle at 50% 40%, #2a1d3d, #0b0806 72%); box-sizing: border-box; }
+.medallion-crest { padding: 8%; }
+.gavel-plate img { padding: 12%; }
+@media (prefers-reduced-motion: reduce) { .logo { animation: none; } }

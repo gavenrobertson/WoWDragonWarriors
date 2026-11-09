@@ -53,14 +53,14 @@ export async function notify(category: DiscordCategory, embed: Embed, opts: { co
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: SITE.name,
-        avatar_url: hubUrl("/assets/crest-256.jpg"),
+        avatar_url: hubUrl("/assets/crest-256.png"),
         content: opts.content,
         allowed_mentions: { parse: [] },
         embeds: [{
           color: 0xffd100, ...embed,
           thumbnail: embed.thumbnail ? { url: embed.thumbnail } : undefined,
           image: embed.image ? { url: embed.image } : undefined,
-          footer: { text: `${SITE.name} guild hub`, icon_url: hubUrl("/assets/crest-256.jpg") },
+          footer: { text: `${SITE.name} guild hub`, icon_url: hubUrl("/assets/crest-256.png") },
           timestamp: embed.timestamp ?? new Date().toISOString(),
         }],
       }),
