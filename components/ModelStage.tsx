@@ -145,6 +145,10 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
       <div className="row" style={{ justifyContent: "center", gap: 8, padding: "12px 16px", borderTop: "1px solid var(--dw-border)", position: "relative", zIndex: 2 }}>
         <button type="button" className="icon-btn" aria-label="Turn left" onClick={() => turn(-1)}><IconRotL /></button>
         <button type="button" className="btn btn-sm" onClick={reset}>Reset</button>
+        {is3d && <>
+          <button type="button" className="icon-btn" aria-label="Zoom out" onClick={() => handle.current?.zoom(-1)}>−</button>
+          <button type="button" className="icon-btn" aria-label="Zoom in" onClick={() => handle.current?.zoom(1)}>+</button>
+        </>}
         <button type="button" className="icon-btn" aria-label="Turn right" onClick={() => turn(1)}><IconRotR /></button>
         <button type="button" className="btn btn-sm" aria-pressed={auto} onClick={() => setAuto(!auto)} style={auto ? { borderColor: "var(--dw-gold)" } : undefined}>
           Auto-rotate

@@ -5,7 +5,8 @@
 import { useEffect, useRef, useState } from "react";
 
 type ModelConfig = { modelId: number; options: { optionId: number; choiceId: number }[]; items: [number, number][]; missing: number };
-type Viewer = { renderer?: { azimuth: number; zenith: number; distance: number; actors?: { setAnimation?: (n: string) => void; getNumAnimations?: () => number }[] }; destroy?: () => void };
+type Zoom = { target: number; current: number; rateCurrent: number; range: [number, number] };
+type Viewer = { renderer?: { azimuth: number; zenith: number; distance: number; zoom?: Zoom; actors?: { setAnimation?: (n: string) => void; getNumAnimations?: () => number }[] }; destroy?: () => void };
 
 declare global {
   interface Window { ZamModelViewer?: new (opts: unknown) => Viewer; jQuery?: (el: Element) => unknown; WH?: Record<string, unknown>; CONTENT_PATH?: string }
@@ -13,6 +14,14 @@ declare global {
 
 const JQUERY = "https://code.jquery.com/jquery-3.7.1.min.js";
 let loader: Promise<void> | null = null;
+
+// Zoom units used by Wowhead's viewer (higher = closer). 1 is the default framing.
+const ZOOM_HOME = 1, ZOOM_MIN = -3, ZOOM_MAX = 7;
+function setZoom(z: Zoom, target: number) {
+  const lo = Math.max(ZOOM_MIN, z.range?.[0] ?? ZOOM_MIN), hi = Math.min(ZOOM_MAX, z.range?.[1] ?? ZOOM_MAX);
+  z.target = Math.max(lo, Math.min(hi, target));
+  z.rateCurrent = 0; // cancel any momentum from the viewer's accelerating zoom
+}
 
 function loadScript(src: string) {
   return new Promise<void>((resolve, reject) => {
@@ -116,13 +125,31 @@ export function Model3D({ slug, onState, handleRef, autoRotate }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
+  // Calm, linear wheel zoom. The viewer's own wheel zoom accelerates with every notch
+  // (three notches jumped ~6 of its ~27 zoom units), so we take the wheel over:
+  // ~0.4 units per notch, proportional for trackpads, eased by the viewer's own interpolation.
+  useEffect(() => {
+    const el = box.current;
+    if (!el || !mounted) return;
+    const onWheel = (e: WheelEvent) => {
+      const z = viewer.current?.renderer?.zoom;
+      if (!z) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const px = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaMode === 2 ? e.deltaY * 400 : e.deltaY;
+      setZoom(z, z.target - Math.max(-120, Math.min(120, px)) * 0.004);
+    };
+    el.addEventListener("wheel", onWheel, { capture: true, passive: false });
+    return () => el.removeEventListener("wheel", onWheel, { capture: true });
+  }, [mounted]);
+
   // Controls exposed to the stage buttons.
   useEffect(() => {
     if (!handleRef) return;
     handleRef.current = {
       rotate: (rad) => { const r = viewer.current?.renderer; if (r) r.azimuth += rad; },
-      reset: () => { const r = viewer.current?.renderer; if (r) { r.azimuth = 0; r.zenith = 0; } },
-      zoom: (d) => { const r = viewer.current?.renderer; if (r) r.distance = Math.max(1, r.distance + d); },
+      reset: () => { const r = viewer.current?.renderer; if (r) { r.azimuth = 0; r.zenith = 0; if (r.zoom) setZoom(r.zoom, ZOOM_HOME); } },
+      zoom: (d) => { const z = viewer.current?.renderer?.zoom; if (z) setZoom(z, z.target + d); },
       animate: (name) => {
         try { viewer.current?.renderer?.actors?.[0]?.setAnimation?.(name); return true; } catch { return false; }
       },
