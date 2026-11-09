@@ -11,7 +11,7 @@ const ICONS: Record<string, string> = {
   "/": "inv_misc_rune_01", "/guild": "inv_bannerpvp_02", "/characters": "achievement_character_human_male", "/loot": "inv_misc_bag_10",
   "/bis": "inv_sword_04", "/raids": "achievement_boss_onyxia", "/roster": "inv_misc_note_06", "/admin": "inv_misc_gear_01", "/arcade": "inv_misc_coin_02",
 };
-const icon = (href: string) => `https://render.worldofwarcraft.com/us/icons/36/${ICONS[href] ?? "inv_misc_questionmark"}.jpg`;
+const icon = (href: string) => `https://render.worldofwarcraft.com/us/icons/56/${ICONS[href] ?? "inv_misc_questionmark"}.jpg`;
 
 export function MobileNav({ items, discord, account }: {
   items: { href: string; label: string }[];
@@ -66,7 +66,7 @@ export function MobileNav({ items, discord, account }: {
         <nav aria-label="Main" className="mm-links">
           {items.map((n, i) => (
             <Link key={n.href} href={n.href} className="mm-link" aria-current={active(n.href) ? "page" : undefined} style={{ ["--i" as string]: i }}>
-              <img src={icon(n.href)} alt="" width={30} height={30} />
+              <img src={icon(n.href)} alt="" width={30} height={30} loading="lazy" decoding="async" />
               <span>{n.label}</span>
               <span className="mm-chev" aria-hidden="true">›</span>
             </Link>
