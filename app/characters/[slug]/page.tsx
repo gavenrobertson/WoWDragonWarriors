@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getViewer } from "@/lib/auth";
 import { NS, SITE } from "@/lib/config";
 import { getCharacters, getRanks, getWishlists, store } from "@/lib/store";
+import { GROUPS, METRICS } from "@/lib/metrics";
 import { CharacterView, type CharacterVM } from "./CharacterView";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -28,6 +29,22 @@ export default async function CharacterPage({ params }: Props) {
   const rankOf = (idx: number | null) => ranks.find((r) => r.index === idx);
   const beforeRaids = Date.now() < new Date(SITE.raidUnlock).getTime();
 
+  // Personal records: every stat with the character's place in the guild, and the guild titles they hold.
+  const tracked = chars.filter((c) => c.inGuild && c.metrics);
+  const recordsOf = (c: typeof active): CharacterVM["records"] => {
+    if (!c.metrics) return null;
+    const rows = METRICS.map((m) => {
+      const value = c.metrics!.v[m.key] ?? 0;
+      const rank = c.inGuild && value > 0 ? 1 + tracked.filter((o) => (o.metrics!.v[m.key] ?? 0) > value).length : null;
+      return { key: m.key, group: m.group, title: m.title, label: m.label[0].toUpperCase() + m.label.slice(1), raw: m.label, icon: m.icon, value, rank };
+    });
+    return {
+      of: tracked.length,
+      titles: rows.filter((r) => r.rank === 1).map((r) => ({ title: r.title, label: r.raw, icon: r.icon })),
+      groups: GROUPS.map((g) => ({ title: g.title, rows: rows.filter((r) => r.group === g.id).map(({ key, label, icon, value, rank }) => ({ key, label, icon, value, rank })) })),
+    };
+  };
+
   const toVM = (c: typeof active): CharacterVM => {
     const rank = rankOf(c.rank);
     const wl = wishes.filter((w) => w.characterId === c.id).sort((a, b) => a.rank - b.rank);
@@ -37,6 +54,7 @@ export default async function CharacterPage({ params }: Props) {
       isMain: c.isMain, rank: rank?.name ?? (c.inGuild ? "Member" : "Not in guild"),
       attendance: c.level < 60 ? "Not raiding" : beforeRaids || c.attendancePct == null ? "Starts Dec 9" : `${Math.round(c.attendancePct)}%`,
       priority: wl.length === 0 ? "None yet" : c.isMain ? "Tier 1" : "Alt",
+      records: recordsOf(c),
       stats: c.stats, legacy: c.legacy ?? null, profs: c.professions, renderUrl: c.renderUrl ?? null, syncedAt: c.syncedAt ?? null,
       gear: c.gear.map((g) => ({ ...g, iconUrl: g.itemId ? itemById.get(g.itemId)?.iconUrl ?? null : null })),
       wishlist: wl.map((w) => {

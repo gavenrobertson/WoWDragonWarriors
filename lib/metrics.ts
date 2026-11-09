@@ -85,3 +85,22 @@ export function extractMetrics(json: any, completedQuests?: number): CharMetrics
   if (v.quests == null && completedQuests != null) v.quests = completedQuests;
   return { v, inst };
 }
+
+/** Titles shown on the guild page (one holder each). Every metric still shows on the character's own Records tab. */
+export const TITLE_KEYS = ["quests", "dungeons", "bosses", "raidBosses", "kills", "hks", "flights", "deaths", "camped", "fish"];
+
+/** Guild feats: tiered goals the whole guild works toward together. `source` is a metric key, or "level60" for members at 60. */
+export interface GuildFeat { key: string; name: string; desc: string; icon: string; source: string; tiers: number[] }
+export const GUILD_FEATS: GuildFeat[] = [
+  { key: "level60", name: "Legion of Sixty", desc: "Members at level 60", icon: "achievement_level_60", source: "level60", tiers: [5, 10, 25, 40] },
+  { key: "quests", name: "Questing Legion", desc: "Quests completed by the guild", icon: "achievement_quests_completed_08", source: "quests", tiers: [1000, 5000, 10000, 25000, 50000] },
+  { key: "dungeons", name: "Dungeon Crawlers", desc: "Dungeons entered", icon: "achievement_dungeon_classicdungeonmaster", source: "dungeons", tiers: [50, 150, 300, 600, 1000] },
+  { key: "bosses", name: "Bane of Bosses", desc: "Dungeon and raid bosses slain", icon: "inv_misc_bone_humanskull_01", source: "bosses", tiers: [25, 100, 250, 500, 1000] },
+  { key: "raidBosses", name: "Dragonslayers", desc: "Raid bosses slain", icon: "inv_misc_head_dragon_black", source: "raidBosses", tiers: [1, 10, 50, 150] },
+  { key: "kills", name: "Scourge of Azeroth", desc: "Total kills", icon: "ability_warrior_bladestorm", source: "kills", tiers: [10000, 50000, 100000, 250000, 500000] },
+  { key: "hks", name: "For the Alliance!", desc: "Honorable kills", icon: "achievement_pvp_a_a", source: "hks", tiers: [100, 500, 1000, 5000, 10000] },
+  { key: "flights", name: "Gryphon Riders", desc: "Flight paths taken", icon: "ability_mount_gryphon_01", source: "flights", tiers: [100, 250, 500, 1000, 2500] },
+  { key: "deaths", name: "Spirit Healer's Favorites", desc: "Deaths (we'll get there)", icon: "spell_holy_guardianspirit", source: "deaths", tiers: [100, 500, 1000, 2500] },
+];
+
+export const metricByKey = (k: string) => METRICS.find((m) => m.key === k);

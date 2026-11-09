@@ -8,11 +8,17 @@ import { ModelStage } from "@/components/ModelStage";
 import { Toast } from "@/components/Toast";
 import { useAction } from "@/components/useAction";
 import { classColor, qualityColor, STATUS } from "@/lib/ui";
+import { wowIcon } from "@/lib/metrics";
 
 export interface CharacterVM {
   slug: string; name: string; level: number; race: string; className: string; spec: string; role: string; isMain: boolean;
   rank: string; attendance: string; priority: string;
   stats: { label: string; value: string }[];
+  records: {
+    of: number;
+    titles: { title: string; label: string; icon: string }[];
+    groups: { title: string; rows: { key: string; label: string; icon: string; value: number; rank: number | null }[] }[];
+  } | null;
   legacy: { rank: number; pct: number; milestones: { title: string; when: string }[] } | null;
   profs: { name: string; skill: number; max?: number }[];
   gear: { slot: string; name: string; quality: string; iconUrl?: string | null }[];
@@ -20,10 +26,10 @@ export interface CharacterVM {
   renderUrl: string | null; syncedAt: string | null;
 }
 
-const TABS = [["stats", "Stats"], ["legacy", "Legacy"], ["loot", "Wishlist & loot"], ["prof", "Professions"]] as const;
+const TABS = [["stats", "Stats"], ["records", "Records"], ["legacy", "Legacy"], ["loot", "Wishlist & loot"], ["prof", "Professions"]] as const;
 type Tab = (typeof TABS)[number][0];
 const SOURCES: Record<Tab, string> = {
-  stats: "Blizzard API · /statistics", legacy: "Blizzard API · /achievements (Legacy)", loot: "Hub database · wishlists, loot council decisions", prof: "Blizzard API · /professions",
+  stats: "Blizzard API · /statistics", records: "Blizzard API · /achievements/statistics, ranked against the guild", legacy: "Blizzard API · /achievements (Legacy)", loot: "Hub database · wishlists, loot council decisions", prof: "Blizzard API · /professions",
 };
 
 export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
@@ -105,6 +111,41 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
               ))}
             </div>
           ) : <p className="soft">Stats appear after the next profile sync.</p>)}
+
+          {tab === "records" && (active.records ? (
+            <div className="stack" style={{ gap: 18 }}>
+              {active.records.titles.length > 0 && (
+                <div className="stack" style={{ gap: 8 }}>
+                  <span className="small strong soft">Guild titles held</span>
+                  <div className="rec-titles">
+                    {active.records.titles.map((t) => (
+                      <span key={t.title} className="rec-title">
+                        <span className="hof-icon sm" aria-hidden="true"><img src={wowIcon(t.icon, 36)} alt="" /></span>
+                        <span><strong>{t.title}</strong><span>Most {t.label} in the guild</span></span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="rec-groups">
+                {active.records.groups.map((g) => (
+                  <section key={g.title} className="rec-group" aria-label={g.title}>
+                    <h3>{g.title}</h3>
+                    <ul className="rec-list">
+                      {g.rows.map((r) => (
+                        <li key={r.key}>
+                          <span className="hof-icon sm" aria-hidden="true"><img src={wowIcon(r.icon, 36)} alt="" loading="lazy" /></span>
+                          <span className="rec-label">{r.label}</span>
+                          <span className="rec-val">{r.value.toLocaleString("en-US")}</span>
+                          <span className={`rec-rank${r.rank === 1 ? " first" : ""}`} title={r.rank ? `#${r.rank} of ${active.records!.of} in the guild` : undefined}>{r.rank ? `#${r.rank}` : "—"}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            </div>
+          ) : <p className="soft">Records appear after the next profile sync.</p>)}
 
           {tab === "legacy" && (active.legacy ? (
             <div className="row" style={{ alignItems: "flex-start", gap: 24 }}>

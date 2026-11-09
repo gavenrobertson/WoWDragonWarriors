@@ -802,54 +802,74 @@ button:disabled, [aria-disabled="true"], select:disabled, input:disabled { curso
 @media (max-width: 480px) { .site-header .discord-link { display: none; } }
 
 /* ---------- guild Hall of Fame ---------- */
-.hof { display: grid; gap: 18px; padding-bottom: 6px; }
-.hof-wait { text-align: center; color: #d8cdb4; }
+.hof { display: grid; gap: 14px; padding-bottom: 6px; }
+.hof-wait.wow-scroll { min-height: 0; padding: 32px 20px; text-align: center; color: #d8cdb4; }
+.hof-icon { position: relative; display: inline-block; flex: none; width: 44px; height: 44px; border-radius: 5px; overflow: hidden; background: #000;
+  box-shadow: 0 0 0 1px #000, 0 0 0 2px #8a6a2c, 0 0 0 3px #000, 0 3px 8px -2px #000; }
+.hof-icon img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); }
+.hof-icon::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.18), transparent 38%), radial-gradient(120% 100% at 50% 120%, rgba(0,0,0,.45), transparent 60%); }
+.hof-icon.sm { width: 30px; height: 30px; border-radius: 4px; }
+
 .hof-totals { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
-.hof-total { display: grid; justify-items: center; gap: 2px; padding: 12px 6px 10px; text-align: center; border: 1px solid #000; border-radius: 4px;
-  background: radial-gradient(120% 90% at 50% 0%, rgba(255,209,0,.10), transparent 60%), linear-gradient(180deg, #1d150b, #0c0806);
-  box-shadow: inset 0 0 0 1px #5e4720, inset 0 1px 0 1px rgba(255,226,154,.06); }
-.hof-total-glyph { font-size: 18px; filter: saturate(.85); }
-.hof-total strong { font-family: var(--font-display); font-size: 24px; line-height: 1.1; color: var(--wow-gold); text-shadow: 0 0 12px rgba(255,209,0,.35), 0 1px 0 #000; }
-.hof-total span:last-child { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a99a7a; }
-.hof-note { margin: -8px 0 0; font-size: 12px; color: #8f846e; text-align: center; }
-.hof-group { display: grid; gap: 10px; }
-.hof-group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding-bottom: 6px; border-bottom: 1px solid #3b2f17; box-shadow: 0 1px 0 rgba(255,209,0,.08); }
-.hof-group-head h2 { margin: 0; font-family: var(--font-display); font-size: 20px; color: var(--wow-gold); text-shadow: 0 1px 0 #000; }
-.hof-group-head span { font-size: 13px; color: #a99a7a; font-style: italic; }
-.hof-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
-.hof-card { position: relative; display: grid; gap: 10px; align-content: start; padding: 12px 14px 14px; border: 1px solid #000; border-radius: 6px;
-  background: linear-gradient(180deg, rgba(43,32,16,.92), rgba(12,8,6,.96)); box-shadow: inset 0 0 0 1px #4d3a1a, 0 6px 18px -10px #000;
-  animation: hof-rise .5s var(--ease-out, ease-out) both; animation-delay: calc(var(--i, 0) * 35ms); transition: box-shadow .2s, transform .2s; }
-.hof-card:hover { box-shadow: inset 0 0 0 1px #b8902f, 0 10px 24px -12px rgba(255,209,0,.35); transform: translateY(-2px); }
-.hof-wide { grid-column: 1 / -1; }
-@keyframes hof-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.hof-card-head { display: flex; align-items: center; gap: 10px; }
-.hof-glyph { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; font-size: 17px;
-  background: radial-gradient(circle at 40% 35%, #3a2a12, #0d0905); box-shadow: inset 0 0 0 1px #8a6a2c, 0 0 0 2px #000; }
-.hof-card-titles { display: grid; min-width: 0; }
-.hof-card-titles h3 { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 400; color: #ffe9a0; text-shadow: 0 1px 0 #000; }
-.hof-card-titles span { font-size: 12px; color: #a99a7a; }
-.hof-champ { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 12px; align-items: center;
-  padding: 10px 10px 10px 12px; border-radius: 4px; text-decoration: none; color: inherit;
-  background: radial-gradient(90% 120% at 0% 50%, rgba(255,209,0,.14), transparent 70%), rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px #5e4720; }
-.hof-champ .hof-face { grid-row: 1 / 3; }
-.hof-champ-name { font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 0 #000; }
-.hof-champ-val { font-family: var(--font-display); font-size: 22px; line-height: 1.1; color: var(--wow-gold); text-shadow: 0 1px 0 #000; }
-.hof-champ-val small { font-family: var(--font-body, inherit); font-size: 12px; color: #a99a7a; }
-.hof-crown { position: absolute; left: 26px; top: -9px; font-size: 18px; color: #FFD100; text-shadow: 0 0 8px rgba(255,209,0,.7), 0 1px 0 #000; z-index: 1; animation: hof-crown 3s ease-in-out infinite; }
-@keyframes hof-crown { 50% { transform: translateY(-2px) rotate(-6deg); text-shadow: 0 0 14px rgba(255,209,0,.95), 0 1px 0 #000; } }
-.hof-face { position: relative; display: inline-grid; place-items: center; flex: none; border-radius: 50%; overflow: hidden; background: #120d07;
-  box-shadow: 0 0 0 2px var(--c, #b8902f), 0 0 0 3px #000, 0 0 12px -2px var(--c, #b8902f); font-weight: 700; color: var(--c); }
-.hof-face img { width: 100%; height: 100%; object-fit: cover; }
-.hof-runners { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.hof-runners li { display: grid; grid-template-columns: 20px 26px minmax(0, 1fr) auto; align-items: center; gap: 8px; font-size: 14px; }
-.hof-runners a { font-weight: 600; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 0 #000; }
-.hof-runners a:hover { text-decoration: underline; }
-.hof-medal { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700; color: #1a1206; box-shadow: 0 0 0 1px #000; }
-.hof-medal.m2 { background: linear-gradient(180deg, #f2f2f2, #9da3ab); }
-.hof-medal.m3 { background: linear-gradient(180deg, #f0b37a, #8c5426); }
-.hof-run-val { font-variant-numeric: tabular-nums; color: #e9dfc6; }
+.hof-total { display: grid; justify-items: center; gap: 4px; padding: 10px 4px 8px; text-align: center; border: 1px solid #000; border-radius: 4px;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(255,209,0,.10), transparent 60%), linear-gradient(180deg, #1d150b, #0c0806); box-shadow: inset 0 0 0 1px #5e4720; }
+.hof-total strong { font-family: var(--font-display); font-size: 22px; line-height: 1; color: var(--wow-gold); text-shadow: 0 0 12px rgba(255,209,0,.35), 0 1px 0 #000; }
+.hof-total > span:last-child { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #a99a7a; }
+
+.hof-switch { display: flex; gap: 4px; padding: 4px; border: 1px solid #000; border-radius: 6px; background: rgba(0,0,0,.45); box-shadow: inset 0 0 0 1px #3b2f17; }
+.hof-switch-btn { flex: 1; min-height: 40px; padding: 0 10px; border: 0; border-radius: 4px; background: none; color: #b9ab89; cursor: pointer;
+  font-family: var(--font-display); font-size: 15px; white-space: nowrap; transition: color .15s, background .15s; }
+.hof-switch-btn:hover { color: #fff3b0; }
+.hof-switch-btn[aria-selected="true"] { color: var(--wow-gold); background: linear-gradient(180deg, #3d2f1c, #1b130a); box-shadow: inset 0 0 0 1px #9c7a35, 0 4px 10px -6px #000; text-shadow: 0 1px 0 #000; }
+.hof-panel { display: grid; gap: 10px; animation: hof-rise .35s var(--ease-out, ease-out) both; }
+@keyframes hof-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.hof-panel-note { margin: 0; font-size: 13px; color: #a99a7a; }
+.hof-panel-note strong { color: var(--wow-gold); }
+.hof-note { margin: 0; font-size: 12px; color: #8f846e; text-align: center; }
 .hof-empty { margin: 0; padding: 14px 10px; border-radius: 4px; text-align: center; font-size: 13px; font-style: italic; color: #a99a7a; background: rgba(0,0,0,.3); box-shadow: inset 0 0 0 1px #3b2f17; }
+
+/* guild feats: achievement-window rows */
+.hof-feats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 8px; }
+.hof-feat { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid #000; border-radius: 5px;
+  background: linear-gradient(180deg, rgba(36,28,18,.9), rgba(12,9,6,.95)); box-shadow: inset 0 0 0 1px #3b2f17; }
+.hof-feat:not(.earned) .hof-icon img { filter: grayscale(.85) brightness(.7); }
+.hof-feat.earned { box-shadow: inset 0 0 0 1px #6b5223; }
+.hof-feat.maxed { background: radial-gradient(90% 140% at 0% 50%, rgba(255,209,0,.14), transparent 60%), linear-gradient(180deg, rgba(43,32,16,.92), rgba(12,8,6,.96)); box-shadow: inset 0 0 0 1px #b8902f; }
+.hof-feat-body { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.hof-feat-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.hof-feat-name { font-family: var(--font-display); font-size: 16px; color: #ffe9a0; text-shadow: 0 1px 0 #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hof-feat:not(.earned) .hof-feat-name { color: #c9bc9c; }
+.hof-feat-desc { font-size: 12px; color: #a99a7a; }
+.hof-pips { display: inline-flex; gap: 4px; flex: none; }
+.hof-pips i { width: 9px; height: 9px; transform: rotate(45deg); background: #1a140b; box-shadow: inset 0 0 0 1px #6b5223; }
+.hof-pips i.on { background: linear-gradient(135deg, #fff1a8, #e0a100 55%, #7a5200); box-shadow: 0 0 6px rgba(255,209,0,.6); }
+.hof-feat-prog { display: flex; align-items: center; gap: 10px; margin-top: 3px; }
+.hof-feat-prog .hof-feat-count { flex: none; min-width: 64px; text-align: right; }
+.hof-feat-bar { flex: 1; height: 8px; border-radius: 4px; background: rgba(0,0,0,.6); box-shadow: inset 0 0 0 1px #3b2f17; overflow: hidden; }
+.hof-feat-bar span { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #2f6d1a, #58b02d 70%, #a8f070); box-shadow: 0 0 8px rgba(88,176,45,.5);
+  animation: hof-grow .9s var(--ease-out, ease-out) both; transform-origin: left; }
+.hof-feat.maxed .hof-feat-bar span { background: linear-gradient(90deg, #7a5200, #e0a100 60%, #fff1a8); }
+.hof-feat-count { font-size: 12px; color: #e9dfc6; font-variant-numeric: tabular-nums; }
+
+/* title holders: compact list */
+.hof-titles { list-style: none; margin: 0; padding: 0; display: grid; border: 1px solid #000; border-radius: 5px; overflow: hidden; background: rgba(5,3,8,.55); box-shadow: inset 0 0 0 1px #3b2f17; }
+.hof-titles li { display: grid; grid-template-columns: 30px minmax(0, 1fr) minmax(0, 1.1fr); align-items: center; gap: 12px; padding: 8px 12px; border-top: 1px solid rgba(59,47,23,.6); }
+.hof-titles li:first-child { border-top: 0; }
+.hof-titles li:nth-child(odd) { background: rgba(255,209,0,.025); }
+.hof-title-name { display: grid; min-width: 0; line-height: 1.25; }
+.hof-title-name strong { font-family: var(--font-display); font-weight: 400; font-size: 15px; color: #ffe9a0; }
+.hof-title-name span { font-size: 12px; color: #a99a7a; }
+.hof-holder { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-width: 0; text-decoration: none; }
+.hof-holder:hover .hof-holder-name { text-decoration: underline; }
+.hof-holder-name { font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 0 #000; }
+.hof-holder-val { font-family: var(--font-display); color: var(--wow-gold); font-variant-numeric: tabular-nums; }
+.hof-holder.vacant { display: block; font-size: 13px; font-style: italic; color: #8f846e; }
+.hof-face { position: relative; display: inline-grid; place-items: center; flex: none; border-radius: 50%; overflow: hidden; background: #120d07;
+  box-shadow: 0 0 0 2px var(--c, #b8902f), 0 0 0 3px #000; font-weight: 700; font-size: 13px; color: var(--c); }
+.hof-face img { width: 100%; height: 100%; object-fit: cover; }
+
+/* dungeons */
 .hof-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .hof-bars li { display: grid; grid-template-columns: minmax(120px, 220px) minmax(0, 1fr) 48px; align-items: center; gap: 12px; font-size: 14px; color: #e9dfc6; }
 .hof-bar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -858,20 +878,40 @@ button:disabled, [aria-disabled="true"], select:disabled, input:disabled { curso
   animation: hof-grow .9s var(--ease-out, ease-out) both; transform-origin: left; }
 @keyframes hof-grow { from { transform: scaleX(0); } }
 .hof-bar-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--wow-gold); }
+
 @media (max-width: 760px) {
-  .hof-totals { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .hof-total strong { font-size: 20px; }
-  .hof-bars li { grid-template-columns: minmax(0, 1fr) 40px; }
+  .hof-totals { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .hof-total { padding: 8px 2px 6px; }
+  .hof-total strong { font-size: 19px; }
+  .hof-switch-btn { font-size: 13px; padding: 0 4px; }
+  .hof-feats { gap: 6px; }
+  .hof-feat { padding: 7px 10px; gap: 10px; }
+  .hof-feat .hof-icon { width: 36px; height: 36px; }
+  .hof-feat-name { font-size: 15px; }
+  .hof-feat-desc { display: none; }
+  .hof-titles li { grid-template-columns: 30px minmax(0, 1fr); row-gap: 2px; padding: 7px 10px; }
+  .hof-title-name span { display: none; }
+  .hof-titles .hof-holder { grid-column: 2; grid-template-columns: 22px minmax(0, 1fr) auto; }
+  .hof-titles .hof-face { width: 22px !important; height: 22px !important; font-size: 11px; }
+  .hof-titles li > .hof-icon { grid-row: 1 / 3; align-self: center; }
+  .hof-panel-note { font-size: 12px; }
+  .hof-bars li { grid-template-columns: minmax(0, 1fr) 40px; row-gap: 4px; }
   .hof-bar { grid-column: 1 / -1; grid-row: 2; }
 }
-@media (prefers-reduced-motion: reduce) { .hof-card, .hof-bar span, .hof-crown { animation: none; } }
-.hof-wait.wow-scroll { min-height: 0; padding: 32px 20px; }
-/* Hall of Fame: real WoW icons in an action-bar style frame */
-.hof-icon { position: relative; display: inline-block; flex: none; width: 40px; height: 40px; border-radius: 5px; overflow: hidden; background: #000;
-  box-shadow: 0 0 0 1px #000, 0 0 0 2px #8a6a2c, 0 0 0 3px #000, 0 3px 8px -2px #000; }
-.hof-icon img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); }
-.hof-icon::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: linear-gradient(180deg, rgba(255,255,255,.18), transparent 38%), radial-gradient(120% 100% at 50% 120%, rgba(0,0,0,.45), transparent 60%); }
-.hof-icon.sm { width: 30px; height: 30px; border-radius: 4px; margin-bottom: 4px; }
-.hof-card:hover .hof-icon { box-shadow: 0 0 0 1px #000, 0 0 0 2px #FFD100, 0 0 0 3px #000, 0 0 12px rgba(255,209,0,.45); }
-.hof-group-head h2::before { content: "❖"; margin-right: 10px; font-size: 14px; color: #b8902f; vertical-align: 3px; }
+@media (prefers-reduced-motion: reduce) { .hof-panel, .hof-bar span, .hof-feat-bar span { animation: none; } }
+
+/* ---------- character Records tab ---------- */
+.rec-titles { display: flex; flex-wrap: wrap; gap: 8px; }
+.rec-title { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border-radius: 6px; border: 1px solid #000;
+  background: radial-gradient(100% 140% at 0% 50%, rgba(255,209,0,.18), transparent 65%), linear-gradient(180deg, #2b2010, #120d07); box-shadow: inset 0 0 0 1px #b8902f, 0 0 14px -6px rgba(255,209,0,.6); }
+.rec-title strong { font-family: var(--font-display); font-weight: 400; color: var(--wow-gold); display: block; line-height: 1.2; }
+.rec-title span span { font-size: 12px; color: #a99a7a; }
+.rec-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; align-items: start; }
+.rec-group h3 { margin: 0 0 6px; font-family: var(--font-display); font-weight: 400; font-size: 16px; color: var(--wow-gold); }
+.rec-list { list-style: none; margin: 0; padding: 0; border: 1px solid #000; border-radius: 5px; overflow: hidden; background: rgba(5,3,8,.5); box-shadow: inset 0 0 0 1px #3b2f17; }
+.rec-list li { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 6px 10px; border-top: 1px solid rgba(59,47,23,.6); font-size: 14px; }
+.rec-list li:first-child { border-top: 0; }
+.rec-label { color: #e9dfc6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rec-val { font-family: var(--font-display); color: #fff; font-variant-numeric: tabular-nums; }
+.rec-rank { min-width: 44px; text-align: right; font-size: 12px; color: #a99a7a; font-variant-numeric: tabular-nums; }
+.rec-rank.first { color: var(--wow-gold); font-weight: 700; }

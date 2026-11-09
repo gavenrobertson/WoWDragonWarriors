@@ -3,7 +3,7 @@ import { getViewer } from "@/lib/auth";
 import { SITE } from "@/lib/config";
 import { getCharacters, getRanks, getSettings, store } from "@/lib/store";
 import { classIcon } from "@/lib/ui";
-import { METRICS } from "@/lib/metrics";
+import { GUILD_FEATS, TITLE_KEYS, metricByKey } from "@/lib/metrics";
 import type { HallOfFameData } from "./HallOfFame";
 import { GuildWindow, type GuildMember } from "./GuildWindow";
 
@@ -23,24 +23,25 @@ export default async function GuildPage() {
     }));
   const s = settings as Record<string, unknown>;
 
-  // Hall of Fame: leaderboards from each member's Blizzard statistics (computed here so the page ships only the top 3s).
+  // Hall of Fame: guild feats from summed Blizzard statistics, plus one holder per featured title.
   const tracked = chars.filter((c) => c.inGuild && c.metrics);
   const sum = (k: string) => tracked.reduce((a, c) => a + (c.metrics!.v[k] ?? 0), 0);
   const inst: Record<string, number> = {};
   for (const c of tracked) for (const [k, n] of Object.entries(c.metrics!.inst)) inst[k] = (inst[k] ?? 0) + n;
+  const at60 = members.filter((m) => m.level >= 60).length;
   const hall: HallOfFameData = {
     tracked: tracked.length,
     members: members.length,
     totals: { quests: sum("quests"), dungeons: sum("dungeons"), bosses: sum("bosses"), kills: sum("kills"), hks: sum("hks"), deaths: sum("deaths") },
-    boards: METRICS.map((m) => ({
-      key: m.key, title: m.title, label: m.label, group: m.group, icon: m.icon,
-      top: tracked
+    feats: GUILD_FEATS.map((f) => ({ key: f.key, name: f.name, desc: f.desc, icon: f.icon, tiers: f.tiers, value: f.source === "level60" ? at60 : sum(f.source) })),
+    titles: TITLE_KEYS.map((k) => metricByKey(k)!).map((m) => {
+      const best = tracked
         .map((c) => ({ slug: c.slug, name: c.fullName, className: c.className, avatarUrl: c.avatarUrl ?? null, level: c.level, value: c.metrics!.v[m.key] ?? 0 }))
         .filter((r) => r.value > 0)
-        .sort((a, b) => b.value - a.value || b.level - a.level)
-        .slice(0, 3),
-    })),
-    dungeons: Object.entries(inst).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, kills]) => ({ name, kills })),
+        .sort((a, b) => b.value - a.value || b.level - a.level)[0] ?? null;
+      return { key: m.key, title: m.title, label: m.label, icon: m.icon, holder: best };
+    }),
+    dungeons: Object.entries(inst).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name, kills]) => ({ name, kills })),
   };
   return (
     <main id="main" tabIndex={-1} className="container page guild-page">
