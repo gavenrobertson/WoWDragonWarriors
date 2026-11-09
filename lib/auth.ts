@@ -14,7 +14,7 @@ export type Permission = "canSignUp" | "canWishlist" | "canRunRaids" | "canAward
 type Perms = Record<Permission, boolean>;
 const NO_PERMS: Perms = { canSignUp: false, canWishlist: false, canRunRaids: false, canAwardLoot: false, isAdmin: false };
 
-export interface ViewerCharacter { id: string; slug: string; name: string; className: string | null; level: number | null; isMain: boolean; inGuild: boolean }
+export interface ViewerCharacter { id: string; slug: string; name: string; className: string | null; level: number | null; isMain: boolean; inGuild: boolean; avatarUrl?: string | null }
 export interface Viewer {
   demo: boolean;
   signedIn: boolean;
@@ -93,13 +93,13 @@ export const getViewer = cache(async (): Promise<Viewer> => {
   );
   if (!user) return { demo: false, signedIn: false, characters: [], perms: NO_PERMS };
 
-  const rows = await sql<{ id: string; slug: string; name: string; surname: string; class: string | null; level: number | null; in_guild: number; guild_rank: number | null }>(
-    `select id, slug, name, surname, class, level, in_guild, guild_rank from characters
+  const rows = await sql<{ id: string; slug: string; name: string; surname: string; class: string | null; level: number | null; in_guild: number; guild_rank: number | null; avatar_url: string | null }>(
+    `select id, slug, name, surname, class, level, in_guild, guild_rank, avatar_url from characters
      where user_id = $1 and claimed order by level desc nulls last, name`,
     [user.id],
   );
   const characters = rows.map((r) => ({
-    id: r.id, slug: r.slug, name: `${r.name} ${r.surname}`.trim(), className: r.class, level: r.level, isMain: r.id === user.main_character_id, inGuild: !!r.in_guild,
+    id: r.id, slug: r.slug, name: `${r.name} ${r.surname}`.trim(), className: r.class, level: r.level, isMain: r.id === user.main_character_id, inGuild: !!r.in_guild, avatarUrl: r.avatar_url,
   }));
 
   // Permissions come from the best (lowest-numbered) guild rank among the user's claimed, in-guild characters.

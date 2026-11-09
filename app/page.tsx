@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Countdown } from "@/components/Countdown";
-import { Bar, vars } from "@/components/bits";
+import { Medallion } from "@/components/Medallion";
+import { Avatar, Bar, vars } from "@/components/bits";
 import { SITE, isDemo } from "@/lib/config";
 import { LEVEL_BANDS_SAMPLE, getCharacters, getEvents, store } from "@/lib/store";
 import { classColor, timeAgo } from "@/lib/ui";
@@ -58,8 +59,11 @@ export default async function HomePage() {
             <Link href="/loot?tab=wish" className="btn btn-lg">Build your wishlist</Link>
           </div>
         </div>
-        <div className="inset stack" style={{ flex: "1 1 300px", justifyContent: "center", padding: 28, borderRadius: 12, "--gap": "8px" } as React.CSSProperties}>
-          <span className="small muted">Time until raids unlock</span>
+        <div className="inset stack countdown-card" data-tilt style={{ flex: "1 1 300px", justifyContent: "center", alignItems: "stretch", padding: 28, borderRadius: 12, "--gap": "8px" } as React.CSSProperties}>
+          <div className="row" style={{ gap: 14, flexWrap: "nowrap", marginBottom: 6 }}>
+            <Medallion size={84} />
+            <span className="small muted">Time until raids unlock</span>
+          </div>
           <Countdown target={SITE.raidUnlock} />
           <span className="soft" style={{ fontSize: 14 }}>Wednesday, December 9, 2026</span>
         </div>
@@ -72,7 +76,7 @@ export default async function HomePage() {
         </div>
         <div className="grid-auto">
           {raids.map((r) => (
-            <article key={r.name} className="panel" style={{ gap: 14 }}>
+            <article key={r.name} className="panel raid-card" data-tilt style={{ gap: 14 }}>
               <div className="row between" style={{ alignItems: "flex-start" }}>
                 <div className="stack" style={vars({ "--gap": "2px" })}>
                   <h3 className="display" style={{ fontSize: 20 }}>{r.name}</h3>
@@ -136,9 +140,12 @@ export default async function HomePage() {
               <ul>
                 {recent.map((m) => (
                   <li key={m.id} className="row between" style={{ padding: "10px 0", borderBottom: "1px solid #241A33" }}>
-                    <Link href={`/characters/${m.slug}`} style={{ textDecoration: "none", display: "flex", flexDirection: "column", lineHeight: 1.3 }}>
-                      <span className="strong" style={{ color: classColor(m.className) }}>{m.fullName}</span>
-                      <span className="micro muted">{m.className} · {timeAgo(m.lastSeenMin)}</span>
+                    <Link href={`/characters/${m.slug}`} className="row" style={{ textDecoration: "none", gap: 10, flexWrap: "nowrap" }}>
+                      <Avatar name={m.fullName} className={m.className} size={36} url={m.avatarUrl} />
+                      <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.3 }}>
+                        <span className="strong" style={{ color: classColor(m.className) }}>{m.fullName}</span>
+                        <span className="micro muted">{m.className} · {timeAgo(m.lastSeenMin)}</span>
+                      </span>
                     </Link>
                     <span className="small strong soft">{m.level}</span>
                   </li>

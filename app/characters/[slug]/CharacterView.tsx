@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { syncMyCharacter } from "@/app/actions";
 import { Avatar, Bar, ItemIcon, StatusDot, vars } from "@/components/bits";
-import { IconPlus, IconRotL, IconRotR, IconSync } from "@/components/icons";
+import { IconPlus, IconSync } from "@/components/icons";
+import { ModelStage } from "@/components/ModelStage";
 import { Toast } from "@/components/Toast";
 import { useAction } from "@/components/useAction";
 import { classColor, qualityColor, STATUS } from "@/lib/ui";
@@ -14,8 +15,8 @@ export interface CharacterVM {
   stats: { label: string; value: string }[];
   legacy: { rank: number; pct: number; milestones: { title: string; when: string }[] } | null;
   profs: { name: string; skill: number; max?: number }[];
-  gear: { slot: string; name: string; quality: string }[];
-  wishlist: { rank: number; name: string; source: string; status: string }[];
+  gear: { slot: string; name: string; quality: string; iconUrl?: string | null }[];
+  wishlist: { rank: number; name: string; source: string; status: string; iconUrl?: string | null; slot: string }[];
   renderUrl: string | null; syncedAt: string | null;
 }
 
@@ -26,15 +27,12 @@ const SOURCES: Record<Tab, string> = {
 };
 
 export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
-  active: CharacterVM; switcher: { slug: string; name: string; level: number; race: string; className: string; isMain: boolean }[];
+  active: CharacterVM; switcher: { slug: string; name: string; level: number; race: string; className: string; isMain: boolean; avatarUrl?: string | null }[];
   isOwn: boolean; canSync: boolean; namespace: string;
 }) {
   const [tab, setTab] = useState<Tab>("stats");
-  const [angle, setAngle] = useState(0);
-  const [transmog, setTransmog] = useState(false);
   const { pending, run, toast } = useAction();
   const color = classColor(active.className);
-  const norm = ((angle % 360) + 360) % 360;
   const gearLeft = active.gear.slice(0, 8), gearRight = active.gear.slice(8, 16);
 
   return (
@@ -45,7 +43,7 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
           return (
             <Link key={c.slug} href={`/characters/${c.slug}`} aria-current={on ? "page" : undefined} className="select-card"
               style={{ flex: "1 1 220px", minHeight: 76, textDecoration: "none", ...(on ? { borderColor: "var(--dw-gold)", background: "var(--dw-selected)" } : {}) }}>
-              <Avatar name={c.name} className={c.className} />
+              <Avatar name={c.name} className={c.className} url={c.avatarUrl} />
               <span className="stack" style={{ gap: 0, lineHeight: 1.3, minWidth: 0 }}>
                 <span className="row" style={{ gap: 8 }}>
                   <span className="bold" style={{ fontSize: 16, color: classColor(c.className) }}>{c.name}</span>
@@ -87,41 +85,7 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
 
       <section aria-label="Equipment and model" className="row" style={{ alignItems: "stretch", gap: 16 }}>
         <GearList label="Equipped, left" gear={gearLeft} />
-        <div className="model-stage">
-          <div className="row between" style={{ padding: "12px 16px", borderBottom: "1px solid var(--dw-border)" }}>
-            <span className="small strong soft">3D character model</span>
-            <span className="micro muted">Facing {norm}°</span>
-          </div>
-          <div role="img" aria-label={`Character model for ${active.name}`} className="model-canvas">
-            <svg width="360" height="120" viewBox="0 0 360 120" fill="none" aria-hidden="true" className="model-ring" style={{ transform: `rotate(${angle}deg)` }}>
-              <ellipse cx="180" cy="60" rx="170" ry="48" stroke="#2E2414" strokeWidth="2" />
-              <ellipse cx="180" cy="60" rx="132" ry="36" stroke="#E3B341" strokeOpacity="0.5" strokeWidth="1.5" strokeDasharray="6 10" />
-              <ellipse cx="180" cy="60" rx="92" ry="24" stroke="#2E2414" strokeWidth="2" />
-            </svg>
-            {active.renderUrl ? (
-              <img src={active.renderUrl} alt="" className="model-render" style={{ transform: `scaleX(${norm > 90 && norm < 270 ? -1 : 1})` }} />
-            ) : (
-              <svg width="200" height="380" viewBox="0 0 200 380" aria-hidden="true" style={{ position: "relative", marginBottom: 40 }}>
-                <g fill="#231D19" stroke="#6A5590" strokeWidth="2" strokeLinejoin="round">
-                  <circle cx="100" cy="52" r="30" />
-                  <path d="M46 110 C58 92 78 86 100 86 C122 86 142 92 154 110 L166 196 L144 202 L136 150 L134 230 L66 230 L64 150 L56 202 L34 196 Z" />
-                  <path d="M68 232 L132 232 L128 346 L106 350 L100 262 L94 350 L72 346 Z" />
-                </g>
-              </svg>
-            )}
-            <div className="model-caption">
-              <span className="small strong" style={{ color }}>{active.name} · {transmog ? "Transmog appearance" : "Equipped gear"}</span>
-              <span className="micro muted">3D viewer fed by /appearance + /equipment · falls back to the /character-media render</span>
-            </div>
-          </div>
-          <div className="row" style={{ justifyContent: "center", gap: 8, padding: "12px 16px", borderTop: "1px solid var(--dw-border)" }}>
-            <button type="button" className="icon-btn" aria-label="Rotate left" onClick={() => setAngle(angle - 45)}><IconRotL /></button>
-            <button type="button" className="btn btn-sm" onClick={() => setAngle(0)}>Reset</button>
-            <button type="button" className="icon-btn" aria-label="Rotate right" onClick={() => setAngle(angle + 45)}><IconRotR /></button>
-            <button type="button" className="btn btn-sm" aria-pressed={transmog} onClick={() => setTransmog(!transmog)}
-              style={transmog ? { borderColor: "var(--dw-gold)" } : undefined}>Show transmog</button>
-          </div>
-        </div>
+        <ModelStage name={active.name} color={color} renderUrl={active.renderUrl} />
         <GearList label="Equipped, right" gear={gearRight} />
       </section>
 
@@ -161,8 +125,9 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
           {tab === "loot" && (active.wishlist.length ? (
             <div className="stack" style={{ gap: 10 }}>
               {active.wishlist.map((w) => (
-                <div key={w.rank} className="tile" style={{ display: "grid", gridTemplateColumns: "40px minmax(0,1fr) auto", alignItems: "center", gap: 14 }}>
+                <div key={w.rank} className="tile" style={{ display: "grid", gridTemplateColumns: "40px 40px minmax(0,1fr) auto", alignItems: "center", gap: 14 }}>
                   <span className="bold" style={{ fontSize: 20, color: "var(--dw-gold-link)", textAlign: "center" }}>#{w.rank}</span>
+                  <ItemIcon slot={w.slot} quality="epic" iconUrl={w.iconUrl} />
                   <span className="stack" style={{ gap: 0, lineHeight: 1.3 }}><span className="strong" style={{ color: qualityColor("epic") }}>{w.name}</span><span className="micro muted">{w.source}</span></span>
                   <span className="small strong" style={{ color: w.status === "Approved" ? STATUS.ok : "var(--dw-text-2)" }}>{w.status}</span>
                 </div>
@@ -187,7 +152,7 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
   );
 }
 
-function GearList({ label, gear }: { label: string; gear: { slot: string; name: string; quality: string }[] }) {
+function GearList({ label, gear }: { label: string; gear: { slot: string; name: string; quality: string; iconUrl?: string | null }[] }) {
   if (!gear.length) {
     return <div className="empty" style={{ flex: "1 1 280px", alignSelf: "flex-start" }}>Gear appears after the next profile sync.</div>;
   }
@@ -195,7 +160,7 @@ function GearList({ label, gear }: { label: string; gear: { slot: string; name: 
     <ul aria-label={label} className="stack" style={{ flex: "1 1 280px", minWidth: 0, gap: 8 }}>
       {gear.map((g, i) => (
         <li key={`${g.slot}-${i}`} className="list-row">
-          <ItemIcon slot={g.slot} quality={g.quality} />
+          <ItemIcon slot={g.slot} quality={g.quality} iconUrl={g.iconUrl} />
           <span className="stack" style={{ gap: 0, lineHeight: 1.25, minWidth: 0 }}>
             <span className="strong" style={{ fontSize: 14, color: qualityColor(g.quality) }}>{g.name}</span>
             <span className="micro muted">{g.slot}</span>

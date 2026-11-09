@@ -14,10 +14,10 @@ export interface HubCharacter {
   isMain: boolean; inGuild: boolean; claimed: boolean; attendancePct?: number; fireResistance?: number; attunements: string[];
   professions: { name: string; skill: number; max?: number }[]; stats: { label: string; value: string }[];
   legacy?: { rank: number; pct: number; milestones: { title: string; when: string }[] };
-  gear: { slot: string; name: string; quality: Quality | "empty" }[]; renderUrl?: string; syncedAt?: string;
+  gear: { slot: string; name: string; quality: Quality | "empty"; itemId?: number }[]; renderUrl?: string; avatarUrl?: string; syncedAt?: string;
 }
 export interface HubItem {
-  id: number; name: string; quality: Quality; slot: string; slotDetail: string; roles: Role[];
+  id: number; name: string; quality: Quality; slot: string; slotDetail: string; roles: Role[]; iconUrl?: string;
   source: { type: SourceType; raid?: string; boss: string; zone: string; mapLabel?: string; mapX?: number; mapY?: number; how: string };
 }
 export interface HubWish { characterId: string; itemId: number; rank: number; approved: boolean }
@@ -100,7 +100,7 @@ const dbStore: Store = {
       lastSeenMin: minutesSince(r.last_login_at), userId: r.user_id ?? undefined, isMain: !!r.is_main, inGuild: !!r.in_guild, claimed: !!r.claimed,
       attendancePct: r.attendance_pct ?? undefined, fireResistance: r.fire_resistance ?? undefined, attunements: json(r.attunements, []),
       professions: json(r.professions, []), stats: json(r.stats, []), legacy: json(r.legacy, undefined), gear: json(r.equipment, []),
-      renderUrl: r.render_url ?? undefined, syncedAt: iso(r.synced_at),
+      renderUrl: r.render_url ?? undefined, avatarUrl: r.avatar_url ?? undefined, syncedAt: iso(r.synced_at),
     }));
   },
   async items() {
@@ -110,7 +110,7 @@ const dbStore: Store = {
        order by i.id`,
     );
     return rows.map((r) => ({
-      id: r.id, name: r.name, quality: r.quality ?? "common", slot: r.slot ?? "", slotDetail: r.slot_detail ?? r.slot ?? "", roles: json(r.roles, []),
+      id: r.id, name: r.name, quality: r.quality ?? "common", slot: r.slot ?? "", slotDetail: r.slot_detail ?? r.slot ?? "", roles: json(r.roles, []), iconUrl: r.icon_url || undefined,
       source: { type: r.type ?? "world", raid: r.raid ?? undefined, boss: r.boss ?? "", zone: r.zone ?? "", mapLabel: r.map_label ?? undefined, mapX: r.map_x ?? undefined, mapY: r.map_y ?? undefined, how: r.how ?? "" },
     }));
   },
@@ -179,7 +179,7 @@ const dbStore: Store = {
        where id = (select max(id) from sync_runs s2 where s2.job = s.job)`,
     );
     const byJob = new Map(rows.map((r) => [r.job, r]));
-    return ["roster", "profiles", "renders", "warcraftlogs", "discord", "addon"].map((job) => {
+    return ["roster", "profiles", "renders", "icons", "warcraftlogs", "discord", "addon"].map((job) => {
       const r = byJob.get(job);
       return r
         ? { job, status: r.status, value: r.value ?? "", note: r.note ?? "", minutesAgo: minutesSince(r.at) }

@@ -21,7 +21,7 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
     const main = m.userId ? mainOf.get(m.userId) : undefined;
     const ready = m.level < 60 ? `Level ${m.level}` : m.attunements.includes("onyxia") ? "Ready" : "Needs attunement";
     return {
-      slug: m.slug, name: m.fullName, className: m.className, spec: m.spec ?? "", level: m.level, rank: rankName(m.rank),
+      slug: m.slug, avatarUrl: m.avatarUrl ?? null, name: m.fullName, className: m.className, spec: m.spec ?? "", level: m.level, rank: rankName(m.rank),
       role: m.role ? ROLE_LABEL[m.role] : "—", roleKey: m.role ?? "", main: m.isMain ? "Main" : main ? `Alt of ${main.name}` : "—", ready, seen: timeAgo(m.lastSeenMin),
     };
   });

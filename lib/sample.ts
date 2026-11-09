@@ -79,7 +79,7 @@ export const LEVEL_BANDS = [
 ];
 
 export interface SampleItem {
-  id: number; name: string; quality: Quality; slot: string; slotDetail: string; roles: Role[];
+  id: number; name: string; quality: Quality; slot: string; slotDetail: string; roles: Role[]; iconUrl?: string;
   source: { type: SourceType; raid?: string; boss: string; zone: string; mapLabel?: string; mapX?: number; mapY?: number; how: string };
 }
 const ONY = { type: "raid" as const, raid: "onyxias-lair", boss: "Onyxia", zone: "Onyxia’s Lair, Dustwallow Marsh", mapLabel: "Onyxia’s Lair", mapX: 34, mapY: 70, how: "Drops from Onyxia." };
@@ -87,29 +87,29 @@ const all: Role[] = ["tank", "healer", "melee", "ranged"];
 
 // Item ids are the classic ids for these items; verify against static-forever-us once Blizzard publishes the namespace.
 export const ITEMS: SampleItem[] = [
-  { id: 16963, name: "Helm of Wrath", quality: "epic", slot: "Head", slotDetail: "Head · Plate · Warrior tier 2", roles: ["tank", "melee"], source: ONY },
-  { id: 16914, name: "Netherwind Crown", quality: "epic", slot: "Head", slotDetail: "Head · Cloth · Mage tier 2", roles: ["ranged"], source: { ...ONY, how: "Mage tier 2 helm from Onyxia." } },
-  { id: 16921, name: "Halo of Transcendence", quality: "epic", slot: "Head", slotDetail: "Head · Cloth · Priest tier 2", roles: ["healer"], source: ONY },
-  { id: 16929, name: "Nemesis Skullcap", quality: "epic", slot: "Head", slotDetail: "Head · Cloth · Warlock tier 2", roles: ["ranged"], source: ONY },
-  { id: 16947, name: "Helmet of Ten Storms", quality: "epic", slot: "Head", slotDetail: "Head · Mail · Shaman tier 2", roles: ["healer"], source: ONY },
-  { id: 16900, name: "Stormrage Cover", quality: "epic", slot: "Head", slotDetail: "Head · Leather · Druid tier 2", roles: ["healer"], source: ONY },
-  { id: 16908, name: "Bloodfang Hood", quality: "epic", slot: "Head", slotDetail: "Head · Leather · Rogue tier 2", roles: ["melee"], source: ONY },
-  { id: 16939, name: "Dragonstalker’s Helm", quality: "epic", slot: "Head", slotDetail: "Head · Mail · Hunter tier 2", roles: ["ranged"], source: ONY },
-  { id: 17068, name: "Deathbringer", quality: "epic", slot: "Main hand", slotDetail: "One-hand axe", roles: ["melee", "tank"], source: ONY },
-  { id: 17075, name: "Vis’kag the Bloodletter", quality: "epic", slot: "Main hand", slotDetail: "One-hand sword", roles: ["melee"], source: ONY },
-  { id: 17063, name: "Ring of Binding", quality: "epic", slot: "Finger", slotDetail: "Finger", roles: ["tank"], source: { ...ONY, how: "Drops from Onyxia. Usually low contest, so a good tank pickup." } },
-  { id: 17064, name: "Shard of the Scale", quality: "epic", slot: "Trinket", slotDetail: "Trinket", roles: ["healer"], source: ONY },
-  { id: 17078, name: "Sapphiron Drape", quality: "epic", slot: "Back", slotDetail: "Back", roles: ["ranged", "healer"], source: { ...ONY, how: "Caster cloak from Onyxia." } },
-  { id: 18205, name: "Eskhandar’s Collar", quality: "epic", slot: "Neck", slotDetail: "Neck", roles: ["melee"], source: ONY },
-  { id: 17067, name: "Ancient Cornerstone Grimoire", quality: "epic", slot: "Off hand", slotDetail: "Held in off hand", roles: ["ranged", "healer"], source: { ...ONY, how: "Held-in-off-hand drop from Onyxia." } },
-  { id: 18422, name: "Head of Onyxia", quality: "epic", slot: "Quest", slotDetail: "Quest item · one per kill", roles: all, source: ONY },
+  { id: 16963, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133173.jpg", name: "Helm of Wrath", quality: "epic", slot: "Head", slotDetail: "Head · Plate · Warrior tier 2", roles: ["tank", "melee"], source: ONY },
+  { id: 16914, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133172.jpg", name: "Netherwind Crown", quality: "epic", slot: "Head", slotDetail: "Head · Cloth · Mage tier 2", roles: ["ranged"], source: { ...ONY, how: "Mage tier 2 helm from Onyxia." } },
+  { id: 16921, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133126.jpg", name: "Halo of Transcendence", quality: "epic", slot: "Head", slotDetail: "Head · Cloth · Priest tier 2", roles: ["healer"], source: ONY },
+  { id: 16929, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133076.jpg", name: "Nemesis Skullcap", quality: "epic", slot: "Head", slotDetail: "Head · Cloth · Warlock tier 2", roles: ["ranged"], source: ONY },
+  { id: 16947, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133171.jpg", name: "Helmet of Ten Storms", quality: "epic", slot: "Head", slotDetail: "Head · Mail · Shaman tier 2", roles: ["healer"], source: ONY },
+  { id: 16900, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133077.jpg", name: "Stormrage Cover", quality: "epic", slot: "Head", slotDetail: "Head · Leather · Druid tier 2", roles: ["healer"], source: ONY },
+  { id: 16908, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133143.jpg", name: "Bloodfang Hood", quality: "epic", slot: "Head", slotDetail: "Head · Leather · Rogue tier 2", roles: ["melee"], source: ONY },
+  { id: 16939, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133073.jpg", name: "Dragonstalker’s Helm", quality: "epic", slot: "Head", slotDetail: "Head · Mail · Hunter tier 2", roles: ["ranged"], source: ONY },
+  { id: 17068, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/132400.jpg", name: "Deathbringer", quality: "epic", slot: "Main hand", slotDetail: "One-hand axe", roles: ["melee", "tank"], source: ONY },
+  { id: 17075, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/135316.jpg", name: "Vis’kag the Bloodletter", quality: "epic", slot: "Main hand", slotDetail: "One-hand sword", roles: ["melee"], source: ONY },
+  { id: 17063, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133357.jpg", name: "Ring of Binding", quality: "epic", slot: "Finger", slotDetail: "Finger", roles: ["tank"], source: { ...ONY, how: "Drops from Onyxia. Usually low contest, so a good tank pickup." } },
+  { id: 17064, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/134317.jpg", name: "Shard of the Scale", quality: "epic", slot: "Trinket", slotDetail: "Trinket", roles: ["healer"], source: ONY },
+  { id: 17078, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133768.jpg", name: "Sapphiron Drape", quality: "epic", slot: "Back", slotDetail: "Back", roles: ["ranged", "healer"], source: { ...ONY, how: "Caster cloak from Onyxia." } },
+  { id: 18205, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/132501.jpg", name: "Eskhandar’s Collar", quality: "epic", slot: "Neck", slotDetail: "Neck", roles: ["melee"], source: ONY },
+  { id: 17067, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133739.jpg", name: "Ancient Cornerstone Grimoire", quality: "epic", slot: "Off hand", slotDetail: "Held in off hand", roles: ["ranged", "healer"], source: { ...ONY, how: "Held-in-off-hand drop from Onyxia." } },
+  { id: 18422, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/134153.jpg", name: "Head of Onyxia", quality: "epic", slot: "Quest", slotDetail: "Quest item · one per kill", roles: all, source: ONY },
   // Non-raid BiS items
-  { id: 18404, name: "Onyxia Tooth Pendant", quality: "epic", slot: "Neck", slotDetail: "Neck", roles: ["tank", "melee"], source: { type: "quest", boss: "The Lord of Blackrock", zone: "Stormwind City, Elwynn Forest", mapLabel: "Stormwind", mapX: 67, mapY: 78, how: "Someone in the raid loots the Head of Onyxia and turns it in to Highlord Bolvar Fordragon in Stormwind. The follow-up rewards the pendant (or the Onyxia Blood Talisman or Dragonslayer’s Signet)." } },
-  { id: 13340, name: "Cape of the Black Baron", quality: "rare", slot: "Back", slotDetail: "Back", roles: ["tank", "melee"], source: { type: "dungeon", boss: "Baron Rivendare", zone: "Stratholme, Eastern Plaguelands", mapLabel: "Stratholme", mapX: 81, mapY: 22, how: "Final boss of Stratholme’s Undead side." } },
-  { id: 11815, name: "Hand of Justice", quality: "rare", slot: "Trinket", slotDetail: "Trinket", roles: ["tank", "melee"], source: { type: "dungeon", boss: "Trash, rare drop", zone: "Blackrock Depths, Blackrock Mountain", mapLabel: "Blackrock Mountain", mapX: 71, mapY: 62, how: "Random drop from Blackrock Depths trash. Farm full clears." } },
-  { id: 13965, name: "Blackhand’s Breadth", quality: "epic", slot: "Trinket", slotDetail: "Trinket", roles: ["tank", "melee"], source: { type: "dungeon", boss: "General Drakkisath", zone: "Upper Blackrock Spire, Blackrock Mountain", mapLabel: "Blackrock Mountain", mapX: 71, mapY: 62, how: "Final boss of Upper Blackrock Spire. Needs a 10-player group." } },
-  { id: 12784, name: "Arcanite Reaper", quality: "epic", slot: "Two-hand", slotDetail: "Two-hand axe", roles: ["melee"], source: { type: "crafted", boss: "Blacksmithing", zone: "Any guild blacksmith", how: "Crafted by a blacksmith. You can make it yourself once you have the materials." } },
-  { id: 14152, name: "Robe of the Archmage", quality: "epic", slot: "Chest", slotDetail: "Chest · Cloth", roles: ["ranged"], source: { type: "crafted", boss: "Tailoring", zone: "Any guild tailor", how: "Crafted by a tailor." } },
+  { id: 18404, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133296.jpg", name: "Onyxia Tooth Pendant", quality: "epic", slot: "Neck", slotDetail: "Neck", roles: ["tank", "melee"], source: { type: "quest", boss: "The Lord of Blackrock", zone: "Stormwind City, Elwynn Forest", mapLabel: "Stormwind", mapX: 63, mapY: 88, how: "Someone in the raid loots the Head of Onyxia and turns it in to Highlord Bolvar Fordragon in Stormwind. The follow-up rewards the pendant (or the Onyxia Blood Talisman or Dragonslayer’s Signet)." } },
+  { id: 13340, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133772.jpg", name: "Cape of the Black Baron", quality: "rare", slot: "Back", slotDetail: "Back", roles: ["tank", "melee"], source: { type: "dungeon", boss: "Baron Rivendare", zone: "Stratholme, Eastern Plaguelands", mapLabel: "Stratholme", mapX: 81, mapY: 22, how: "Final boss of Stratholme’s Undead side." } },
+  { id: 11815, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133434.jpg", name: "Hand of Justice", quality: "rare", slot: "Trinket", slotDetail: "Trinket", roles: ["tank", "melee"], source: { type: "dungeon", boss: "Trash, rare drop", zone: "Blackrock Depths, Blackrock Mountain", mapLabel: "Blackrock Mountain", mapX: 71, mapY: 62, how: "Random drop from Blackrock Depths trash. Farm full clears." } },
+  { id: 13965, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/133604.jpg", name: "Blackhand’s Breadth", quality: "epic", slot: "Trinket", slotDetail: "Trinket", roles: ["tank", "melee"], source: { type: "dungeon", boss: "General Drakkisath", zone: "Upper Blackrock Spire, Blackrock Mountain", mapLabel: "Blackrock Mountain", mapX: 71, mapY: 62, how: "Final boss of Upper Blackrock Spire. Needs a 10-player group." } },
+  { id: 12784, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/132400.jpg", name: "Arcanite Reaper", quality: "epic", slot: "Two-hand", slotDetail: "Two-hand axe", roles: ["melee"], source: { type: "crafted", boss: "Blacksmithing", zone: "Any guild blacksmith", how: "Crafted by a blacksmith. You can make it yourself once you have the materials." } },
+  { id: 14152, iconUrl: "https://render.worldofwarcraft.com/forever-us/icons/56/132679.jpg", name: "Robe of the Archmage", quality: "epic", slot: "Chest", slotDetail: "Chest · Cloth", roles: ["ranged"], source: { type: "crafted", boss: "Tailoring", zone: "Any guild tailor", how: "Crafted by a tailor." } },
 ];
 
 // BiS lists (phase 1) — status: have | wishlisted | need
@@ -199,6 +199,7 @@ export const BANK = {
 };
 
 export const SYNC_RUNS = [
+  { job: "icons", status: "ok", value: "22 icons cached", note: "All item icons cached", minutesAgo: 9 },
   { job: "roster", status: "ok", value: "48 members", note: "Last sync 4 min ago", minutesAgo: 4 },
   { job: "profiles", status: "ok", value: "46 / 48", note: "2 characters under level 10 aren’t in the API yet", minutesAgo: 4 },
   { job: "renders", status: "partial", value: "41 / 48", note: "New characters can take a day to get renders", minutesAgo: 60 },

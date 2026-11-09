@@ -13,6 +13,7 @@ const SYNC_META: Record<string, { name: string; src: string }> = {
   roster: { name: "Guild roster", src: "/data/wow/guild/{slug}/roster" },
   profiles: { name: "Character profiles", src: "/profile/wow/character/{name}-{surname}" },
   renders: { name: "Renders", src: "/character-media" },
+  icons: { name: "Item icons", src: "/data/wow/media/item/{id}" },
   warcraftlogs: { name: "Warcraft Logs", src: "warcraftlogs.com/api/v2 (GraphQL)" },
   discord: { name: "Discord bot", src: "Discord bot + webhooks" },
   addon: { name: "Addon exports", src: "Upload: bank + loot addon" },

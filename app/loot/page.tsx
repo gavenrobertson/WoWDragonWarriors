@@ -31,7 +31,7 @@ export default async function LootPage({ searchParams }: { searchParams: Promise
         .filter((q): q is NonNullable<typeof q> => !!q)
         // Your #1 outranks anyone's #2; ties → attendance, then fewer items won.
         .sort((a, b) => a.rank - b.rank || b.att - a.att || a.won - b.won);
-      return { id: i.id, name: i.name, quality: i.quality, slot: i.slot, slotDetail: i.slotDetail, roles: i.roles, raid: i.source.raid ?? "", boss: i.source.boss, queue };
+      return { id: i.id, iconUrl: i.iconUrl ?? null, name: i.name, quality: i.quality, slot: i.slot, slotDetail: i.slotDetail, roles: i.roles, raid: i.source.raid ?? "", boss: i.source.boss, queue };
     });
 
   // Wishlist owner: the viewer's main if it's level 60, else their highest level-60 character.

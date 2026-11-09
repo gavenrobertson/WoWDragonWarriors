@@ -9,10 +9,10 @@ import { SOURCE_COLORS, cap, qualityColor } from "@/lib/ui";
 
 type Status = "have" | "wishlisted" | "need";
 export interface BisRow {
-  itemId: number; slot: string; name: string; quality: string; type: string; source: string; zone: string;
+  itemId: number; iconUrl: string | null; slot: string; name: string; quality: string; type: string; source: string; zone: string;
   pin: { label: string; x: number; y: number } | null; status: Status; how: string;
 }
-export interface BisChar { slug: string; name: string; className: string; rows: BisRow[] }
+export interface BisChar { slug: string; name: string; className: string; avatarUrl?: string | null; rows: BisRow[] }
 
 const STATUS_LABEL: Record<Status, [string, string]> = { have: ["Have", "#4CD964"], wishlisted: ["Wishlisted", "#F2CF6B"], need: ["Need", "#A99CC0"] };
 const TYPES = ["raid", "dungeon", "quest", "crafted"];
@@ -86,7 +86,7 @@ export function BisPlanner({ chars }: { chars: BisChar[] }) {
             return (
               <li key={`${r.itemId}-${r.idx}`}>
                 <button type="button" className="select-card" aria-pressed={on} onClick={() => setSel(r.idx)} style={{ width: "100%", padding: "10px 14px" }}>
-                  <ItemIcon slot={r.slot} quality={r.quality} />
+                  <ItemIcon slot={r.slot} quality={r.quality} iconUrl={r.iconUrl} />
                   <span className="stack grow" style={{ gap: 2, lineHeight: 1.3 }}>
                     <span className="row" style={{ gap: 8 }}>
                       <span className="strong" style={{ color: qualityColor(r.quality) }}>{r.name}</span>
@@ -105,7 +105,7 @@ export function BisPlanner({ chars }: { chars: BisChar[] }) {
 
         <aside aria-label="Where to get it" className="side-col panel sticky-aside" style={{ flexBasis: 420 }}>
           <div className="row" style={{ gap: 14, flexWrap: "nowrap" }}>
-            <ItemIcon slot={s.slot} quality={s.quality} />
+            <ItemIcon slot={s.slot} quality={s.quality} iconUrl={s.iconUrl} size={56} />
             <div className="stack" style={{ gap: 2 }}>
               <h2 style={{ fontSize: 20, color: qualityColor(s.quality) }}>{s.name}</h2>
               <span className="small muted">{s.slot} · <span style={{ color: tfg, background: tbg, padding: "0 6px", borderRadius: 6 }}>{cap(s.type)}</span></span>
@@ -169,7 +169,7 @@ function Header({ chars, ch, onPick }: { chars: BisChar[]; ch: number; onPick: (
         <div className="row" role="group" aria-label="Character">
           {chars.map((c, i) => (
             <button key={c.slug} type="button" className="select-card" aria-pressed={i === ch} onClick={() => onPick(i)} style={{ padding: "8px 14px 8px 8px" }}>
-              <Avatar name={c.name} className={c.className} size={36} />
+              <Avatar name={c.name} className={c.className} size={36} url={c.avatarUrl} />
               <span className="strong">{c.name}</span>
             </button>
           ))}

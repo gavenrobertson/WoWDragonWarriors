@@ -23,7 +23,7 @@ for (const r of S.RANKS) {
 }
 for (const [k, v] of Object.entries(S.SETTINGS)) ins("settings", { key: k, value: JSON.stringify(v) }, " on conflict do nothing");
 for (const it of S.ITEMS) {
-  ins("items", { id: it.id, name: it.name, quality: it.quality, slot: it.slot, slot_detail: it.slotDetail, roles: it.roles }, " on conflict do nothing");
+  ins("items", { id: it.id, name: it.name, quality: it.quality, slot: it.slot, slot_detail: it.slotDetail, roles: it.roles, icon_url: it.iconUrl ?? null }, " on conflict (id) do update set icon_url = coalesce(items.icon_url, excluded.icon_url)");
   const s = it.source;
   ins("item_sources", { item_id: it.id, type: s.type, raid: s.raid ?? null, boss: s.boss, zone: s.zone, map_x: s.mapX ?? null, map_y: s.mapY ?? null, how: s.how, map_label: s.mapLabel ?? null }, " on conflict do nothing");
 }

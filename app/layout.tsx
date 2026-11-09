@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SITE } from "@/lib/config";
 import { SiteHeader } from "@/components/SiteHeader";
+import { Embers } from "@/components/Embers";
+import { Interactions } from "@/components/Interactions";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -28,6 +30,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <div className="aura" aria-hidden="true"><span /><span /><span /></div>
+        <Embers />
+        <Interactions />
         <a href="#main" className="skip-link">Skip to content</a>
         <SiteHeader />
         {children}

@@ -9,6 +9,7 @@ type Ctx = { waitUntil(p: Promise<unknown>): void; passThroughOnException(): voi
 const JOBS: Record<string, string> = {
   "*/30 * * * *": "/api/cron/roster",
   "*/10 * * * *": "/api/cron/profiles",
+  "*/15 * * * *": "/api/cron/icons",
 };
 
 export default {

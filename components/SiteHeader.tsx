@@ -28,7 +28,7 @@ export async function SiteHeader() {
           <NavLinks items={items} />
           {viewer.signedIn && main ? (
             <Link href={`/characters/${main.slug}`} className="account-pill" aria-label={`Your main: ${main.name}`}>
-              <span className="avatar" style={{ "--s": "32px", "--c": color } as React.CSSProperties}>{main.name.charAt(0)}</span>
+              <span className="avatar" style={{ "--s": "32px", "--c": color } as React.CSSProperties}>{main.avatarUrl ? <img src={main.avatarUrl} alt="" /> : main.name.charAt(0)}</span>
               <span className="account-name strong small" style={{ color }}>{main.name}</span>
             </Link>
           ) : viewer.signedIn ? (

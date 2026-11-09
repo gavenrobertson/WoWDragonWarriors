@@ -34,10 +34,11 @@ export default async function CharacterPage({ params }: Props) {
       isMain: c.isMain, rank: rank?.name ?? (c.inGuild ? "Member" : "Not in guild"),
       attendance: c.level < 60 ? "Not raiding" : beforeRaids || c.attendancePct == null ? "Starts Dec 9" : `${Math.round(c.attendancePct)}%`,
       priority: wl.length === 0 ? "None yet" : c.isMain ? "Tier 1" : "Alt",
-      stats: c.stats, legacy: c.legacy ?? null, profs: c.professions, gear: c.gear, renderUrl: c.renderUrl ?? null, syncedAt: c.syncedAt ?? null,
+      stats: c.stats, legacy: c.legacy ?? null, profs: c.professions, renderUrl: c.renderUrl ?? null, syncedAt: c.syncedAt ?? null,
+      gear: c.gear.map((g) => ({ ...g, iconUrl: g.itemId ? itemById.get(g.itemId)?.iconUrl ?? null : null })),
       wishlist: wl.map((w) => {
         const it = itemById.get(w.itemId);
-        return { rank: w.rank, name: it?.name ?? `Item ${w.itemId}`, source: it ? [it.source.zone.split(",")[0], it.source.boss].filter(Boolean).join(" · ") : "", status: w.approved ? "Approved" : "Pending review" };
+        return { rank: w.rank, name: it?.name ?? `Item ${w.itemId}`, iconUrl: it?.iconUrl ?? null, slot: it?.slot ?? "", source: it ? [it.source.zone.split(",")[0], it.source.boss].filter(Boolean).join(" · ") : "", status: w.approved ? "Approved" : "Pending review" };
       }),
     };
   };
@@ -46,7 +47,7 @@ export default async function CharacterPage({ params }: Props) {
   return (
     <CharacterView
       active={toVM(active)}
-      switcher={account.map((c) => ({ slug: c.slug, name: c.fullName, level: c.level, race: c.race, className: c.className, isMain: c.isMain }))}
+      switcher={account.map((c) => ({ slug: c.slug, name: c.fullName, level: c.level, race: c.race, className: c.className, isMain: c.isMain, avatarUrl: c.avatarUrl ?? null }))}
       isOwn={viewer.characters.some((c) => c.slug === slug)}
       canSync={canSync || viewer.demo}
       namespace={NS.profile}

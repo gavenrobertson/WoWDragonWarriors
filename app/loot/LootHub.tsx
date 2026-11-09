@@ -10,7 +10,7 @@ import type { HubAward } from "@/lib/store";
 import { classColor, qualityColor } from "@/lib/ui";
 
 export interface LootItem {
-  id: number; name: string; quality: string; slot: string; slotDetail: string; roles: string[]; raid: string; boss: string;
+  id: number; name: string; quality: string; slot: string; slotDetail: string; roles: string[]; raid: string; boss: string; iconUrl: string | null;
   queue: { name: string; className: string; rank: number; won: number; att: number }[];
 }
 type Tab = "pools" | "wish" | "history";
@@ -111,7 +111,7 @@ export function LootHub(props: {
                       return (
                         <li key={it.id}>
                           <button type="button" aria-pressed={sel === it.id} onClick={() => setSel(it.id)} className="loot-row">
-                            <ItemIcon slot={it.slot} quality={it.quality} />
+                            <ItemIcon slot={it.slot} quality={it.quality} iconUrl={it.iconUrl} />
                             <span className="stack grow" style={{ gap: 0, lineHeight: 1.3 }}>
                               <span className="strong" style={{ color: qualityColor(it.quality) }}>{it.name}</span>
                               <span className="micro muted">{it.slotDetail}</span>
@@ -132,7 +132,7 @@ export function LootHub(props: {
                 {s && (
                   <aside aria-label="Item detail" className="side-col panel sticky-aside" style={{ flexBasis: 380 }}>
                     <div className="row" style={{ gap: 14, flexWrap: "nowrap" }}>
-                      <ItemIcon slot={s.slot} quality={s.quality} />
+                      <ItemIcon slot={s.slot} quality={s.quality} iconUrl={s.iconUrl} size={56} />
                       <div className="stack" style={{ gap: 2 }}>
                         <h2 style={{ fontSize: 20, color: qualityColor(s.quality) }}>{s.name}</h2>
                         <span className="small muted">{s.slotDetail} · {s.boss}</span>
@@ -192,7 +192,7 @@ export function LootHub(props: {
                 return (
                   <div key={id} className="tile" style={{ display: "grid", gridTemplateColumns: "36px 40px minmax(0,1fr) auto", alignItems: "center", gap: 12, padding: "10px 14px" }}>
                     <span className="bold gold" style={{ fontSize: 18, textAlign: "center" }}>#{i + 1}</span>
-                    <ItemIcon slot={it.slot} quality={it.quality} />
+                    <ItemIcon slot={it.slot} quality={it.quality} iconUrl={it.iconUrl} />
                     <span className="stack" style={{ gap: 0, lineHeight: 1.3, minWidth: 0 }}>
                       <span className="strong" style={{ color: qualityColor(it.quality) }}>{it.name}</span>
                       <span className="micro muted">{it.slotDetail} · {raids.find((r) => r.id === it.raid)?.name}</span>

@@ -19,12 +19,12 @@ export default async function BisPage() {
         if (!it) return [];
         const status: BisRow["status"] = b.status === "have" ? "have" : wished.has(it.id) ? "wishlisted" : "need";
         return [{
-          itemId: it.id, slot: b.slot, name: it.name, quality: it.quality, type: it.source.type, source: it.source.boss, zone: it.source.zone,
+          itemId: it.id, iconUrl: it.iconUrl ?? null, slot: b.slot, name: it.name, quality: it.quality, type: it.source.type, source: it.source.boss, zone: it.source.zone,
           pin: it.source.mapLabel && it.source.mapX != null && it.source.mapY != null ? { label: it.source.mapLabel, x: it.source.mapX, y: it.source.mapY } : null,
           status, how: b.how ?? it.source.how,
         }];
       });
-      return { slug: c.slug, name: c.name, className: c.className, rows };
+      return { slug: c.slug, name: c.name, className: c.className, avatarUrl: c.avatarUrl ?? null, rows };
     })
     .filter((c) => c.rows.length > 0);
 

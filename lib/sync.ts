@@ -50,21 +50,32 @@ export async function syncCharacter(slug: string) {
   if (!summary) return { ok: false as const, reason: "Not in the API yet (characters appear after level 10 and a logout)." };
   const s = bnet.normaliseSummary(summary);
   const st = bnet.normaliseStats(stats);
+  const gear = equip ? bnet.normaliseEquipment(equip) : null;
+  // Cache every equipped item so the icon job can fetch its icon once for the whole guild.
+  const equipped = (gear ?? []).filter((g) => g.itemId);
+  if (equipped.length) {
+    await tx(async (q) => {
+      for (const g of equipped) {
+        await q("insert into items (id, name, quality, slot) values ($1,$2,$3,$4) on conflict (id) do nothing", [g.itemId, g.name, g.quality, g.slot]);
+      }
+    });
+  }
   await sql(
     `update characters set level = coalesce($2, level), class = coalesce($3, class), race = coalesce($4, race), spec = coalesce($5, spec),
        last_login_at = coalesce($6, last_login_at), equipment = coalesce($7, equipment), stats = coalesce($8, stats),
        professions = coalesce($9, professions), render_url = coalesce($10, render_url), attunements = coalesce($11, attunements),
-       fire_resistance = coalesce($12, fire_resistance), synced_at = $13
+       fire_resistance = coalesce($12, fire_resistance), synced_at = $13, avatar_url = coalesce($14, avatar_url)
      where slug = $1`,
     [
       slug, s.level ?? null, s.className ?? null, s.race ?? null, s.spec ?? null, s.lastLoginAt ?? null,
-      equip ? bnet.normaliseEquipment(equip) : null,
+      gear,
       st.stats.length ? st.stats : null,
       profs ? bnet.normaliseProfessions(profs) : null,
       bnet.renderUrl(mediaJson) ?? null,
       questJson ? bnet.normaliseAttunements(questJson) : null,
       st.fireResistance ?? null,
       nowIso(),
+      bnet.avatarUrl(mediaJson) ?? null,
     ],
   );
   return { ok: true as const, hasRender: !!bnet.renderUrl(mediaJson) };
@@ -88,6 +99,27 @@ export async function syncAllProfiles({ batch = 4, limit = Number(process.env.PR
   await recordRun("profiles", missing ? "partial" : "ok", `${ok} / ${rows.length} this run`, missing ? `${missing} characters aren’t in the API yet` : `Rotating through ${total} members`, started);
   await recordRun("renders", renders < ok ? "partial" : "ok", `${renders} / ${ok}`, "New characters can take a day to get renders", started);
   return { ok, total: rows.length };
+}
+
+/** Item icons from /data/wow/media/item/{id}, for items cached without one (1 Blizzard call each). */
+export async function syncItemIcons({ limit = Number(process.env.ICON_SYNC_LIMIT) || 40 }: { limit?: number } = {}) {
+  const started = nowIso();
+  const rows = await sql<{ id: number }>("select id from items where icon_url is null order by id limit $1", [limit]);
+  let ok = 0, missing = 0;
+  for (let i = 0; i < rows.length; i += 8) {
+    const results = await Promise.allSettled(rows.slice(i, i + 8).map((r) => bnet.itemMedia(r.id)));
+    const updates: [string, number][] = [];
+    results.forEach((r, j) => {
+      const url = r.status === "fulfilled" ? bnet.itemIconUrl(r.value) : undefined;
+      // Mark items with no icon as "" so they aren't retried every run.
+      if (r.status === "fulfilled") { updates.push([url ?? "", rows[i + j].id]); url ? ok++ : missing++; }
+    });
+    if (updates.length) await tx(async (q) => { for (const [url, id] of updates) await q("update items set icon_url = $1, cached_at = $2 where id = $3", [url, nowIso(), id]); });
+    if (results.some((r) => r.status === "rejected" && r.reason instanceof bnet.RateLimited)) break;
+  }
+  const left = (await sqlOne<{ n: number }>("select count(*) as n from items where icon_url is null"))?.n ?? 0;
+  await recordRun("icons", "ok", `${ok} icons cached`, left ? `${left} items still waiting for icons` : missing ? `${missing} items have no icon` : "All item icons cached", started);
+  return { ok, missing, left };
 }
 
 /** After sign-in: upsert the Battle.net account's characters and attach them to the user. */

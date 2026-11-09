@@ -13,18 +13,19 @@ export function Bar({ pct, color, height, label }: { pct: number; color?: string
   );
 }
 
-export function Avatar({ name, className, size = 48 }: { name: string; className?: string | null; size?: number }) {
+export function Avatar({ name, className, size = 48, url }: { name: string; className?: string | null; size?: number; url?: string | null }) {
   return (
     <span className="avatar" aria-hidden="true" style={{ "--s": `${size}px`, "--c": classColor(className) } as Vars}>
-      {name.charAt(0)}
+      {url ? <img src={url} alt="" loading="lazy" /> : name.charAt(0)}
     </span>
   );
 }
 
-export function ItemIcon({ slot, quality, iconUrl }: { slot: string; quality?: string | null; iconUrl?: string }) {
+export function ItemIcon({ slot, quality, iconUrl, size }: { slot: string; quality?: string | null; iconUrl?: string | null; size?: number }) {
   return (
-    <span className="item-icon" aria-hidden="true" style={{ "--c": qualityColor(quality) } as Vars}>
-      {iconUrl ? <img src={iconUrl} alt="" /> : slotAbbr(slot)}
+    <span className="item-icon" data-q={quality ?? "common"} aria-hidden="true"
+      style={{ "--c": qualityColor(quality), ...(size ? { width: size, height: size } : {}) } as Vars}>
+      {iconUrl ? <img src={iconUrl} alt="" loading="lazy" /> : slotAbbr(slot)}
     </span>
   );
 }

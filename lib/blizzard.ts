@@ -220,6 +220,14 @@ export function normaliseAttunements(json: any): string[] {
   return Object.entries(ATTUNEMENT_QUESTS).filter(([, ids]) => ids.some((id) => done.has(id))).map(([k]) => k);
 }
 
+export function avatarUrl(json: any): string | undefined {
+  return (json?.assets ?? []).find((a: any) => a.key === "avatar")?.value;
+}
+
+export function itemIconUrl(json: any): string | undefined {
+  return (json?.assets ?? []).find((a: any) => a.key === "icon")?.value;
+}
+
 export function renderUrl(json: any): string | undefined {
   const assets: any[] = json?.assets ?? [];
   return (assets.find((a) => a.key === "main-raw") ?? assets.find((a) => a.key === "main") ?? assets.find((a) => a.key === "avatar"))?.value;
