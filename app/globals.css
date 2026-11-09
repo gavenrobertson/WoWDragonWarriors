@@ -917,17 +917,21 @@ button:disabled, [aria-disabled="true"], select:disabled, input:disabled { curso
 .rec-rank.first { color: var(--wow-gold); font-weight: 700; }
 
 /* ---------- brand art (home banner + fortress hero) ---------- */
-.home-banner { position: relative; border-radius: 10px; overflow: hidden; border: 3px solid #5a4520; line-height: 0; margin-bottom: -12px;
-  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000, 0 24px 60px -30px #000, 0 0 40px -18px rgba(155,93,255,.55); animation: banner-in .8s var(--ease-out, ease-out) both; }
-.home-banner img { display: block; width: 100%; height: auto; aspect-ratio: 2000 / 572; object-fit: cover; }
-.home-banner::after { content: ""; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 2px #8a6a2c, inset 0 0 0 3px #000, inset 0 0 40px rgba(0,0,0,.55);
+.home-banner { position: relative; width: min(100%, 640px); margin: -8px auto -14px; line-height: 0; animation: banner-in .8s var(--ease-out, ease-out) both;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%), linear-gradient(180deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%), linear-gradient(180deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+  mask-composite: intersect;
+  filter: drop-shadow(0 10px 24px rgba(0,0,0,.7)); }
+.home-banner img { display: block; width: 100%; height: auto; aspect-ratio: 2000 / 572; }
+.home-banner::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(105deg, transparent 35%, rgba(255,233,160,.16) 48%, transparent 60%) no-repeat; background-size: 250% 100%; background-position: 150% 0; animation: banner-sheen 7s ease-in-out 1.2s infinite; }
 @keyframes banner-in { from { opacity: 0; transform: translateY(-6px) scale(.99); } to { opacity: 1; transform: none; } }
 @keyframes banner-sheen { 0%, 70% { background-position: 150% 0; } 100% { background-position: -60% 0; } }
 .hero-art::before { content: ""; position: absolute; inset: 3px; border-radius: 7px; pointer-events: none; z-index: 0;
   background: linear-gradient(90deg, rgba(12,8,10,.96) 0%, rgba(12,8,10,.82) 42%, rgba(12,8,10,.5) 100%), url("/assets/brand/fortress-1920.webp") 70% 30% / cover no-repeat; }
 @media (max-width: 760px) {
-  .home-banner { border-width: 2px; margin-bottom: -16px; }
+  .home-banner { margin: -16px auto -18px; }
   .hero-art::before { background: linear-gradient(180deg, rgba(12,8,10,.72), rgba(12,8,10,.94) 55%), url("/assets/brand/fortress-960.webp") 60% 20% / cover no-repeat; }
 }
 @media (prefers-reduced-motion: reduce) { .home-banner, .home-banner::after { animation: none; } }
