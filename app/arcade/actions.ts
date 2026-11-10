@@ -173,3 +173,11 @@ export async function blackjackAct(input: { id: string; action: "hit" | "stand" 
 // ---------------------------------------------------------------- skill games (free, capped rewards)
 export async function snakeStart() { return play((u) => A.skillStart(u, "snake")); }
 export async function snakeFinish(input: { id: string; score: number }) { return play((u) => A.skillFinish(u, "snake", String(input.id), input.score)); }
+export async function poolStart(input: { level: A.PoolLevel }) {
+  const level = (Object.keys(A.POOL_LEVELS) as A.PoolLevel[]).includes(input.level) ? input.level : "apprentice";
+  return play((u) => A.skillStart(u, "pool", { level }));
+}
+/** The level was fixed when the game started, so a win is worth what the server stored, whatever the browser says. */
+export async function poolFinish(input: { id: string; won: boolean }) {
+  return play((u) => A.skillFinish(u, "pool", String(input.id), 0, (s) => (input.won ? A.POOL_LEVELS[s.level as A.PoolLevel] ?? 1 : 0)));
+}

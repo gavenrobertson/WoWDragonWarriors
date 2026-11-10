@@ -402,3 +402,33 @@ html[data-theme="x-prismatic"] .site-header { border-image: var(--sk-rainbow) 1;
 @media (max-width: 900px) { .game-layout.snake-layout { grid-template-columns: minmax(0, 1fr); } }
 .snake-hud strong { font-family: var(--font-body); font-weight: 700; }
 .snake-wrap, .snake-stage { min-width: 0; }
+
+/* =====================================================================
+   Dragon's Eye 8-ball
+   ===================================================================== */
+.pool-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+@media (max-width: 1000px) { .pool-layout { grid-template-columns: minmax(0, 1fr); } }
+.pool-stage { display: grid; gap: 10px; min-width: 0; }
+.pool-wrap { position: relative; width: 100%; min-width: 0; display: grid; justify-items: center; }
+.pool-canvas { display: block; touch-action: none; user-select: none; -webkit-user-select: none; border-radius: 18px; box-shadow: 0 24px 50px -24px #000, 0 0 40px -20px rgba(155,93,255,.5); }
+.pool-overlay { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; padding: 16px; text-align: center;
+  background: radial-gradient(circle, rgba(10,6,20,.8), rgba(5,3,10,.92)); border-radius: 18px; overflow-y: auto; }
+.pool-levels { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 8px; }
+@media (max-width: 560px) { .pool-levels { grid-template-columns: minmax(0, 1fr); width: 100%; } }
+.pool-level { display: grid; justify-items: start; gap: 2px; text-align: left; padding: 10px 14px; min-height: 0; white-space: normal; }
+.pool-level strong { font-size: 16px; }
+.pool-level .micro { font-family: var(--font-body); }
+.pool-players { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pool-player { display: grid; gap: 2px; padding: 8px 12px; border-radius: 8px; background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px #3b2f17; transition: box-shadow .2s; min-width: 0; }
+.pool-player strong { font-family: var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pool-player.up { box-shadow: inset 0 0 0 2px var(--wow-gold), 0 0 18px -6px var(--wow-gold); }
+.pool-minis { display: flex; gap: 3px; min-height: 14px; flex-wrap: wrap; }
+.pool-mini { width: 13px; height: 13px; border-radius: 50%; background: var(--c); box-shadow: inset -2px -2px 3px rgba(0,0,0,.45), 0 0 0 1px #000; }
+.pool-mini.striped { background: linear-gradient(180deg, #f4efe2 0 28%, var(--c) 28% 72%, #f4efe2 72%); }
+.pool-mini.gone { opacity: .18; }
+.pool-note { min-height: 1.4em; margin: 0; text-align: center; color: var(--dw-text-2); }
+.pool-controls input[type="range"] { width: 100%; accent-color: var(--wow-gold); }
+.pool-shootbar { display: grid; gap: 8px; }
+.pool-stage > .pool-shootbar { position: sticky; bottom: 8px; z-index: 5; padding: 10px 12px; border-radius: 10px;
+  background: rgba(12,8,4,.94); box-shadow: inset 0 0 0 1px #6b5223, 0 10px 30px -10px #000; }
+.pool-stage > .pool-shootbar .field { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 8px; }

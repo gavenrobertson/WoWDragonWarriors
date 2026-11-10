@@ -13,6 +13,7 @@ export const GAMES = [
   { slug: "dragonspire", name: "Dragonspire", blurb: "Climb the tower, dodge the dragons", icon: "achievement_dungeon_ulduarraid_misc_01" },
   { slug: "scratch", name: "Treasure Scratch", blurb: "Scratch three to win", icon: "inv_scroll_01" },
   { slug: "leap", name: "Leap of Faith", blurb: "Name your multiplier and jump", icon: "spell_holy_divineintervention" },
+  { slug: "pool", name: "Dragon's Eye 8-Ball", blurb: "Sink your seven, then the eye", icon: "inv_misc_orb_03" },
   { slug: "snake", name: "Wyrm Run", blurb: "Grow your dragon, don't bite your tail", icon: "inv_misc_head_dragon_01" },
 ] as const;
 

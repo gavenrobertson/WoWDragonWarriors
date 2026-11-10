@@ -16,6 +16,7 @@ import { Dragonspire } from "@/components/arcade/Dragonspire";
 import { Scratch } from "@/components/arcade/Scratch";
 import { Leap } from "@/components/arcade/Leap";
 import { Snake } from "@/components/arcade/Snake";
+import { Pool } from "@/components/arcade/Pool";
 import { getViewer } from "@/lib/auth";
 
 type Props = { params: Promise<{ game: string }> };
@@ -51,6 +52,13 @@ export default async function GamePage({ params }: Props) {
       }
       case "scratch": return <Scratch prizes={SCRATCH_PRIZES.map((p) => ({ id: p.id, icon: p.icon, mult: p.mult }))} filler={{ id: SCRATCH_FILLER.id, icon: SCRATCH_FILLER.icon }} />;
       case "leap": return <Leap />;
+      case "pool": {
+        const v = await getViewer();
+        const uid = !v.demo && v.signedIn ? v.userId : null;
+        const rules = SKILL_GAMES.pool;
+        const [earned, board] = await Promise.all([uid ? skillEarnedToday(uid, "pool") : 0, v.demo ? [] : skillBoard("pool", "wins").catch(() => [])]);
+        return <Pool rules={{ perPoint: rules.perPoint, daily: rules.daily }} leftToday0={Math.max(0, rules.daily - earned)} board={board} me={v.main?.name?.split(" ")[0] ?? "You"} />;
+      }
       case "snake": {
         const v = await getViewer();
         const uid = !v.demo && v.signedIn ? v.userId : null;
