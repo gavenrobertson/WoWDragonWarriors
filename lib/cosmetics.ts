@@ -119,11 +119,11 @@ export const cosmeticById = (id: string | null | undefined) => (id ? COSMETICS.f
 export interface Chest { id: string; name: string; price: number; blurb: string; odds: Record<Rarity, number>; icon: string }
 /** Odds per rarity (sum 1). Inside a rarity every item is equally likely. */
 export const CHESTS: Chest[] = [
-  { id: "copper", name: "Copper-Bound Chest", price: 400, blurb: "Mostly marks and colours. A small chance at something rare.", icon: "inv_box_01",
+  { id: "copper", name: "Copper-Bound Chest", price: 250, blurb: "Mostly marks and colours. A small chance at something rare.", icon: "inv_box_01",
     odds: { common: 0.55, uncommon: 0.33, rare: 0.1, epic: 0.018, legendary: 0.002 } },
-  { id: "gilded", name: "Gilded Chest", price: 1500, blurb: "Better odds at gradients, glows and site themes.", icon: "inv_box_02",
+  { id: "gilded", name: "Gilded Chest", price: 800, blurb: "Better odds at gradients, glows and site themes.", icon: "inv_box_02",
     odds: { common: 0.25, uncommon: 0.38, rare: 0.27, epic: 0.09, legendary: 0.01 } },
-  { id: "hoard", name: "Dragon's Hoard", price: 5000, blurb: "No commons. Real shots at chrome names and legendary themes.", icon: "inv_box_04",
+  { id: "hoard", name: "Dragon's Hoard", price: 2500, blurb: "No commons. Real shots at chrome names and legendary themes.", icon: "inv_box_04",
     odds: { common: 0, uncommon: 0.3, rare: 0.4, epic: 0.24, legendary: 0.06 } },
 ];
 

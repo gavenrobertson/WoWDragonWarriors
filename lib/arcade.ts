@@ -76,6 +76,36 @@ async function rollChestDrop(userId: string, bet: number) {
 export async function addChests(userId: string, chestId: string, n: number) {
   await sql("insert into arcade_chest_inv (user_id, chest_id, count) values ($1,$2,$3) on conflict (user_id, chest_id) do update set count = count + $3", [userId, chestId, n]);
 }
+// ---------------------------------------------------------------- chest grants for everyone
+/** Chests every member gets at the end of each month (Central time). */
+export const MONTHLY_CHESTS: Record<string, number> = { copper: 3, gilded: 2, hoard: 1 };
+/** One-time welcome-to-chests gift, sent once by the cron job and announced in Discord. */
+export const LAUNCH_GIFT = { key: "launch-2026-11", chests: { copper: 5, gilded: 3, hoard: 2 } as Record<string, number> };
+
+/** Give every member these chests, exactly once per `key` (a settings row marks it done). Returns how many got them, or null if already done. */
+export async function grantChestsToAll(key: string, chests: Record<string, number>, note: string) {
+  const claimed = await sqlOne<{ key: string }>("insert into settings (key, value) values ($1, $2) on conflict (key) do nothing returning key", [`chest-grant:${key}`, new Date().toISOString()]);
+  if (!claimed) return null;
+  for (const [chestId, n] of Object.entries(chests)) {
+    if (!CHESTS.some((c) => c.id === chestId) || n <= 0) continue;
+    await sql("insert into arcade_chest_inv (user_id, chest_id, count) select id, $1, $2 from users where true on conflict (user_id, chest_id) do update set count = count + $2", [chestId, n]);
+  }
+  await sql(`insert into arcade_plays (user_id, game, bet, payout, detail) select id, 'reward:chests', 0, 0, $1 from users`, [JSON.stringify({ key, note, chests })]);
+  return Number((await sqlOne<{ n: number }>("select count(*) as n from users"))?.n ?? 0);
+}
+
+/** The month's chests, on the last day of the month from 6pm Central. Safe to call every few minutes. */
+export async function grantMonthlyChests(now = new Date()) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", hourCycle: "h23" })
+    .formatToParts(now).map((p) => [p.type, p.value]));
+  const y = Number(parts.year), m = Number(parts.month), d = Number(parts.day), h = Number(parts.hour);
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  if (d !== lastDay || h < 18) return null;
+  const month = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-US", { month: "long", timeZone: "UTC" });
+  const n = await grantChestsToAll(`monthly-${y}-${String(m).padStart(2, "0")}`, MONTHLY_CHESTS, `${month} chests`);
+  return n === null ? null : { month, members: n };
+}
+
 export async function chestInventory(userId: string): Promise<Record<string, number>> {
   const rows = await sql<{ chest_id: string; count: number }>("select chest_id, count from arcade_chest_inv where user_id = $1 and count > 0", [userId]);
   return Object.fromEntries(rows.map((r) => [r.chest_id, Number(r.count)]));
