@@ -84,9 +84,11 @@ export async function crashStart(input: { bet: number; auto: number | null }) { 
 export async function crashPoll(input: { id: string }) { return play((u) => A.crashPoll(u, input.id)); }
 export async function crashCashout(input: { id: string }) { return play((u) => A.crashCashout(u, input.id)); }
 
-export async function openChest(input: { chest: string }) {
+export async function myChests() { return play(async (u) => ({ chests: await A.chestInventory(u) })); }
+
+export async function openChest(input: { chest: string; owned?: boolean }) {
   return play(async (u) => {
-    const r = await A.openChest(u, input.chest);
+    const r = await A.openChest(u, input.chest, !!input.owned);
     // Legendary drops are worth a shout in Discord.
     if (r.rarity === "legendary" && !r.duplicate && r.item.kind !== "marks") {
       const v = await getViewer();

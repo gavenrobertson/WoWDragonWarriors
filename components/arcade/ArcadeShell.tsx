@@ -4,21 +4,47 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { GAMES, wowIconUrl } from "@/lib/arcade-games";
+import { CHESTS } from "@/lib/cosmetics";
+import { myChests } from "@/app/arcade/actions";
 export { GAMES, fmt } from "@/lib/arcade-games";
 export { wowIconUrl };
 
-const Ctx = createContext<{ balance: number; setBalance: (n: number) => void; signedIn: boolean; flash: (delta: number) => void }>({
-  balance: 0, setBalance: () => {}, signedIn: false, flash: () => {},
+type Chests = Record<string, number>;
+const Ctx = createContext<{ balance: number; setBalance: (n: number) => void; signedIn: boolean; flash: (delta: number) => void; chests: Chests; setChests: (c: Chests) => void }>({
+  balance: 0, setBalance: () => {}, signedIn: false, flash: () => {}, chests: {}, setChests: () => {},
 });
 export const useArcade = () => useContext(Ctx);
 
 
-export function ArcadeShell({ initial, signedIn, children }: { initial: number; signedIn: boolean; children: React.ReactNode }) {
+export function ArcadeShell({ initial, signedIn, chests: chests0 = {}, children }: { initial: number; signedIn: boolean; chests?: Chests; children: React.ReactNode }) {
   const [balance, setBal] = useState(initial);
+  const [chests, setChestsS] = useState<Chests>(chests0);
+  const chestsRef = useRef(chests0);
+  const [found, setFound] = useState<{ id: string; k: number } | null>(null);
+  const foundT = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const checking = useRef(false);
+  const setChests = useCallback((c: Chests) => { chestsRef.current = c; setChestsS(c); }, []);
+  // Every play ends with a balance update; that's when to check whether a chest dropped.
+  const checkChests = useCallback(async () => {
+    if (!signedIn || checking.current) return;
+    checking.current = true;
+    try {
+      const r = await myChests();
+      if (!r.ok) return;
+      const before = chestsRef.current;
+      const gained = CHESTS.filter((c) => (r.chests[c.id] ?? 0) > (before[c.id] ?? 0)).sort((a, b) => b.price - a.price)[0];
+      setChests(r.chests);
+      if (gained) {
+        setFound({ id: gained.id, k: Date.now() });
+        if (foundT.current) clearTimeout(foundT.current);
+        foundT.current = setTimeout(() => setFound(null), 6000);
+      }
+    } finally { checking.current = false; }
+  }, [signedIn, setChests]);
   const [delta, setDelta] = useState<{ n: number; k: number } | null>(null);
   const t = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => setBal(initial), [initial]);
-  const setBalance = useCallback((n: number) => setBal(n), []);
+  const setBalance = useCallback((n: number) => { setBal(n); void checkChests(); }, [checkChests]);
   const flash = useCallback((n: number) => {
     if (!n) return;
     setDelta({ n, k: Date.now() });
@@ -26,15 +52,18 @@ export function ArcadeShell({ initial, signedIn, children }: { initial: number; 
     t.current = setTimeout(() => setDelta(null), 1800);
   }, []);
   const path = usePathname();
+  const chestCount = Object.values(chests).reduce((a, b) => a + b, 0);
+  const foundChest = found ? CHESTS.find((c) => c.id === found.id) : null;
   return (
-    <Ctx.Provider value={{ balance, setBalance, signedIn, flash }}>
+    <Ctx.Provider value={{ balance, setBalance, signedIn, flash, chests, setChests }}>
       <div className="arcade">
         <div className="arcade-bar">
           <nav className="arcade-tabs" aria-label="Arcade">
             <Link href="/arcade" aria-current={path === "/arcade" ? "page" : undefined}>Lobby</Link>
             <GamesMenu path={path} />
-            <Link href="/arcade/chests" aria-current={path === "/arcade/chests" ? "page" : undefined} aria-label="Chests" className="tab-iconic">
+            <Link href="/arcade/chests" aria-current={path === "/arcade/chests" ? "page" : undefined} aria-label={`Chests${chestCount ? `, ${chestCount} unopened` : ""}`} className="tab-iconic">
               <img src={wowIconUrl("inv_box_02", 36)} alt="" width={22} height={22} className="tab-icon" /><span className="tab-text">Chests</span>
+              {chestCount > 0 && <span className="chest-badge" aria-hidden="true">{chestCount > 99 ? "99+" : chestCount}</span>}
             </Link>
             <Link href="/arcade/collection" aria-current={path === "/arcade/collection" ? "page" : undefined} aria-label="Collection" className="tab-iconic">
               <img src={wowIconUrl("inv_misc_bag_10", 36)} alt="" width={22} height={22} className="tab-icon" /><span className="tab-text">Collection</span>
@@ -47,6 +76,12 @@ export function ArcadeShell({ initial, signedIn, children }: { initial: number; 
             {delta && <span key={delta.k} className={`arcade-delta ${delta.n > 0 ? "up" : "down"}`}>{delta.n > 0 ? "+" : ""}{delta.n.toLocaleString("en-US")}</span>}
           </div>
         </div>
+        {foundChest && (
+          <Link key={found!.k} href="/arcade/chests" className="chest-found" role="status" onClick={() => setFound(null)}>
+            <img src={wowIconUrl(foundChest.icon, 56)} alt="" width={40} height={40} />
+            <span><strong>You found a {foundChest.name}!</strong><span className="micro">It&apos;s waiting in Chests. Tap to open it.</span></span>
+          </Link>
+        )}
         {!signedIn && (
           <div className="arcade-signin">
             <span>Sign in with Battle.net to claim a <strong>5,000 Dragon Mark welcome bonus</strong> and a free name colour, then spin the daily wheel and play.</span>

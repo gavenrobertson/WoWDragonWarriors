@@ -36,15 +36,45 @@ export function checkBet(bet: unknown) {
   return b;
 }
 
-/** Take marks atomically; fails if the balance is too low. */
-export async function debit(userId: string, amount: number, wager = true) {
+/** Take marks atomically; fails if the balance is too low. A wager also rolls for a chest drop. */
+export async function debit(userId: string, amount: number, wager = true, drops = wager) {
   await wallet(userId);
   const r = await sqlOne<{ marks: number }>(
     `update arcade_wallets set marks = marks - $2, lifetime_wagered = lifetime_wagered + $3 where user_id = $1 and marks >= $2 returning marks`,
     [userId, amount, wager ? amount : 0],
   );
   if (!r) throw new ArcadeError("Not enough Dragon Marks. Spin the daily wheel for more.");
+  if (drops && amount > 0) await rollChestDrop(userId, amount).catch((e) => console.error("chest drop", e));
   return r.marks;
+}
+
+// ---------------------------------------------------------------- chest drops from play
+// Every bet has a chance to drop a chest, in proportion to the bet: the expected value of drops is about
+// 4% of what you wager (2% in Copper, 1.2% in Gilded, 0.8% in Hoard), so pricier chests are much rarer.
+// A 100-mark bet: Copper 1 in 200, Gilded 1 in 1,250, Hoard 1 in 6,250. A 5,000-mark bet: 1 in 4, 1 in 25, 1 in 125.
+export const CHEST_DROP_SHARE: Record<string, number> = { copper: 0.02, gilded: 0.012, hoard: 0.008 };
+export const CHEST_DROP_DAILY = 12;
+export const chestDropChance = (chestId: string, bet: number) => {
+  const c = CHESTS.find((x) => x.id === chestId);
+  return c ? Math.min(0.5, (bet * (CHEST_DROP_SHARE[c.id] ?? 0)) / c.price) : 0;
+};
+async function rollChestDrop(userId: string, bet: number) {
+  // best chest first, at most one drop per bet
+  const hit = [...CHESTS].sort((a, b) => b.price - a.price).find((c) => rand() < chestDropChance(c.id, bet));
+  if (!hit) return null;
+  const since = new Date(Date.now() - 24 * 3600_000).toISOString();
+  const today = await sqlOne<{ n: number }>("select count(*) as n from arcade_plays where user_id = $1 and game like 'drop:%' and created_at > $2", [userId, since]);
+  if (Number(today?.n ?? 0) >= CHEST_DROP_DAILY) return null;
+  await addChests(userId, hit.id, 1);
+  await logPlay(userId, `drop:${hit.id}`, bet, 0, { chest: hit.id });
+  return hit.id;
+}
+export async function addChests(userId: string, chestId: string, n: number) {
+  await sql("insert into arcade_chest_inv (user_id, chest_id, count) values ($1,$2,$3) on conflict (user_id, chest_id) do update set count = count + $3", [userId, chestId, n]);
+}
+export async function chestInventory(userId: string): Promise<Record<string, number>> {
+  const rows = await sql<{ chest_id: string; count: number }>("select chest_id, count from arcade_chest_inv where user_id = $1 and count > 0", [userId]);
+  return Object.fromEntries(rows.map((r) => [r.chest_id, Number(r.count)]));
 }
 export async function credit(userId: string, amount: number) {
   if (amount <= 0) return (await wallet(userId)).marks;
@@ -340,10 +370,14 @@ export async function crashCashout(userId: string, id: string) {
 export const crashTimeTo = msFor;
 
 // ---------------------------------------------------------------- chests
-export async function openChest(userId: string, chestId: string) {
+/** Open a chest: from your inventory if `fromInventory`, otherwise buy it with marks. */
+export async function openChest(userId: string, chestId: string, fromInventory = false) {
   const chest = CHESTS.find((c) => c.id === chestId);
   if (!chest) throw new ArcadeError("Unknown chest.");
-  await debit(userId, chest.price);
+  if (fromInventory) {
+    const took = await sqlOne("update arcade_chest_inv set count = count - 1 where user_id = $1 and chest_id = $2 and count > 0 returning count", [userId, chest.id]);
+    if (!took) throw new ArcadeError("You don't have one of those chests. Play games to find more.");
+  } else await debit(userId, chest.price, true, false);
   const item: Cosmetic = rollChest(chest, rand(), rand());
   const rarity = item.rarity;
   let duplicate = false, refund = 0;
@@ -354,8 +388,8 @@ export async function openChest(userId: string, chestId: string) {
     if (!added) { duplicate = true; refund = DUPLICATE_REFUND[rarity]; }
   }
   const balance = refund ? await credit(userId, refund) : (await wallet(userId)).marks;
-  await logPlay(userId, `chest:${chest.id}`, chest.price, refund, { item: item.id, rarity, duplicate });
-  return { item, rarity, duplicate, refund, balance };
+  await logPlay(userId, `chest:${chest.id}`, fromInventory ? 0 : chest.price, refund, { item: item.id, rarity, duplicate, ...(fromInventory ? { found: true } : {}) });
+  return { item, rarity, duplicate, refund, balance, chests: await chestInventory(userId) };
 }
 
 export async function ownedCosmetics(userId: string) {
@@ -401,7 +435,7 @@ export async function poolStake(userId: string, itemId: number, characterId: str
   if (!wished) throw new ArcadeError("That player isn't a contender for this item.");
   const mine = await sqlOne("select 1 from council_pool where item_id = $1 and user_id = $2 and status = 'open'", [itemId, userId]);
   if (mine) throw new ArcadeError("You've already backed someone for this item.");
-  const balance = await debit(userId, s);
+  const balance = await debit(userId, s, true, false);
   await sql("insert into council_pool (item_id, user_id, character_id, stake) values ($1,$2,$3,$4)", [itemId, userId, characterId, s]);
   return { balance };
 }

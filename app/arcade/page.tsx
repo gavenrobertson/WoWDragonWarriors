@@ -36,6 +36,7 @@ export default async function ArcadeLobby() {
         <h2 id="earn-h">Ways to earn Dragon Marks</h2>
         <ul className="earn-list">
           <li><img src={wowIconUrl("inv_misc_coin_02", 36)} alt="" /><span><strong>Daily wheel</strong><span className="micro muted">{fmt(WHEEL[0].marks)} to {fmt(WHEEL[WHEEL.length - 1].marks)}, more with a streak</span></span></li>
+          <li><img src={wowIconUrl("inv_box_02", 36)} alt="" /><span><strong>Chests from play</strong><span className="micro muted">Every bet can drop a chest; bigger bets, better odds</span></span></li>
           <li><img src={wowIconUrl("achievement_boss_onyxia", 36)} alt="" /><span><strong>+{fmt(RAID_MARKS)} per raid</strong><span className="micro muted">Sign up and show up ({fmt(BENCH_MARKS)} if benched), paid after the raid</span></span></li>
           <li><img src={wowIconUrl("inv_misc_note_06", 36)} alt="" /><span><strong>+{COUNCIL_VOTE_MARKS} per council vote</strong><span className="micro muted">Officers who vote, every item awarded</span></span></li>
           <li><img src={wowIconUrl("inv_misc_ticket_darkmoon_01", 36)} alt="" /><span><strong>+{OBSERVER_MARKS} for observing</strong><span className="micro muted">Back a contender in the council pool, win or lose</span></span></li>

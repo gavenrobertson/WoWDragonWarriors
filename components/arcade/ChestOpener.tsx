@@ -17,8 +17,12 @@ function pickFiller(chest: Chest, cosmetics: Cosmetic[]) {
   return pool.length ? pool[Math.floor(Math.random() * pool.length)] : cosmetics[0];
 }
 
-export function ChestOpener({ chests, cosmetics, owned: owned0 }: { chests: Chest[]; cosmetics: Cosmetic[]; owned: string[] }) {
-  const { signedIn, balance, setBalance, flash } = useArcade();
+const oneIn = (p: number) => (p >= 0.5 ? "1 in 2" : `1 in ${fmt(Math.round(1 / p))}`);
+
+export function ChestOpener({ chests, cosmetics, owned: owned0, drop }: {
+  chests: Chest[]; cosmetics: Cosmetic[]; owned: string[]; drop: { daily: number; chance: Record<string, { at100: number; at1000: number }> };
+}) {
+  const { signedIn, balance, setBalance, flash, chests: inv, setChests } = useArcade();
   const [owned, setOwned] = useState(owned0);
   const [reel, setReel] = useState<{ chest: Chest; items: Cosmetic[]; x: number; go: boolean } | null>(null);
   const [won, setWon] = useState<{ item: Cosmetic; duplicate: boolean; refund: number } | null>(null);
@@ -27,13 +31,14 @@ export function ChestOpener({ chests, cosmetics, owned: owned0 }: { chests: Ches
   const [equipped, setEquipped] = useState(false);
   const box = useRef<HTMLDivElement>(null);
 
-  const open = async (chest: Chest) => {
+  const open = async (chest: Chest, fromInv = false) => {
     if (spinning) return;
     setErr(null); setWon(null); setEquipped(false);
     setSpinning(true);
     box.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    const r = await openChest({ chest: chest.id });
+    const r = await openChest({ chest: chest.id, owned: fromInv });
     if (!r.ok) { setSpinning(false); return setErr(r.error); }
+    setChests(r.chests);
     setBalance(r.balance - r.refund); // show the price leaving now; the refund lands with the reveal
     const items = Array.from({ length: LEN }, () => pickFiller(chest, cosmetics));
     items[WIN_AT] = r.item;
@@ -93,6 +98,17 @@ export function ChestOpener({ chests, cosmetics, owned: owned0 }: { chests: Ches
       )}
       {err && <p className="game-err" role="alert">{err}</p>}
 
+      {signedIn && (
+        <div className="chest-inv panel" aria-label="Your unopened chests">
+          <strong>Your chests</strong>
+          {chests.map((c) => (
+            <span key={c.id} className={`chest-inv-item${(inv[c.id] ?? 0) > 0 ? " has" : ""}`}>
+              <img src={wowIconUrl(c.icon, 36)} alt="" width={28} height={28} /> {c.name.replace(" Chest", "")} <strong>×{inv[c.id] ?? 0}</strong>
+            </span>
+          ))}
+          <span className="micro muted">Up to {drop.daily} found a day.</span>
+        </div>
+      )}
       <div className="chest-grid">
         {chests.map((c) => (
           <article key={c.id} id={c.id} className="panel chest-panel">
@@ -108,9 +124,21 @@ export function ChestOpener({ chests, cosmetics, owned: owned0 }: { chests: Ches
                 <li key={r}><span style={{ color: RARITY_COLOR[r] }}>{RARITY_LABEL[r]}</span><span>{(c.odds[r] * 100).toFixed(c.odds[r] < 0.01 ? 1 : 0)}%</span></li>
               ))}
             </ul>
-            <button type="button" className="btn btn-primary" onClick={() => open(c)} disabled={!signedIn || spinning || balance < c.price}>
-              Open · <span className="mark-coin sm" aria-hidden="true" /> {fmt(c.price)}
-            </button>
+            <p className="micro muted chest-drop-odds">Found while playing: {oneIn(drop.chance[c.id].at100)} bets of 100, {oneIn(drop.chance[c.id].at1000)} of 1,000</p>
+            {(inv[c.id] ?? 0) > 0 ? (
+              <div className="stack" style={{ gap: 6 }}>
+                <button type="button" className="btn btn-primary" onClick={() => open(c, true)} disabled={!signedIn || spinning}>
+                  Open yours <span className="chest-owned-n">×{inv[c.id]}</span>
+                </button>
+                <button type="button" className="btn btn-sm" onClick={() => open(c)} disabled={!signedIn || spinning || balance < c.price}>
+                  Buy another · <span className="mark-coin sm" aria-hidden="true" /> {fmt(c.price)}
+                </button>
+              </div>
+            ) : (
+              <button type="button" className="btn btn-primary" onClick={() => open(c)} disabled={!signedIn || spinning || balance < c.price}>
+                Open · <span className="mark-coin sm" aria-hidden="true" /> {fmt(c.price)}
+              </button>
+            )}
           </article>
         ))}
       </div>
