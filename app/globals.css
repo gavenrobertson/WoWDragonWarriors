@@ -1601,3 +1601,46 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; h
    (fully transparent content delays Largest Contentful Paint until the fade ends). Looks the same. */
 @keyframes page-in { from { opacity: .02; transform: translateY(12px); } }
 .page > * { animation: page-in .55s var(--ease-out) both; }
+
+/* arcade bar: Lobby · Games ▾ · Chests · Collection — no hidden scrolling strip */
+.arcade-tabs { overflow: visible; -webkit-mask-image: none !important; mask-image: none !important; flex-wrap: nowrap; align-items: center; }
+.games-menu { position: relative; }
+.games-menu-btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 0; border-radius: 5px; background: none; cursor: pointer; color: #c9bc9c; font-family: var(--font-display); font-size: 14px; white-space: nowrap; }
+.games-menu-btn:hover, .games-menu-btn[aria-expanded="true"] { color: #fff3b0; background: rgba(255,209,0,.06); }
+.games-menu-btn[aria-current="page"] { color: var(--wow-gold); background: linear-gradient(180deg, #3d2f1c, #1b130a); box-shadow: inset 0 0 0 1px #9c7a35; }
+.games-menu-btn img { border-radius: 4px; box-shadow: 0 0 0 1px #000; }
+.games-menu-caret { font-size: 11px; opacity: .8; }
+.games-menu-panel { position: absolute; z-index: 40; top: calc(100% + 8px); left: 0; width: min(560px, calc(100vw - 32px)); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 8px; border-radius: 10px; border: 1px solid #000;
+  background: linear-gradient(180deg, #241a0e, #100b06); box-shadow: inset 0 0 0 1px #8a6a2c, 0 24px 40px -12px #000; animation: win-pop .18s var(--ease-out); }
+.games-menu-item { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 10px; border-radius: 6px; text-decoration: none; color: inherit; }
+.games-menu-item:hover, .games-menu-item:focus-visible { background: rgba(255,209,0,.07); outline: none; box-shadow: inset 0 0 0 1px #6b5223; }
+.games-menu-item[aria-current="page"] { box-shadow: inset 0 0 0 1px #FFD100; }
+.games-menu-item img { flex: none; border-radius: 5px; box-shadow: 0 0 0 1px #000, 0 0 0 2px #6b5223; }
+.games-menu-item > span { display: grid; min-width: 0; line-height: 1.25; }
+.games-menu-item strong { font-family: var(--font-display); font-weight: 400; color: #ffe9a0; font-size: 15px; }
+@media (max-width: 600px) {
+  .arcade-tabs { -webkit-mask-image: none; mask-image: none; gap: 0; }
+  .arcade-tabs a, .games-menu-btn { padding: 8px 8px; font-size: 13px; }
+  .games-menu-btn img { display: none; }
+  .games-menu-panel { position: fixed; left: 12px; right: 12px; top: calc(var(--hdr-h, 64px) + 58px); width: auto; grid-template-columns: 1fr 1fr; max-height: calc(100dvh - var(--hdr-h, 64px) - 80px); overflow-y: auto; }
+  .games-menu-item .micro { display: none; }
+}
+.gm-short { display: none; }
+@media (max-width: 600px) { .gm-full { display: none; } .gm-short { display: inline; } }
+.tab-icon { display: none; }
+.arcade-tabs a.tab-iconic { display: inline-flex; align-items: center; }
+@media (max-width: 600px) {
+  .tab-text { display: none; }
+  .tab-icon { display: block; border-radius: 4px; box-shadow: 0 0 0 1px #000, 0 0 0 2px #6b5223; }
+  .arcade-tabs a.tab-iconic { padding: 6px 8px; }
+  .arcade-tabs a.tab-iconic[aria-current="page"] .tab-icon { box-shadow: 0 0 0 1px #000, 0 0 0 2px #FFD100; }
+  .games-menu-item { min-height: 52px; padding: 6px 8px; gap: 8px; }
+  .games-menu-item strong { font-size: 14px; white-space: normal; line-height: 1.15; }
+  .games-menu-item img { width: 28px; height: 28px; }
+}
+@media (max-width: 380px) {
+  .arcade-bar { gap: 6px; }
+  .arcade-tabs a, .games-menu-btn { padding: 8px 6px; }
+  .arcade-tabs a.tab-iconic { padding: 6px 5px; }
+  .arcade-wallet .micro { display: none; }
+}

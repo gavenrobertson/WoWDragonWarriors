@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { GAMES } from "@/lib/arcade-games";
-export { GAMES, fmt, wowIconUrl } from "@/lib/arcade-games";
+import { GAMES, wowIconUrl } from "@/lib/arcade-games";
+export { GAMES, fmt } from "@/lib/arcade-games";
+export { wowIconUrl };
 
 const Ctx = createContext<{ balance: number; setBalance: (n: number) => void; signedIn: boolean; flash: (delta: number) => void }>({
   balance: 0, setBalance: () => {}, signedIn: false, flash: () => {},
@@ -31,9 +32,13 @@ export function ArcadeShell({ initial, signedIn, children }: { initial: number; 
         <div className="arcade-bar">
           <nav className="arcade-tabs" aria-label="Arcade">
             <Link href="/arcade" aria-current={path === "/arcade" ? "page" : undefined}>Lobby</Link>
-            {GAMES.map((g) => <Link key={g.slug} href={`/arcade/${g.slug}`} aria-current={path === `/arcade/${g.slug}` ? "page" : undefined}>{g.name}</Link>)}
-            <Link href="/arcade/chests" aria-current={path === "/arcade/chests" ? "page" : undefined}>Chests</Link>
-            <Link href="/arcade/collection" aria-current={path === "/arcade/collection" ? "page" : undefined}>Collection</Link>
+            <GamesMenu path={path} />
+            <Link href="/arcade/chests" aria-current={path === "/arcade/chests" ? "page" : undefined} aria-label="Chests" className="tab-iconic">
+              <img src={wowIconUrl("inv_box_02", 36)} alt="" width={22} height={22} className="tab-icon" /><span className="tab-text">Chests</span>
+            </Link>
+            <Link href="/arcade/collection" aria-current={path === "/arcade/collection" ? "page" : undefined} aria-label="Collection" className="tab-iconic">
+              <img src={wowIconUrl("inv_misc_bag_10", 36)} alt="" width={22} height={22} className="tab-icon" /><span className="tab-text">Collection</span>
+            </Link>
           </nav>
           <div className="arcade-wallet" aria-live="polite">
             <span className="mark-coin" aria-hidden="true" />
@@ -52,6 +57,40 @@ export function ArcadeShell({ initial, signedIn, children }: { initial: number; 
         <p className="arcade-fine">Dragon Marks are play money for fun and cosmetics. They can&apos;t be bought, sold or cashed out.</p>
       </div>
     </Ctx.Provider>
+  );
+}
+
+/** "Games" button in the arcade bar: opens a panel of every game with its icon. Shows the current game's name. */
+function GamesMenu({ path }: { path: string }) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  const current = GAMES.find((g) => path === `/arcade/${g.slug}`);
+  useEffect(() => { setOpen(false); }, [path]);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", away); document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", key); };
+  }, [open]);
+  return (
+    <div className="games-menu" ref={wrap}>
+      <button type="button" className="games-menu-btn" aria-expanded={open} aria-haspopup="true" aria-current={current ? "page" : undefined} onClick={() => setOpen((o) => !o)}>
+        {current && <img src={wowIconUrl(current.icon, 36)} alt="" width={18} height={18} />}
+        <span className="gm-full">{current ? current.name : "Games"}</span><span className="gm-short">Games</span>
+        <span className="games-menu-caret" aria-hidden="true">▾</span>
+      </button>
+      {open && (
+        <div className="games-menu-panel" role="menu" aria-label="All games">
+          {GAMES.map((g) => (
+            <Link key={g.slug} href={`/arcade/${g.slug}`} role="menuitem" className="games-menu-item" aria-current={path === `/arcade/${g.slug}` ? "page" : undefined}>
+              <img src={wowIconUrl(g.icon, 36)} alt="" width={30} height={30} />
+              <span><strong>{g.name}</strong><span className="micro muted">{g.blurb}</span></span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
