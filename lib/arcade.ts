@@ -703,3 +703,59 @@ export async function bjAct(userId: string, id: string, action: "hit" | "stand" 
   }
   return bjDealerPlays(userId, r);
 }
+
+// ---------------------------------------------------------------- skill games (free to play)
+// These run in the browser, so the server can't decide the outcome. A run costs nothing; a finished run
+// pays a few marks per point, capped per run and per rolling 24 hours, and a score that couldn't have been
+// reached in the time played is refused.
+export const SKILL_GAMES = {
+  snake: { perPoint: 15, maxRun: 1500, daily: 4000, maxPointsPerSec: 2, maxPoints: 600 },
+} as const;
+export type SkillGame = keyof typeof SKILL_GAMES;
+const skillRules = (game: string) => {
+  const r = SKILL_GAMES[game as SkillGame];
+  if (!r) throw new ArcadeError("Unknown game.");
+  return r;
+};
+const daySince = () => new Date(Date.now() - 24 * 3600_000).toISOString();
+
+export async function skillStart(userId: string, game: SkillGame) {
+  skillRules(game);
+  await sql("update arcade_rounds set status = 'lost' where user_id = $1 and game = $2 and status = 'active'", [userId, game]);
+  const id = await newRound(userId, game, 0, { startedAt: Date.now() });
+  return { id };
+}
+
+export async function skillEarnedToday(userId: string, game: SkillGame) {
+  const r = await sqlOne<{ s: number }>("select coalesce(sum(payout), 0) as s from arcade_plays where user_id = $1 and game = $2 and created_at > $3", [userId, game, daySince()]);
+  return Number(r?.s ?? 0);
+}
+export async function skillBest(userId: string, game: SkillGame) {
+  const r = await sqlOne<{ b: number | null }>("select max(cast(json_extract(detail, '$.score') as integer)) as b from arcade_plays where user_id = $1 and game = $2", [userId, game]);
+  return Number(r?.b ?? 0);
+}
+
+export async function skillFinish(userId: string, game: SkillGame, id: string, score: unknown) {
+  const rules = skillRules(game);
+  const r = await roundById(userId, id, game);
+  if (r.status !== "active") throw new ArcadeError("That run already ended.");
+  const pts = Math.max(0, Math.min(rules.maxPoints, Math.floor(Number(score)) || 0));
+  const secs = (Date.now() - Number(r.state.startedAt)) / 1000;
+  if (!(await closeRound(r.id, { ...r.state, score: pts, secs: Math.round(secs) }, pts > 0 ? "won" : "lost"))) throw new ArcadeError("That run already ended.");
+  if (pts > 10 + secs * rules.maxPointsPerSec) {
+    await logPlay(userId, game, 0, 0, { score: 0, claimed: pts, flagged: true });
+    throw new ArcadeError("That score doesn't add up, so it wasn't counted.");
+  }
+  const today = await skillEarnedToday(userId, game);
+  const earned = Math.max(0, Math.min(rules.maxRun, pts * rules.perPoint, rules.daily - today));
+  const balance = earned ? await credit(userId, earned) : (await wallet(userId)).marks;
+  await logPlay(userId, game, 0, earned, { score: pts });
+  return { score: pts, earned, balance, best: await skillBest(userId, game), leftToday: Math.max(0, rules.daily - today - earned) };
+}
+
+export async function skillBoard(game: SkillGame) {
+  return sql<{ score: number; name: string | null; surname: string | null; class: string | null; name_style: string | null; title: string | null }>(
+    `select max(cast(json_extract(p.detail, '$.score') as integer)) as score, c.name, c.surname, c.class, u.name_style, u.title
+     from arcade_plays p join users u on u.id = p.user_id left join characters c on c.id = u.main_character_id
+     where p.game = $1 group by p.user_id having score > 0 order by score desc limit 10`, [game]);
+}

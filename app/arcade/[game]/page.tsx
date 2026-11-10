@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { KENO_PAYS, MINE_TILES, SCRATCH_FILLER, SCRATCH_PRIZES, SPIRE_FLOORS, SPIRE_MODES, spireMult, type SpireMode, PLINKO_RISKS, PLINKO_ROWS, SLOT_DRAGON_ONE, SLOT_DRAGON_TWO, SLOT_PAIR, SLOT_SYMBOLS, plinkoTable, slotsRtp } from "@/lib/arcade";
+import { KENO_PAYS, MINE_TILES, SKILL_GAMES, skillBest, skillBoard, skillEarnedToday, SCRATCH_FILLER, SCRATCH_PRIZES, SPIRE_FLOORS, SPIRE_MODES, spireMult, type SpireMode, PLINKO_RISKS, PLINKO_ROWS, SLOT_DRAGON_ONE, SLOT_DRAGON_TWO, SLOT_PAIR, SLOT_SYMBOLS, plinkoTable, slotsRtp } from "@/lib/arcade";
 import { GAMES } from "@/lib/arcade-games";
 import { Plinko } from "@/components/arcade/Plinko";
 import { Mines } from "@/components/arcade/Mines";
@@ -15,6 +15,8 @@ import { Keno } from "@/components/arcade/Keno";
 import { Dragonspire } from "@/components/arcade/Dragonspire";
 import { Scratch } from "@/components/arcade/Scratch";
 import { Leap } from "@/components/arcade/Leap";
+import { Snake } from "@/components/arcade/Snake";
+import { getViewer } from "@/lib/auth";
 
 type Props = { params: Promise<{ game: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -27,7 +29,7 @@ export default async function GamePage({ params }: Props) {
   const { game } = await params;
   const g = GAMES.find((x) => x.slug === game);
   if (!g) notFound();
-  const body = (() => {
+  const body = await (async () => {
     switch (game) {
       case "plinko": {
         const tables: Record<string, number[]> = {};
@@ -49,6 +51,15 @@ export default async function GamePage({ params }: Props) {
       }
       case "scratch": return <Scratch prizes={SCRATCH_PRIZES.map((p) => ({ id: p.id, icon: p.icon, mult: p.mult }))} filler={{ id: SCRATCH_FILLER.id, icon: SCRATCH_FILLER.icon }} />;
       case "leap": return <Leap />;
+      case "snake": {
+        const v = await getViewer();
+        const uid = !v.demo && v.signedIn ? v.userId : null;
+        const rules = SKILL_GAMES.snake;
+        const [best, earned, board] = await Promise.all([
+          uid ? skillBest(uid, "snake") : 0, uid ? skillEarnedToday(uid, "snake") : 0, v.demo ? [] : skillBoard("snake").catch(() => []),
+        ]);
+        return <Snake rules={{ perPoint: rules.perPoint, maxRun: rules.maxRun, daily: rules.daily }} best0={best} leftToday0={Math.max(0, rules.daily - earned)} board={board} />;
+      }
     }
   })();
   return (

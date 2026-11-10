@@ -169,3 +169,7 @@ export async function spireCashout(input: { id: string }) { return play((u) => A
 
 export async function blackjackDeal(input: { bet: number }) { return play((u) => A.bjStart(u, A.checkBet(input.bet))); }
 export async function blackjackAct(input: { id: string; action: "hit" | "stand" | "double" }) { return play((u) => A.bjAct(u, input.id, input.action)); }
+
+// ---------------------------------------------------------------- skill games (free, capped rewards)
+export async function snakeStart() { return play((u) => A.skillStart(u, "snake")); }
+export async function snakeFinish(input: { id: string; score: number }) { return play((u) => A.skillFinish(u, "snake", String(input.id), input.score)); }

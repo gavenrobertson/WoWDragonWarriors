@@ -372,3 +372,33 @@ html[data-theme="x-prismatic"] .site-header { border-image: var(--sk-rainbow) 1;
 .theme-preview-bar strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .drop-cell { display: grid; gap: 6px; }
 .drop-cell .preview-btn { justify-self: center; min-height: 32px; font-size: 13px; padding: 4px 12px; }
+
+/* =====================================================================
+   Wyrm Run (snake)
+   ===================================================================== */
+.snake-stage { display: grid; gap: 10px; justify-items: center; }
+.snake-hud { display: flex; gap: 22px; justify-content: center; font-family: var(--font-display); }
+.snake-hud > span { display: grid; justify-items: center; line-height: 1.1; }
+.snake-hud strong { font-size: 22px; font-variant-numeric: tabular-nums; }
+.snake-wrap { position: relative; width: 100%; max-width: 600px; display: grid; justify-items: center; outline: none; }
+.snake-canvas { display: block; border-radius: 6px; touch-action: none; user-select: none; -webkit-user-select: none;
+  box-shadow: 0 0 0 1px #000, 0 0 0 3px #8a6a2c, 0 0 0 4px #000, 0 18px 40px -16px #000, 0 0 40px -18px rgba(155,93,255,.6); }
+.snake-overlay { position: absolute; inset: 0; margin: auto; display: grid; place-content: center; justify-items: center; gap: 12px; text-align: center; padding: 16px;
+  background: radial-gradient(circle, rgba(10,6,20,.78), rgba(5,3,10,.9)); border-radius: 6px; max-width: 600px; aspect-ratio: 1; width: 100%; }
+.snake-big { font-family: var(--font-title); font-size: clamp(26px, 6vw, 40px); color: var(--wow-gold); text-shadow: 0 2px 0 #000, 0 0 18px rgba(255,209,0,.35); }
+.snake-pad { display: none; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 56px); gap: 6px; justify-content: center; margin-top: 4px; }
+.snake-pad .btn { min-height: 0; padding: 0; font-size: 20px; touch-action: manipulation; }
+.snake-pad .btn:nth-child(1) { grid-area: 1 / 2; } .snake-pad .btn:nth-child(2) { grid-area: 2 / 1; } .snake-pad .btn:nth-child(3) { grid-area: 2 / 2; font-size: 14px; }
+.snake-pad .btn:nth-child(4) { grid-area: 2 / 3; } .snake-pad .btn:nth-child(5) { grid-area: 3 / 2; }
+@media (pointer: coarse) { .snake-pad { display: grid; } }
+.snake-key { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.snake-key li { display: flex; gap: 10px; align-items: center; }
+.snake-key img { border-radius: 5px; box-shadow: 0 0 0 1px #000, 0 0 0 2px #6b5223; }
+.snake-key li > span { display: grid; line-height: 1.2; }
+.snake-board { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.snake-board li { display: grid; grid-template-columns: 20px 1fr auto; gap: 8px; align-items: center; }
+.snake-board strong { font-variant-numeric: tabular-nums; color: var(--wow-gold); }
+.game-layout.snake-layout { grid-template-columns: minmax(0, 1fr) 300px; }
+@media (max-width: 900px) { .game-layout.snake-layout { grid-template-columns: minmax(0, 1fr); } }
+.snake-hud strong { font-family: var(--font-body); font-weight: 700; }
+.snake-wrap, .snake-stage { min-width: 0; }
