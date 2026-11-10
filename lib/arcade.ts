@@ -54,8 +54,8 @@ export async function debit(userId: string, amount: number, wager = true, drops 
 // 6% in Copper, 3% in Gilded, 1.5% in Hoard), with a floor so small bets still find them, and pricier
 // chests are much rarer. A 100-mark bet (the floor starts there): Copper 1 in 67, Gilded 1 in 333, Hoard 1 in 2,000.
 // A 1,000-mark bet: 1 in 7, 1 in 50, 1 in 333. The daily cap keeps it from being farmed with tiny bets.
-export const CHEST_DROP_SHARE: Record<string, number> = { copper: 0.06, gilded: 0.03, hoard: 0.015 };
-const CHEST_DROP_FLOOR: Record<string, number> = { copper: 0.015, gilded: 0.003, hoard: 0.0005 };
+export const CHEST_DROP_SHARE: Record<string, number> = { copper: 0.06, gilded: 0.03, hoard: 0.015, relic: 0.003 };
+const CHEST_DROP_FLOOR: Record<string, number> = { copper: 0.015, gilded: 0.003, hoard: 0.0005, relic: 0.00005 };
 export const CHEST_DROP_DAILY = 20;
 export const chestDropChance = (chestId: string, bet: number) => {
   const c = CHESTS.find((x) => x.id === chestId);

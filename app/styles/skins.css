@@ -582,3 +582,214 @@ html[data-theme="x-prismatic"] .site-header { border-image: var(--sk-rainbow) 1;
 @media (max-width: 380px) { .arcade-tabs a.tab-iconic { padding: 6px 4px; } .games-menu-btn { padding: 8px 5px; } }
 .bal-short { display: none; }
 @media (max-width: 380px) { .bal-full { display: none; } .bal-short { display: inline; } .arcade-wallet { padding-left: 6px; padding-right: 8px; gap: 4px; } }
+
+/* =====================================================================
+   November additions: name styles
+   ===================================================================== */
+.nx-copper { -webkit-text-fill-color: #f0904a; }
+.nx-peacebloom { -webkit-text-fill-color: #9dffcf; }
+.nx-mageroyal { -webkit-text-fill-color: #cdb8ff; }
+.nx-forgeiron, .nx-tidal, .nx-candy, .nx-starlight, .nx-plasma { -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: none; }
+.nx-forgeiron { background-image: linear-gradient(90deg, #8d99a6, #c9d1d9 40%, #ff9a3d 75%, #ff4d0a); }
+.nx-tidal { background-image: linear-gradient(90deg, #0f5aa8, #2fc6e0 55%, #e8fbff); }
+.nx-candy { background-image: linear-gradient(90deg, #ff8fd0, #8ff0e0 50%, #fff27a); }
+.nx-neon { -webkit-text-fill-color: #ffe6fb; text-shadow: 0 0 4px #ff3ec8, 0 0 10px #ff3ec8, 0 0 22px rgba(255,62,200,.7); animation: nx-neon 4s linear infinite; }
+@keyframes nx-neon { 0%, 46%, 49%, 52%, 100% { opacity: 1; } 47.5%, 50.5% { opacity: .55; } }
+.nx-obsidian { -webkit-text-fill-color: #0d0d0d; -webkit-text-stroke: 1px #cfd3d8; text-shadow: 0 0 8px rgba(207,211,216,.35); }
+.nx-starlight { background-image: radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 60% 70%, #fff, transparent), radial-gradient(1.5px 1.5px at 80% 20%, #fff, transparent), radial-gradient(1px 1px at 40% 80%, #dfe8ff, transparent), linear-gradient(90deg, #6a8bff, #b98cff 50%, #6ad0ff);
+  background-size: 40px 20px, 34px 22px, 52px 24px, 28px 18px, 100% 100%; animation: nx-stars 6s linear infinite; filter: drop-shadow(0 0 6px rgba(140,160,255,.7)); }
+@keyframes nx-stars { to { background-position: 40px 0, -34px 0, 52px 0, -28px 0, 0 0; } }
+.nx-plasma { background-image: linear-gradient(90deg, #ff5ce0, #8a7dff, #5cd6ff, #5cff8a, #ff5ce0); background-size: 300% 100%; animation: nx-shine 3s linear infinite, nx-hue 6s linear infinite; filter: drop-shadow(0 0 6px rgba(200,140,255,.8)); }
+@keyframes nx-hue { to { filter: hue-rotate(360deg) drop-shadow(0 0 6px rgba(200,140,255,.8)); } }
+@media (prefers-reduced-motion: reduce) { .nx-neon, .nx-starlight, .nx-plasma { animation: none !important; } }
+
+/* =====================================================================
+   November additions: site themes (deep reskins)
+   ===================================================================== */
+html[data-theme="x-crimson"] {
+  --sk-bg0: #070304; --sk-page: radial-gradient(1200px 600px at 50% -10%, rgba(196,26,36,.16), transparent 60%), #070304;
+  --sk-surface: #100708; --sk-surface-2: #180a0c; --sk-input: #0a0405; --sk-royal-bg: linear-gradient(180deg, #170809, #0b0405);
+  --sk-line: #2a1114; --sk-line-hi: #a3222e; --sk-edge: #d6454d;
+  --sk-accent: #ff5a64; --sk-link: #ff8a8f; --sk-link-hi: #ffd0d2; --sk-text: #f5e6e7; --sk-text-2: #c9aeb0; --sk-muted: #8c6e71; --sk-h2: #ff7078; --sk-h3: #ffc2c6;
+  --sk-title: linear-gradient(180deg, #ffd0d2, #ff5a64 50%, #a3222e); --sk-title-filter: drop-shadow(0 2px 0 #000) drop-shadow(0 0 12px rgba(255,60,70,.3));
+  --sk-btn: #160809; --sk-btn-fg: #ff8a8f; --sk-btn-fg-hi: #fff; --sk-primary: linear-gradient(180deg, #d6303a, #8a1019); --sk-primary-fg: #fff; --sk-primary-line: #ff9aa0;
+  --sk-header: #0a0405; --sk-th: #170809; --sk-glow: 0 0 14px -4px rgba(255,60,70,.45); --sk-glow-strong: 0 0 22px -4px rgba(255,60,70,.65);
+  --sk-glow1: #7a0f18; --sk-glow2: #ff3b47; --sk-glow3: #2a0508; --sk-aura: .25; --sk-embers: .2;
+}
+html[data-theme="x-sapphire"] {
+  --sk-bg0: #03060f; --sk-page: radial-gradient(1200px 600px at 50% -10%, rgba(60,110,220,.2), transparent 60%), #03060f;
+  --sk-surface: #08101f; --sk-surface-2: #0d182c; --sk-input: #050a14; --sk-royal-bg: linear-gradient(180deg, #0d1a33, #060c18);
+  --sk-line: #16264a; --sk-line-hi: #5b7fc4; --sk-edge: #c9d6ea;
+  --sk-accent: #c9d9ff; --sk-link: #8fb3ff; --sk-link-hi: #fff; --sk-text: #e8eefc; --sk-text-2: #a9b6d4; --sk-muted: #6d7a98; --sk-h2: #c9d9ff; --sk-h3: #9fc0ff;
+  --sk-title: linear-gradient(180deg, #ffffff, #c9d9ff 45%, #5b7fc4 75%, #e8f0ff); --sk-title-filter: drop-shadow(0 2px 0 #000) drop-shadow(0 0 12px rgba(120,160,255,.3));
+  --sk-btn: #0c1528; --sk-btn-fg: #c9d9ff; --sk-btn-fg-hi: #fff; --sk-primary: linear-gradient(180deg, #4a78e0, #1f3f8a); --sk-primary-fg: #fff; --sk-primary-line: #c9d9ff;
+  --sk-header: #050a16; --sk-th: #0d182c; --sk-glow: 0 0 14px -4px rgba(120,160,255,.45); --sk-glow-strong: 0 0 22px -4px rgba(120,160,255,.65);
+  --sk-glow1: #1f3f8a; --sk-glow2: #8fb3ff; --sk-glow3: #0a1430; --sk-aura: .3; --sk-embers: 0;
+}
+html[data-theme="x-jade"] {
+  --sk-bg0: #020806; --sk-page: radial-gradient(1200px 600px at 50% -10%, rgba(40,180,130,.16), transparent 60%), #020806;
+  --sk-surface: #061210; --sk-surface-2: #0a1c18; --sk-input: #030a08; --sk-royal-bg: linear-gradient(180deg, #0a1d18, #04100c);
+  --sk-line: #123a30; --sk-line-hi: #3fae8a; --sk-edge: #d6b25c;
+  --sk-accent: #e4c46e; --sk-link: #6fe0b4; --sk-link-hi: #dfffee; --sk-text: #e6f5ef; --sk-text-2: #a5c4b8; --sk-muted: #6a8a7e; --sk-h2: #6fe0b4; --sk-h3: #e4c46e;
+  --sk-title: linear-gradient(180deg, #f6e7b4, #e4c46e 45%, #3fae8a 80%); --sk-title-filter: drop-shadow(0 2px 0 #000) drop-shadow(0 0 12px rgba(63,174,138,.3));
+  --sk-btn: #0a1a16; --sk-btn-fg: #e4c46e; --sk-btn-fg-hi: #fff4cf; --sk-primary: linear-gradient(180deg, #3fae8a, #1d6b52); --sk-primary-fg: #fff; --sk-primary-line: #e4c46e;
+  --sk-header: #030b09; --sk-th: #0a1c18; --sk-glow: 0 0 14px -4px rgba(63,174,138,.5); --sk-glow-strong: 0 0 22px -4px rgba(228,196,110,.55);
+  --sk-glow1: #1d6b52; --sk-glow2: #e4c46e; --sk-glow3: #06261d; --sk-aura: .28; --sk-embers: .15;
+}
+html[data-theme="x-midnight"] {
+  --sk-bg0: #000; --sk-page: radial-gradient(1000px 500px at 50% -10%, rgba(140,90,255,.12), transparent 60%), #000;
+  --sk-surface: #08060c; --sk-surface-2: #0e0b15; --sk-input: #040306; --sk-royal-bg: linear-gradient(180deg, #0e0b16, #050408);
+  --sk-line: #1c1628; --sk-line-hi: #7a5cc4; --sk-edge: #9b7dff;
+  --sk-accent: #c4adff; --sk-link: #b39bff; --sk-link-hi: #fff; --sk-text: #eeeaf7; --sk-text-2: #aaa3bd; --sk-muted: #6f6883; --sk-h2: #c4adff; --sk-h3: #ddd0ff;
+  --sk-title: linear-gradient(180deg, #ffffff, #c4adff 55%, #7a5cc4); --sk-title-filter: drop-shadow(0 0 10px rgba(155,125,255,.45));
+  --sk-btn: #0e0b15; --sk-btn-fg: #c4adff; --sk-btn-fg-hi: #fff; --sk-primary: linear-gradient(180deg, #8a6aff, #4a2fa8); --sk-primary-fg: #fff; --sk-primary-line: #ddd0ff;
+  --sk-header: #030205; --sk-th: #0e0b15; --sk-text-glow: 0 0 10px rgba(155,125,255,.4);
+  --sk-glow: 0 0 14px -4px rgba(155,125,255,.55); --sk-glow-strong: 0 0 24px -4px rgba(155,125,255,.75);
+  --sk-glow1: #3a2480; --sk-glow2: #9b7dff; --sk-glow3: #120830; --sk-aura: .22; --sk-embers: 0;
+}
+html[data-theme="x-amber"] {
+  --sk-bg0: #0a0603; --sk-page: radial-gradient(1200px 650px at 50% -10%, rgba(255,160,60,.2), transparent 60%), radial-gradient(800px 500px at 100% 110%, rgba(255,120,40,.1), transparent 70%), #0a0603;
+  --sk-surface: #150d06; --sk-surface-2: #1e130a; --sk-input: #0c0704; --sk-royal-bg: linear-gradient(180deg, #24160a, #110a04);
+  --sk-surface-bg: radial-gradient(120% 90% at 50% 0%, rgba(255,170,80,.07), transparent 60%), #150d06;
+  --sk-line: #3a2512; --sk-line-hi: #c9853a; --sk-edge: #ffb35c;
+  --sk-accent: #ffc477; --sk-link: #ffb35c; --sk-link-hi: #ffe9c9; --sk-text: #f8ead8; --sk-text-2: #d2b896; --sk-muted: #93795a; --sk-h2: #ffc477; --sk-h3: #ffdca8;
+  --sk-title: linear-gradient(180deg, #fff1d6, #ffc477 45%, #c9853a 80%); --sk-title-filter: drop-shadow(0 2px 0 #000) drop-shadow(0 0 16px rgba(255,170,80,.35));
+  --sk-btn: #1e130a; --sk-btn-fg: #ffc477; --sk-btn-fg-hi: #fff3dd; --sk-primary: linear-gradient(180deg, #ff9f43, #b55a12); --sk-primary-fg: #1a0e04; --sk-primary-line: #ffe0b0;
+  --sk-header: #0d0804; --sk-th: #1e130a; --sk-glow: 0 0 16px -4px rgba(255,160,60,.5); --sk-glow-strong: 0 0 24px -4px rgba(255,160,60,.7);
+  --sk-glow1: #b55a12; --sk-glow2: #ffb35c; --sk-glow3: #3a1a04; --sk-aura: .35; --sk-embers: .7;
+}
+html[data-theme="x-sunset"] {
+  --sk-bg0: #0e0418; --sk-page: linear-gradient(180deg, #0e0418 0%, #2a0a3a 45%, #5a1a3a 75%, #8a3a1a 100%);
+  --sk-surface: rgba(20,6,30,.9); --sk-surface-2: #22092f; --sk-input: #10041a; --sk-royal-bg: linear-gradient(180deg, rgba(40,10,50,.94), rgba(20,5,26,.94));
+  --sk-line: #3d1650; --sk-line-hi: #ff8a3d; --sk-edge: #ff6a9a;
+  --sk-accent: #ffb070; --sk-link: #ff9ac2; --sk-link-hi: #ffe6f0; --sk-text: #fbeff5; --sk-text-2: #d6b6c8; --sk-muted: #9a7a90; --sk-h2: #ff9ac2; --sk-h3: #ffb070;
+  --sk-title: linear-gradient(90deg, #ffd36b, #ff8a3d 35%, #ff4f9a 70%, #b06bff); --sk-title-filter: drop-shadow(0 0 12px rgba(255,120,80,.55));
+  --sk-btn: #1e0829; --sk-btn-fg: #ffb070; --sk-btn-fg-hi: #fff; --sk-btn-line: rgba(255,154,194,.5);
+  --sk-primary: linear-gradient(90deg, #ff8a3d, #ff4f9a); --sk-primary-fg: #fff; --sk-primary-line: rgba(255,255,255,.5);
+  --sk-header: rgba(14,4,24,.94); --sk-th: #22092f; --sk-text-glow: 0 0 10px rgba(255,120,150,.5);
+  --sk-glow: 0 0 16px -2px rgba(255,120,120,.55); --sk-glow-strong: 0 0 26px 0 rgba(255,120,120,.75);
+  --sk-frame-shadow: 0 0 22px -14px rgba(255,120,150,.6); --sk-royal-shadow: 0 0 32px -8px rgba(255,138,61,.5);
+  --sk-glow1: #ff4f9a; --sk-glow2: #ff8a3d; --sk-glow3: #6a2cff; --sk-aura: .2; --sk-embers: .25;
+}
+html[data-theme="x-glacial"] {
+  --sk-bg0: #04101a; --sk-page: linear-gradient(160deg, #061a2a 0%, #0a2a40 50%, #04101a 100%);
+  --sk-surface: rgba(200,235,255,.06); --sk-surface-2: rgba(200,235,255,.1); --sk-input: rgba(0,10,20,.4);
+  --sk-royal-bg: linear-gradient(160deg, rgba(220,245,255,.13), rgba(200,235,255,.04));
+  --sk-line: rgba(200,235,255,.14); --sk-line-hi: rgba(160,225,255,.55); --sk-edge: #bfe9ff; --sk-edge-dark: rgba(200,235,255,.08);
+  --sk-accent: #c8f0ff; --sk-link: #9fdcff; --sk-link-hi: #fff; --sk-text: #f0faff; --sk-text-2: #b8d4e2; --sk-muted: #7f9cad; --sk-h2: #c8f0ff; --sk-h3: #9fdcff;
+  --sk-title: linear-gradient(180deg, #ffffff, #c8f0ff 50%, #6fc6ff); --sk-title-filter: drop-shadow(0 0 14px rgba(160,225,255,.5));
+  --sk-btn: rgba(200,235,255,.1); --sk-btn-fg: #e8f8ff; --sk-btn-fg-hi: #fff; --sk-btn-line: rgba(200,235,255,.25);
+  --sk-primary: linear-gradient(180deg, #8fe0ff, #3a9ad6); --sk-primary-fg: #04121c; --sk-primary-line: #fff;
+  --sk-header: rgba(4,16,26,.6); --sk-th: rgba(200,235,255,.07); --sk-text-glow: 0 0 12px rgba(160,225,255,.4);
+  --sk-glow: 0 0 18px -4px rgba(160,225,255,.5); --sk-glow-strong: 0 0 28px -4px rgba(160,225,255,.7);
+  --sk-r: 14px; --sk-r-btn: 9px; --sk-frame-shadow: 0 18px 40px -24px rgba(0,0,0,.8);
+  --sk-glow1: #3a9ad6; --sk-glow2: #c8f0ff; --sk-glow3: #1a4a7a; --sk-aura: .45; --sk-embers: 0;
+}
+@media (min-width: 900px) {
+  html[data-theme="x-glacial"] :is(.panel-royal, .hero, .site-header, .arcade-bar, .games-menu-panel) { -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); }
+}
+html[data-theme="x-emberforge"] {
+  --sk-bg0: #050302; --sk-page: radial-gradient(1000px 500px at 50% 110%, rgba(255,90,20,.18), transparent 65%), #050302;
+  --sk-surface: #0c0806; --sk-surface-2: #140d09; --sk-input: #070403; --sk-royal-bg: linear-gradient(180deg, #110a07, #070403);
+  --sk-line: #24160e; --sk-line-hi: #ff6a1a; --sk-edge: #ff8a3d;
+  --sk-accent: #ff9a4d; --sk-link: #ffb070; --sk-link-hi: #ffe6cc; --sk-text: #f7ece4; --sk-text-2: #c9b1a2; --sk-muted: #8a7364; --sk-h2: #ff9a4d; --sk-h3: #ffc79c;
+  --sk-title: linear-gradient(0deg, #ff3a00, #ff8a1a 40%, #ffd36b 75%, #fff4cf); --sk-title-filter: drop-shadow(0 0 10px rgba(255,100,20,.65));
+  --sk-btn: #120b07; --sk-btn-fg: #ff9a4d; --sk-btn-fg-hi: #fff; --sk-btn-line: rgba(255,106,26,.6);
+  --sk-primary: linear-gradient(180deg, #ff8a1a, #b33a00); --sk-primary-fg: #fff; --sk-primary-line: #ffd0a8;
+  --sk-header: #070403; --sk-th: #140d09; --sk-text-glow: 0 0 10px rgba(255,106,26,.55);
+  --sk-glow: 0 0 16px -3px rgba(255,106,26,.6); --sk-glow-strong: 0 0 26px -2px rgba(255,106,26,.8);
+  --sk-frame-shadow: 0 0 20px -12px rgba(255,106,26,.6); --sk-royal-shadow: 0 0 34px -10px rgba(255,106,26,.6), inset 0 -20px 40px -30px rgba(255,90,20,.6);
+  --sk-glow1: #b33a00; --sk-glow2: #ff6a1a; --sk-glow3: #3a1000; --sk-aura: .25; --sk-embers: 1;
+}
+html[data-theme="x-holo"] {
+  --sk-bg0: #0a0a12; --sk-page: radial-gradient(1200px 600px at 20% -10%, rgba(255,160,230,.14), transparent 60%), radial-gradient(1000px 600px at 90% 110%, rgba(140,230,255,.14), transparent 65%), #0a0a12;
+  --sk-surface: #11111c; --sk-surface-2: #181826; --sk-input: #0a0a12;
+  --sk-holo: linear-gradient(120deg, #ffb3e6, #b3c7ff, #b3fff0, #fff3b3, #ffb3e6);
+  --sk-surface-bg: linear-gradient(#11111c, #11111c) padding-box, var(--sk-holo) border-box;
+  --sk-royal-bg: linear-gradient(160deg, rgba(255,179,230,.08), rgba(179,255,240,.06)) padding-box, linear-gradient(#11111c, #11111c) padding-box, var(--sk-holo) border-box;
+  --sk-line: rgba(255,255,255,.05); --sk-line-hi: #c8b3ff; --sk-edge: #ffb3e6; --sk-edge-dark: transparent;
+  --sk-accent: #f3e8ff; --sk-link: #b3e6ff; --sk-link-hi: #fff; --sk-text: #f6f4ff; --sk-text-2: #c4c0d8; --sk-muted: #8a86a0; --sk-h2: #fff; --sk-h3: #e6d6ff;
+  --sk-title: var(--sk-holo); --sk-title-filter: drop-shadow(0 0 12px rgba(220,200,255,.45));
+  --sk-btn: #181826; --sk-btn-fg: #f3e8ff; --sk-btn-fg-hi: #fff; --sk-btn-line: rgba(220,200,255,.25);
+  --sk-primary: linear-gradient(120deg, #ffb3e6, #b3c7ff 50%, #b3fff0); --sk-primary-fg: #15121f; --sk-primary-line: #fff;
+  --sk-header: #0b0b14; --sk-th: #181826; --sk-glow: 0 0 18px -4px rgba(220,200,255,.55); --sk-glow-strong: 0 0 28px -4px rgba(255,179,230,.6);
+  --sk-r: 14px; --sk-glow1: #ffb3e6; --sk-glow2: #b3fff0; --sk-glow3: #b3c7ff; --sk-aura: .2; --sk-embers: 0;
+}
+html[data-theme="x-holo"] :is(.panel, .table-wrap, .empty, .notice, .list-row) { background-size: 100% 100%, 300% 300%; }
+html[data-theme="x-holo"] :is(.panel-royal, .hero) { border: 2px solid transparent; background-size: 100% 100%, 100% 100%, 300% 300%; animation: sk-holo 8s ease-in-out infinite alternate; }
+@keyframes sk-holo { from { background-position: 0 0, 0 0, 0% 50%; } to { background-position: 0 0, 0 0, 100% 50%; } }
+html[data-theme="x-galaxy"] {
+  --sk-bg0: #03020a;
+  --sk-page: radial-gradient(1.5px 1.5px at 10% 20%, #fff, transparent), radial-gradient(1px 1px at 30% 70%, #cfd8ff, transparent), radial-gradient(1.5px 1.5px at 55% 15%, #fff, transparent),
+    radial-gradient(1px 1px at 75% 55%, #fff, transparent), radial-gradient(1.5px 1.5px at 90% 85%, #e6d6ff, transparent), radial-gradient(1px 1px at 45% 90%, #fff, transparent),
+    radial-gradient(900px 500px at 20% 20%, rgba(120,60,255,.28), transparent 65%), radial-gradient(800px 500px at 85% 70%, rgba(255,80,180,.2), transparent 65%), radial-gradient(700px 400px at 60% 40%, rgba(60,200,255,.12), transparent 65%), #03020a;
+  --sk-surface: rgba(255,255,255,.045); --sk-surface-2: rgba(255,255,255,.075); --sk-input: rgba(0,0,0,.4);
+  --sk-royal-bg: linear-gradient(135deg, rgba(160,120,255,.12), rgba(255,255,255,.03));
+  --sk-line: rgba(255,255,255,.09); --sk-line-hi: rgba(190,160,255,.5); --sk-edge: #c9b3ff; --sk-edge-dark: rgba(255,255,255,.05);
+  --sk-accent: #e0d0ff; --sk-link: #a8c8ff; --sk-link-hi: #fff; --sk-text: #f4f2ff; --sk-text-2: #c2bcdc; --sk-muted: #8a84a8; --sk-h2: #e0d0ff; --sk-h3: #ffb3e6;
+  --sk-title: linear-gradient(90deg, #a8c8ff, #e0d0ff 35%, #ffb3e6 65%, #a8c8ff); --sk-title-filter: drop-shadow(0 0 14px rgba(190,160,255,.55));
+  --sk-btn: rgba(255,255,255,.07); --sk-btn-fg: #f0eaff; --sk-btn-fg-hi: #fff; --sk-btn-line: rgba(255,255,255,.16);
+  --sk-primary: linear-gradient(90deg, #6a4cff, #c04cff 55%, #ff4ca8); --sk-primary-fg: #fff; --sk-primary-line: rgba(255,255,255,.45);
+  --sk-header: rgba(6,4,18,.6); --sk-th: rgba(255,255,255,.05); --sk-text-glow: 0 0 12px rgba(190,160,255,.4);
+  --sk-glow: 0 0 18px -4px rgba(190,160,255,.5); --sk-glow-strong: 0 0 28px -4px rgba(255,120,200,.6);
+  --sk-r: 16px; --sk-r-btn: 10px; --sk-frame-shadow: 0 18px 40px -24px rgba(0,0,0,.85);
+  --sk-glow1: #6a4cff; --sk-glow2: #ff4ca8; --sk-glow3: #3cc8ff; --sk-aura: .35; --sk-embers: 0;
+}
+@media (min-width: 900px) {
+  html[data-theme="x-galaxy"] :is(.panel-royal, .hero, .site-header, .arcade-bar, .games-menu-panel) { -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%); }
+}
+html[data-theme="x-midnight"] .brand-name, html[data-theme="x-emberforge"] .brand-name { animation: sk-flicker 9s linear infinite; }
+.theme-swatch-x-crimson { background: linear-gradient(135deg, #070304 0 50%, #a3222e 51% 56%, #170809 57%); }
+.theme-swatch-x-sapphire { background: linear-gradient(135deg, #03060f, #1f3f8a 55%, #c9d9ff); }
+.theme-swatch-x-jade { background: linear-gradient(135deg, #020806, #1d6b52 55%, #e4c46e); }
+.theme-swatch-x-midnight { background: radial-gradient(circle at 50% 120%, #7a5cc4, transparent 60%), #000; box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #3a2a66 !important; }
+.theme-swatch-x-amber { background: radial-gradient(circle at 50% 110%, #ffb35c, #b55a12 45%, #150d06 80%); }
+.theme-swatch-x-sunset { background: linear-gradient(180deg, #0e0418, #5a1a3a 50%, #ff8a3d); box-shadow: 0 0 0 1px #000, 0 0 14px -3px rgba(255,120,120,.7) !important; }
+.theme-swatch-x-glacial { background: radial-gradient(circle at 30% 30%, rgba(220,245,255,.6), transparent 50%), linear-gradient(160deg, #0a2a40, #3a9ad6); }
+.theme-swatch-x-emberforge { background: radial-gradient(circle at 50% 120%, #ff6a1a, transparent 55%), #050302; box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #ff6a1a, 0 0 14px -2px rgba(255,106,26,.7) !important; }
+.theme-swatch-x-holo { background: linear-gradient(120deg, #ffb3e6, #b3c7ff, #b3fff0, #fff3b3); }
+.theme-swatch-x-galaxy { background: radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 60%, #fff, transparent), radial-gradient(circle at 30% 30%, rgba(120,60,255,.7), transparent 55%), radial-gradient(circle at 80% 70%, rgba(255,80,180,.6), transparent 55%), #03020a; }
+
+/* =====================================================================
+   November additions: profile banners
+   ===================================================================== */
+.bn-sunrise { background: radial-gradient(circle at 70% 85%, #fff4c2 0 7%, #ffd36b 9%, rgba(255,160,80,.6) 22%, transparent 45%), linear-gradient(180deg, #2a3a7a 0%, #b06a8a 45%, #ffb36b 75%, #ffd99a 100%); }
+.bn-sunrise::before { background: radial-gradient(120% 60% at 30% 120%, #2f5a2a 60%, transparent 61%), radial-gradient(90% 50% at 85% 125%, #3d6e2f 60%, transparent 61%); }
+.bn-depths { background: linear-gradient(180deg, #0f5a8a, #063456 50%, #021a2e); }
+.bn-depths::before { background: repeating-linear-gradient(100deg, transparent 0 40px, rgba(180,230,255,.08) 40px 70px); -webkit-mask-image: linear-gradient(180deg, #000, transparent 85%); mask-image: linear-gradient(180deg, #000, transparent 85%); animation: bn-rays 8s ease-in-out infinite alternate; }
+@keyframes bn-rays { from { transform: translateX(-20px); opacity: .7; } to { transform: translateX(20px); opacity: 1; } }
+.bn-grove { background: radial-gradient(circle at 75% 35%, #f4f0d8 0 9%, rgba(244,240,216,.35) 11%, transparent 26%), linear-gradient(180deg, #0a1430, #142a40 70%, #0a1a20); }
+.bn-grove::before { background:
+  radial-gradient(30px 70px at 8% 100%, #050b0a 98%, transparent), radial-gradient(40px 90px at 18% 100%, #071210 98%, transparent), radial-gradient(28px 60px at 30% 100%, #050b0a 98%, transparent),
+  radial-gradient(36px 80px at 52% 100%, #071210 98%, transparent), radial-gradient(30px 66px at 64% 100%, #050b0a 98%, transparent), radial-gradient(44px 96px at 88% 100%, #071210 98%, transparent), radial-gradient(30px 70px at 97% 100%, #050b0a 98%, transparent); }
+.bn-snow { background: linear-gradient(180deg, #0b1830, #1a3050 70%, #c8dcf0 100%); }
+.bn-snow::before, .bn-snow > i { position: absolute; inset: -100% 0 0 0; display: block; background-image: radial-gradient(2px 2px at 10% 10%, #fff, transparent), radial-gradient(2px 2px at 30% 40%, #fff, transparent), radial-gradient(1.5px 1.5px at 55% 25%, #fff, transparent), radial-gradient(2px 2px at 75% 60%, #fff, transparent), radial-gradient(1.5px 1.5px at 90% 15%, #fff, transparent), radial-gradient(1.5px 1.5px at 45% 80%, #fff, transparent);
+  background-size: 180px 120px; animation: bn-snowfall 9s linear infinite; }
+.bn-snow > i { background-size: 260px 160px; opacity: .6; animation-duration: 14s; }
+@keyframes bn-snowfall { to { transform: translateY(50%); } }
+.bn-circuit { background:
+  linear-gradient(90deg, transparent 0 48%, rgba(224,138,60,.35) 48% 49%, transparent 49%) 0 0 / 60px 60px, linear-gradient(0deg, transparent 0 48%, rgba(224,138,60,.35) 48% 49%, transparent 49%) 0 0 / 60px 60px,
+  radial-gradient(circle at 50% 50%, rgba(255,180,90,.6) 0 3px, transparent 4px) 30px 30px / 60px 60px, linear-gradient(135deg, #0a1410, #12221a); }
+.bn-circuit::before { background: linear-gradient(90deg, transparent, rgba(255,200,120,.75), transparent) 0 0 / 25% 2px no-repeat; animation: bn-ley 3s linear infinite; top: 29px; height: 2px; bottom: auto; }
+.bn-lava { background: linear-gradient(120deg, #1a0300, #4a0a00 40%, #1a0300); }
+.bn-lava::before { background: radial-gradient(60% 40% at 30% 60%, rgba(255,120,20,.9), transparent 70%), radial-gradient(50% 30% at 75% 40%, rgba(255,180,40,.8), transparent 70%), radial-gradient(40% 30% at 55% 85%, rgba(255,80,0,.85), transparent 70%);
+  filter: blur(8px); animation: bn-drift 10s ease-in-out infinite alternate; }
+.bn-storm { background: radial-gradient(120% 70% at 50% -10%, #3a4560, #151a28 60%, #0a0c14); }
+.bn-storm::before { background: linear-gradient(115deg, transparent 48%, rgba(220,235,255,.95) 49% 50%, transparent 51%), radial-gradient(60% 80% at 60% 20%, rgba(200,220,255,.35), transparent 70%); opacity: 0; animation: bn-flash 5s linear infinite; }
+@keyframes bn-flash { 0%, 62%, 66%, 70%, 100% { opacity: 0; } 63%, 68% { opacity: 1; } }
+.bn-blossom { background: linear-gradient(180deg, #2a1838, #6a3a5a 60%, #c87a9a); }
+.bn-blossom::before, .bn-blossom > i { position: absolute; inset: -100% -20% 0 -20%; display: block;
+  background-image: radial-gradient(4px 3px at 10% 20%, #ffc4dd, transparent), radial-gradient(3px 2px at 35% 45%, #ffd6e8, transparent), radial-gradient(4px 3px at 60% 15%, #ffb0d0, transparent), radial-gradient(3px 3px at 80% 60%, #ffc4dd, transparent), radial-gradient(4px 2px at 50% 80%, #ffe0ee, transparent);
+  background-size: 220px 140px; animation: bn-petals 12s linear infinite; }
+.bn-blossom > i { background-size: 300px 190px; opacity: .7; animation-duration: 17s; }
+@keyframes bn-petals { to { transform: translate(-60px, 50%); } }
+.bn-nebula { background: #05030f; }
+.bn-nebula::before { inset: -50%; background: radial-gradient(30% 25% at 40% 45%, rgba(160,90,255,.7), transparent 70%), radial-gradient(25% 20% at 60% 55%, rgba(255,80,180,.6), transparent 70%), radial-gradient(20% 18% at 50% 40%, rgba(80,200,255,.5), transparent 70%),
+  radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 70%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 25%, #fff, transparent);
+  filter: blur(1px); animation: bn-spin 60s linear infinite; }
+.bn-goldrain { background: radial-gradient(80% 120% at 50% 120%, rgba(255,200,60,.5), transparent 60%), linear-gradient(180deg, #120c03, #2a1c06); }
+.bn-goldrain::before, .bn-goldrain > i { position: absolute; inset: -100% 0 0 0; display: block;
+  background-image: radial-gradient(5px 3.5px at 15% 10%, #ffe27a 60%, #b08d3c 61%, transparent 70%), radial-gradient(5px 3.5px at 45% 35%, #fff1a8 60%, #c9a13b 61%, transparent 70%), radial-gradient(5px 3.5px at 70% 15%, #ffe27a 60%, #b08d3c 61%, transparent 70%), radial-gradient(5px 3.5px at 88% 55%, #ffe9a8 60%, #b8862e 61%, transparent 70%);
+  background-size: 160px 120px; animation: bn-snowfall 4s linear infinite; filter: drop-shadow(0 0 3px rgba(255,200,60,.8)); }
+.bn-goldrain > i { background-size: 230px 170px; opacity: .7; animation-duration: 6s; }
+@media (prefers-reduced-motion: reduce) { .bn-snow::before, .bn-snow > i, .bn-blossom::before, .bn-blossom > i, .bn-goldrain::before, .bn-goldrain > i, .bn-storm::before, .bn-depths::before, .bn-lava::before, .bn-nebula::before, .bn-circuit::before { animation: none !important; } }
