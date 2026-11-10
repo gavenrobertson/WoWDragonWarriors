@@ -8,7 +8,7 @@ import { DailyWheel } from "@/components/arcade/DailyWheel";
 import { WelcomeBonus } from "@/components/arcade/WelcomeBonus";
 import { GAMES, fmt, wowIconUrl } from "@/lib/arcade-games";
 
-export const metadata: Metadata = { title: "Arcade", description: "The Dragon Warriors arcade: Plinko, Mines, Dragonflight and more. Win Dragon Marks and open chests for name styles, titles and site themes." };
+export const metadata: Metadata = { title: "DW Arcade", description: "DW Arcade, the Dragon Warriors arcade: 30 games from Plinko and Blackjack to typing tests and 8-ball. Win Dragon Marks and open chests for name styles, titles and site themes." };
 
 const GAME_LABEL: Record<string, string> = { plinko: "Plinko", mines: "Mines", crash: "Dragonflight", hilo: "Higher or Lower", slots: "Dragon's Hoard", dice: "Dice", coinflip: "Faction Flip", wheel: "Daily Wheel" };
 
@@ -25,8 +25,8 @@ export default async function ArcadeLobby() {
       {w && !w.welcomed && <WelcomeBonus marks={WELCOME_MARKS} />}
       <section className="panel-royal arcade-hero">
         <div className="stack" style={{ gap: 8 }}>
-          <span className="eyebrow">The Dragon Warriors Arcade</span>
-          <h1>Arcade</h1>
+          <span className="eyebrow">Dragon Warriors presents</span>
+          <h1>DW Arcade</h1>
           <p className="soft" style={{ fontSize: 16, maxWidth: 620 }}>Spin the wheel every day for free Dragon Marks, play for more, then crack open chests for glowing and chrome name colours, titles and whole new looks for the site.</p>
         </div>
         <DailyWheel segments={WHEEL.map((s) => s.marks)} canSpin={!!w && canSpinToday(w.lastDaily)} streak={w?.streak ?? 0} signedIn={!!w} />

@@ -5,7 +5,7 @@ import { classColor } from "@/lib/ui";
 import { NavLinks } from "./NavLinks";
 import { MobileNav } from "./MobileNav";
 import { IconDiscord } from "./icons";
-import { PlayerName } from "./PlayerName";
+import { AccountMenu } from "./AccountMenu";
 import { DISCORD_INVITE } from "@/lib/links";
 
 export async function SiteHeader() {
@@ -37,10 +37,7 @@ export async function SiteHeader() {
             account={viewer.signedIn && main ? { kind: "main", name: main.name, className: main.className, slug: main.slug, nameStyle: viewer.cosmetics.nameStyle, avatarUrl: main.avatarUrl ?? null }
               : viewer.signedIn ? { kind: "claim" } : { kind: "signin" }} />
           {viewer.signedIn && main ? (
-            <Link href={`/characters/${main.slug}`} className="account-pill" aria-label={`Your main: ${main.name}`}>
-              <span className="avatar" style={{ "--s": "32px", "--c": color } as React.CSSProperties}>{main.avatarUrl ? <img src={main.avatarUrl} alt="" /> : main.name.charAt(0)}</span>
-              <span className="account-name strong small"><PlayerName name={main.name} className={main.className} nameStyle={viewer.cosmetics.nameStyle} showTitle={false} /></span>
-            </Link>
+            <AccountMenu name={main.name} className={main.className} slug={main.slug} avatarUrl={main.avatarUrl ?? null} color={color} nameStyle={viewer.cosmetics.nameStyle} />
           ) : viewer.signedIn ? (
             <Link href="/sign-in?step=claim" className="btn btn-sm">Claim characters</Link>
           ) : (

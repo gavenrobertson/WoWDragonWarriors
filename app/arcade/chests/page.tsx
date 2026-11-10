@@ -4,7 +4,7 @@ import { CHEST_DROP_DAILY, chestDropChance, ownedCosmetics } from "@/lib/arcade"
 import { CHESTS, COSMETICS } from "@/lib/cosmetics";
 import { ChestOpener } from "@/components/arcade/ChestOpener";
 
-export const metadata: Metadata = { title: "Chests · Arcade" };
+export const metadata: Metadata = { title: "Chests · DW Arcade" };
 
 export default async function ChestsPage() {
   const v = await getViewer();

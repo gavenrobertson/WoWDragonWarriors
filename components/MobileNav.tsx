@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { IconDiscord } from "./icons";
 import { PlayerName } from "./PlayerName";
+import { AppearanceEditor } from "./AccountMenu";
 
 const ICONS: Record<string, string> = {
   "/": "inv_misc_rune_01", "/guild": "inv_bannerpvp_02", "/characters": "achievement_character_human_male", "/loot": "inv_misc_bag_10",
@@ -19,6 +20,7 @@ export function MobileNav({ items, discord, account }: {
   account: { kind: "main"; name: string; className: string | null; slug: string; nameStyle: string | null; avatarUrl: string | null } | { kind: "claim" } | { kind: "signin" };
 }) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const path = usePathname();
   const btn = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -73,11 +75,13 @@ export function MobileNav({ items, discord, account }: {
           ))}
         </nav>
         <div className="mm-foot">
+          {account.kind === "main" && <button type="button" className="btn btn-lg" onClick={() => { setOpen(false); setEditing(true); }}>✎ Edit appearance</button>}
           <a href={discord} target="_blank" rel="noopener noreferrer" className="btn btn-lg mm-discord"><IconDiscord /> Join our Discord</a>
           {account.kind === "signin" && <Link href="/sign-in" className="btn btn-primary btn-lg">Sign in with Battle.net</Link>}
           {account.kind === "claim" && <Link href="/sign-in?step=claim" className="btn btn-primary btn-lg">Claim your characters</Link>}
         </div>
       </div>
+      {editing && account.kind === "main" && <AppearanceEditor name={account.name} className={account.className} onClose={() => setEditing(false)} />}
     </>
   );
 }

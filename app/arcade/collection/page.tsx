@@ -5,7 +5,7 @@ import { ownedCosmetics } from "@/lib/arcade";
 import { COSMETICS } from "@/lib/cosmetics";
 import { Collection } from "@/components/arcade/Collection";
 
-export const metadata: Metadata = { title: "Collection · Arcade" };
+export const metadata: Metadata = { title: "Collection · DW Arcade" };
 
 export default async function CollectionPage() {
   const v = await getViewer();

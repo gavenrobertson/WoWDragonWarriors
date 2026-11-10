@@ -43,7 +43,7 @@ type Props = { params: Promise<{ game: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { game } = await params;
   const g = GAMES.find((x) => x.slug === game);
-  return { title: g ? `${g.name} · Arcade` : "Arcade" };
+  return { title: g ? `${g.name} · DW Arcade` : "DW Arcade" };
 }
 
 export default async function GamePage({ params }: Props) {

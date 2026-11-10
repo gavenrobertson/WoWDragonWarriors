@@ -52,11 +52,13 @@ export function Interactions() {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
     const io = new IntersectionObserver((entries) => {
       for (const e of entries) if (e.isIntersecting) { e.target.classList.add("revealed"); io.unobserve(e.target); }
-    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+    }, { rootMargin: "0px 0px -4% 0px", threshold: 0 });
     const scan = () => {
       document.querySelectorAll<HTMLElement>("main .panel, main .table-wrap, main .grid-auto > *, main .split > *").forEach((el) => {
         if (el.dataset.revealSeen) return;
         el.dataset.revealSeen = "1";
+        // Interactive pages (the arcade) and tall panels never fade in: they'd leave blank gaps while you scroll.
+        if (el.closest(".arcade") || el.offsetHeight > window.innerHeight * 0.8) return;
         // Only hide things that start off-screen, so nothing visible ever flashes.
         if (el.getBoundingClientRect().top > window.innerHeight) { el.classList.add("reveal"); io.observe(el); }
       });

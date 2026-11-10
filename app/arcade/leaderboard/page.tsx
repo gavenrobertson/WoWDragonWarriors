@@ -7,7 +7,7 @@ import { MONTHLY_PRIZES, SKILL_IDS, SKILL_META, fmtScore } from "@/lib/skill-gam
 import { wowIconUrl } from "@/lib/arcade-games";
 import { PlayerName } from "@/components/PlayerName";
 
-export const metadata: Metadata = { title: "Leaderboard · Arcade" };
+export const metadata: Metadata = { title: "Leaderboard · DW Arcade" };
 
 type Props = { searchParams: Promise<{ t?: string }> };
 

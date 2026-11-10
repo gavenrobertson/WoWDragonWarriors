@@ -39,7 +39,7 @@ export const NAV = [
   { href: "/raids", label: "Raids" },
   { href: "/roster", label: "Roster" },
   { href: "/admin", label: "Admin", adminOnly: true },
-  { href: "/arcade", label: "Arcade" },
+  { href: "/arcade", label: "DW Arcade" },
 ] as const;
 
 export const NS = {

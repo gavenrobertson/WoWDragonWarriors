@@ -193,3 +193,11 @@ const generic = (g: string): GenericSkill => {
 };
 export async function skillBegin(input: { game: string }) { return play((u) => A.skillStart(u, generic(input.game))); }
 export async function skillEnd(input: { game: string; id: string; score: number }) { return play((u) => A.skillFinish(u, generic(input.game), String(input.id), input.score)); }
+
+/** What the signed-in player owns and has equipped, for the appearance editor. */
+export async function myLook() {
+  const v = await getViewer();
+  if (v.demo || !v.signedIn || !v.userId) return { ok: false as const, error: "Sign in to change your look." };
+  const owned = await A.ownedCosmetics(v.userId);
+  return { ok: true as const, owned, equipped: v.cosmetics };
+}
