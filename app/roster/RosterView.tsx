@@ -144,7 +144,7 @@ export function RosterView({ initialTab, total, rows, profs, bank, requests, sig
         <div className="split" style={{ gap: 16 }}>
           <div className="main-col panel">
             <div className="row between baseline">
-              <span className="strong">Guild bank · <span className="gold">{bank.gold != null ? `${Math.floor(bank.gold / 10000).toLocaleString("en-US")} gold` : "[GOLD] gold"}</span></span>
+              <span className="strong">Guild bank · <span className="gold">N/A</span></span>
               <span className="src">Addon export uploaded by the bank officer · last sync {bank.uploadedAt ? new Date(bank.uploadedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : "[TIME]"}</span>
             </div>
             {bank.items.length === 0 ? <p className="empty">No bank export uploaded yet.</p> : (

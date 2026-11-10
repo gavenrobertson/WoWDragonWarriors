@@ -163,8 +163,9 @@ export default async function HomePage() {
           <section aria-labelledby="bank-title" className="panel" style={{ gap: 14 }}>
             <h2 id="bank-title">Guild bank</h2>
             <div className="row baseline" style={vars({ "--gap": "8px" })}>
-              <span style={{ fontSize: 28, fontWeight: 700, color: "var(--dw-gold-light)" }}>{bank.gold != null ? Math.floor(bank.gold / 10000).toLocaleString("en-US") : "[GOLD]"}</span>
-              <span className="muted">gold</span>
+              {/* The bank total isn't tracked yet (no export), so show N/A rather than a guess. */}
+              <span style={{ fontSize: 28, fontWeight: 700, color: "var(--dw-gold-light)" }}>N/A</span>
+              <span className="muted">gold total not tracked yet</span>
             </div>
             <p className="soft" style={{ fontSize: 14 }}>Consumables fund for raid night: flasks, potions and repair costs.</p>
             <span className="src">No Blizzard API for bank contents · synced by the guild addon export</span>

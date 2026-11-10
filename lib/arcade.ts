@@ -78,7 +78,7 @@ export async function addChests(userId: string, chestId: string, n: number) {
 }
 // ---------------------------------------------------------------- chest grants for everyone
 /** Chests every member gets at the end of each month (Central time). */
-export const MONTHLY_CHESTS: Record<string, number> = { copper: 3, gilded: 2, hoard: 1 };
+export const MONTHLY_CHESTS: Record<string, number> = { gilded: 1 };
 /** One-time welcome-to-chests gift, sent once by the cron job and announced in Discord. */
 export const LAUNCH_GIFT = { key: "launch-2026-11", chests: { copper: 5, gilded: 3, hoard: 2 } as Record<string, number> };
 
