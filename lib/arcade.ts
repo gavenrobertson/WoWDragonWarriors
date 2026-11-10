@@ -49,14 +49,18 @@ export async function debit(userId: string, amount: number, wager = true, drops 
 }
 
 // ---------------------------------------------------------------- chest drops from play
-// Every bet has a chance to drop a chest, in proportion to the bet: the expected value of drops is about
-// 4% of what you wager (2% in Copper, 1.2% in Gilded, 0.8% in Hoard), so pricier chests are much rarer.
-// A 100-mark bet: Copper 1 in 200, Gilded 1 in 1,250, Hoard 1 in 6,250. A 5,000-mark bet: 1 in 4, 1 in 25, 1 in 125.
-export const CHEST_DROP_SHARE: Record<string, number> = { copper: 0.02, gilded: 0.012, hoard: 0.008 };
-export const CHEST_DROP_DAILY = 12;
+// Every bet can drop a chest. The chance grows with the bet (worth about 10% of what you wager on average:
+// 6% in Copper, 3% in Gilded, 1.5% in Hoard), with a floor so small bets still find them, and pricier
+// chests are much rarer. A 100-mark bet (the floor starts there): Copper 1 in 67, Gilded 1 in 333, Hoard 1 in 2,000.
+// A 1,000-mark bet: 1 in 7, 1 in 50, 1 in 333. The daily cap keeps it from being farmed with tiny bets.
+export const CHEST_DROP_SHARE: Record<string, number> = { copper: 0.06, gilded: 0.03, hoard: 0.015 };
+const CHEST_DROP_FLOOR: Record<string, number> = { copper: 0.015, gilded: 0.003, hoard: 0.0005 };
+export const CHEST_DROP_DAILY = 20;
 export const chestDropChance = (chestId: string, bet: number) => {
   const c = CHESTS.find((x) => x.id === chestId);
-  return c ? Math.min(0.5, (bet * (CHEST_DROP_SHARE[c.id] ?? 0)) / c.price) : 0;
+  if (!c || bet < MIN_BET) return 0;
+  const floor = bet >= 100 ? CHEST_DROP_FLOOR[c.id] ?? 0 : 0; // the floor starts at 100-mark bets, so tiny bets can't farm it
+  return Math.min(0.5, Math.max(floor, (bet * (CHEST_DROP_SHARE[c.id] ?? 0)) / c.price));
 };
 async function rollChestDrop(userId: string, bet: number) {
   // best chest first, at most one drop per bet
