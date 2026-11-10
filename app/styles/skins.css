@@ -333,7 +333,7 @@ html[data-theme="x-prismatic"] .site-header { border-image: var(--sk-rainbow) 1;
 .bn-hoard::before { background: linear-gradient(115deg, transparent 40%, rgba(255,245,200,.45) 50%, transparent 60%); background-size: 260% 100%; animation: bn-sheen 4.5s linear infinite; }
 @keyframes bn-sheen { from { background-position: 130% 0; } to { background-position: -130% 0; } }
 .bn-neon { background: linear-gradient(180deg, #07021a 0%, #1a0533 55%, #3a0844 100%); }
-.bn-neon::before { left: 46%; right: auto; top: 10%; bottom: auto; width: 22%; aspect-ratio: 1; border-radius: 50%; max-width: 170px;
+.bn-neon::before { left: auto; right: 8%; top: 10%; bottom: auto; width: 22%; aspect-ratio: 1; border-radius: 50%; max-width: 170px;
   background: linear-gradient(180deg, #ffd36b, #ff7a59 45%, #ff3ec8 80%);
   -webkit-mask-image: linear-gradient(180deg, #000 50%, transparent 50% 55%, #000 55% 64%, transparent 64% 69%, #000 69% 77%, transparent 77% 83%, #000 83%);
   mask-image: linear-gradient(180deg, #000 50%, transparent 50% 55%, #000 55% 64%, transparent 64% 69%, #000 69% 77%, transparent 77% 83%, #000 83%);
