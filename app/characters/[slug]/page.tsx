@@ -49,7 +49,7 @@ export default async function CharacterPage({ params }: Props) {
     const rank = rankOf(c.rank);
     const wl = wishes.filter((w) => w.characterId === c.id).sort((a, b) => a.rank - b.rank);
     return {
-      slug: c.slug, name: c.fullName, nameStyle: c.nameStyle ?? null, title: c.title ?? null, level: c.level, race: c.race, className: c.className, spec: c.spec ?? "—",
+      slug: c.slug, name: c.fullName, nameStyle: c.nameStyle ?? null, title: c.title ?? null, banner: c.banner ?? null, level: c.level, race: c.race, className: c.className, spec: c.spec ?? "—",
       role: c.roleLabel ?? (c.role ? c.role[0].toUpperCase() + c.role.slice(1) : c.level < 60 ? "Leveling" : "—"),
       isMain: c.isMain, rank: rank?.name ?? (c.inGuild ? "Member" : "Not in guild"),
       attendance: c.level < 60 ? "Not raiding" : beforeRaids || c.attendancePct == null ? "Starts Dec 9" : `${Math.round(c.attendancePct)}%`,

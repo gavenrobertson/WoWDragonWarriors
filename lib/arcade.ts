@@ -2,7 +2,7 @@ import "server-only";
 // Arcade engine: Dragon Marks wallet and every game's outcome, decided here on the server
 // (the browser only animates the result). Marks are play money: they buy cosmetics, never anything real.
 import { sql, sqlOne, tx } from "./db";
-import { CHESTS, COSMETICS, DUPLICATE_REFUND, rollChest, type Cosmetic } from "./cosmetics";
+import { CHESTS, COSMETICS, DUPLICATE_REFUND, rollChest, type Cosmetic, type EquipKind } from "./cosmetics";
 
 export const START_MARKS = 0; // new players claim the welcome bonus instead
 export const WELCOME_MARKS = 5000;
@@ -362,14 +362,15 @@ export async function ownedCosmetics(userId: string) {
   return (await sql<{ cosmetic_id: string }>("select cosmetic_id from cosmetics_owned where user_id = $1", [userId])).map((r) => r.cosmetic_id);
 }
 
-export async function equip(userId: string, kind: "name" | "title" | "theme", id: string | null) {
+export async function equip(userId: string, kind: EquipKind, id: string | null) {
   if (id) {
     const c = COSMETICS.find((x) => x.id === id);
     if (!c || c.kind !== kind) throw new ArcadeError("That isn't a " + kind + " cosmetic.");
     const own = await sqlOne("select 1 from cosmetics_owned where user_id = $1 and cosmetic_id = $2", [userId, id]);
     if (!own) throw new ArcadeError("You don't own that yet. Open chests to find it.");
   }
-  const col = kind === "name" ? "name_style" : kind === "title" ? "title" : "site_theme";
+  const col = ({ name: "name_style", title: "title", theme: "site_theme", banner: "profile_banner" } as const)[kind];
+  if (!col) throw new ArcadeError("Unknown cosmetic type.");
   await sql(`update users set ${col} = $2 where id = $1`, [userId, id]);
 }
 

@@ -17,7 +17,7 @@ export default async function CollectionPage() {
     <section className="arcade-game" aria-labelledby="col-title">
       <div className="arcade-game-head">
         <h1 id="col-title">Collection</h1>
-        <span className="soft">Equip your name style, title and site theme. Everyone sees your name style and title across the hub.</span>
+        <span className="soft">Equip your name style, title, profile banner and site theme. Everyone sees your name, title and banner; the theme is just for you.</span>
       </div>
       <Collection cosmetics={COSMETICS.filter((c) => c.kind !== "marks")} owned={owned} equipped={v.cosmetics}
         me={{ name: v.main?.name ?? v.battletag?.split("#")[0] ?? "You", className: v.main?.className ?? null }} />

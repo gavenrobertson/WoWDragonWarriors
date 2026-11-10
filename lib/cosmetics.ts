@@ -1,8 +1,9 @@
-// Arcade cosmetics: name styles, titles and site themes, plus the chests that drop them.
+// Arcade cosmetics: name styles, titles, site themes and profile banners, plus the chests that drop them.
 // Client-safe (no server imports). Rarity uses WoW item quality names and colours.
 
 export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
-export type CosmeticKind = "name" | "title" | "theme" | "marks";
+export type CosmeticKind = "name" | "title" | "theme" | "banner" | "marks";
+export type EquipKind = Exclude<CosmeticKind, "marks">;
 export interface Cosmetic { id: string; kind: CosmeticKind; name: string; rarity: Rarity; blurb: string; marks?: number }
 
 export const RARITY_LABEL: Record<Rarity, string> = { common: "Common", uncommon: "Uncommon", rare: "Rare", epic: "Epic", legendary: "Legendary" };
@@ -88,6 +89,30 @@ export const COSMETICS: Cosmetic[] = [
   { id: "theme-nexus", kind: "theme", name: "Arcane Nexus", rarity: "epic", blurb: "Crackling blue-violet ley energy" },
   { id: "theme-nightmare", kind: "theme", name: "Emerald Nightmare", rarity: "legendary", blurb: "The Dream, corrupted: sickly green and violet" },
   { id: "theme-twilight", kind: "theme", name: "Twilight Dragonflight", rarity: "legendary", blurb: "Molten dusk orange over twilight purple" },
+  // deep site themes: full reskins of every surface, not just a tint ("theme-x-*")
+  { id: "theme-x-obsidian", kind: "theme", name: "Obsidian Matte", rarity: "rare", blurb: "All black, matte, no glare. Silver type" },
+  { id: "theme-x-onyx", kind: "theme", name: "Onyx and Gold", rarity: "epic", blurb: "Matte black with polished gold" },
+  { id: "theme-x-chrome", kind: "theme", name: "Midnight Chrome", rarity: "epic", blurb: "Brushed gunmetal and mirror chrome" },
+  { id: "theme-x-cyber", kind: "theme", name: "Arcane Circuit", rarity: "rare", blurb: "Cyan ley-light traced on deep navy" },
+  { id: "theme-x-felneon", kind: "theme", name: "Fel Neon", rarity: "epic", blurb: "Acid-green neon on pure black" },
+  { id: "theme-x-neon", kind: "theme", name: "Neon Nightfall", rarity: "legendary", blurb: "Synthwave pink and cyan, glowing grid horizon" },
+  { id: "theme-x-aurora", kind: "theme", name: "Aurora Glass", rarity: "legendary", blurb: "Frosted glass over drifting northern lights" },
+  { id: "theme-x-prismatic", kind: "theme", name: "Prismatic", rarity: "legendary", blurb: "Black, with every colour running round the frames" },
+  // profile banners: the background behind your name on your character page
+  { id: "banner-obsidian", kind: "banner", name: "Obsidian", rarity: "uncommon", blurb: "Matte black with a silver edge" },
+  { id: "banner-alliance", kind: "banner", name: "Alliance Standard", rarity: "uncommon", blurb: "Royal blue silk and gold" },
+  { id: "banner-horde", kind: "banner", name: "Horde Warbanner", rarity: "uncommon", blurb: "Crimson cloth on dark iron" },
+  { id: "banner-emerald", kind: "banner", name: "Emerald Canopy", rarity: "rare", blurb: "Dream-green light through the leaves" },
+  { id: "banner-starfall", kind: "banner", name: "Starfall", rarity: "rare", blurb: "A night sky with twinkling stars" },
+  { id: "banner-frost", kind: "banner", name: "Frozen Throne", rarity: "rare", blurb: "Shimmering ice crystals" },
+  { id: "banner-aurora", kind: "banner", name: "Northern Lights", rarity: "epic", blurb: "Drifting aurora curtains" },
+  { id: "banner-inferno", kind: "banner", name: "Inferno", rarity: "epic", blurb: "Rising flames and embers" },
+  { id: "banner-leylines", kind: "banner", name: "Ley Lines", rarity: "epic", blurb: "Glowing arcane grid that pulses" },
+  { id: "banner-hoard", kind: "banner", name: "Dragon's Hoard", rarity: "epic", blurb: "Piled gold with a moving gleam" },
+  { id: "banner-neon", kind: "banner", name: "Neon Horizon", rarity: "legendary", blurb: "Synthwave sun over a racing neon grid" },
+  { id: "banner-void", kind: "banner", name: "Void Rift", rarity: "legendary", blurb: "A slowly turning void vortex" },
+  { id: "banner-prism", kind: "banner", name: "Prismatic", rarity: "legendary", blurb: "Every colour, flowing" },
+  { id: "banner-dragonfire", kind: "banner", name: "Dragonfire", rarity: "legendary", blurb: "The crest wreathed in living flame" },
 ];
 export const cosmeticById = (id: string | null | undefined) => (id ? COSMETICS.find((c) => c.id === id) : undefined);
 
@@ -122,3 +147,5 @@ export const DEFAULT_THEME = "default";
 /** CSS class for a name style id ("name-fel" → "nx nx-fel"). */
 export const nameClass = (style?: string | null) => (style && style.startsWith("name-") ? `nx nx-${style.slice(5)}` : "");
 export const themeAttr = (theme?: string | null) => (theme && theme.startsWith("theme-") ? theme.slice(6) : undefined);
+/** CSS classes for a profile banner id ("banner-neon" → "banner-art bn-neon"). */
+export const bannerClass = (id?: string | null) => (id && id.startsWith("banner-") ? `banner-art bn-${id.slice(7)}` : "");

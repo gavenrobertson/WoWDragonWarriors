@@ -9,10 +9,11 @@ import { Toast } from "@/components/Toast";
 import { useAction } from "@/components/useAction";
 import { classColor, qualityColor, STATUS } from "@/lib/ui";
 import { wowIcon } from "@/lib/metrics";
+import { BannerArt } from "@/components/arcade/BannerArt";
 import { PlayerName } from "@/components/PlayerName";
 
 export interface CharacterVM {
-  slug: string; name: string; nameStyle?: string | null; title?: string | null; level: number; race: string; className: string; spec: string; role: string; isMain: boolean;
+  slug: string; name: string; nameStyle?: string | null; title?: string | null; banner?: string | null; level: number; race: string; className: string; spec: string; role: string; isMain: boolean;
   rank: string; attendance: string; priority: string;
   stats: { label: string; value: string }[];
   records: {
@@ -68,7 +69,8 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
         )}
       </section>
 
-      <section aria-labelledby="char-name" className="panel-royal page-head">
+      <section aria-labelledby="char-name" className={`panel-royal page-head${active.banner ? " has-banner" : ""}`}>
+        {active.banner && <BannerArt id={active.banner} />}
         <div className="stack" style={{ gap: 6 }}>
           <span className="eyebrow muted">{active.rank} of Dragon Warriors</span>
           <h1 id="char-name" style={{ fontSize: 46, color }}><PlayerName name={active.name} className={active.className} nameStyle={active.nameStyle} title={active.title} /></h1>

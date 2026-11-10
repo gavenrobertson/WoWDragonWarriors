@@ -18,7 +18,7 @@ export interface HubCharacter {
   gear: { slot: string; name: string; quality: Quality | "empty"; itemId?: number }[]; renderUrl?: string; avatarUrl?: string; syncedAt?: string;
   metrics?: CharMetrics;
   /** Arcade cosmetics of the owning user (claimed characters only). */
-  nameStyle?: string; title?: string;
+  nameStyle?: string; title?: string; banner?: string;
 }
 export interface HubItem {
   id: number; name: string; quality: Quality; slot: string; slotDetail: string; roles: Role[]; iconUrl?: string; itemLevel?: number; requiredLevel?: number;
@@ -146,7 +146,7 @@ const shortDate = (d: string) => new Date(d).toLocaleDateString("en-US", { month
 const dbStore: Store = {
   async characters() {
     const rows = await sql<any>(
-      `select c.*, (u.main_character_id = c.id) as is_main, case when c.claimed then u.name_style end as u_name_style, case when c.claimed then u.title end as u_title
+      `select c.*, (u.main_character_id = c.id) as is_main, case when c.claimed then u.name_style end as u_name_style, case when c.claimed then u.title end as u_title, case when c.claimed then u.profile_banner end as u_banner
        from characters c left join users u on u.id = c.user_id
        order by c.level desc nulls last, c.name`,
     );
@@ -157,7 +157,7 @@ const dbStore: Store = {
       attendancePct: r.attendance_pct ?? undefined, fireResistance: r.fire_resistance ?? undefined, attunements: json(r.attunements, []),
       professions: json(r.professions, []), stats: json(r.stats, []), legacy: json(r.legacy, undefined), gear: json(r.equipment, []),
       renderUrl: r.render_url ?? undefined, avatarUrl: r.avatar_url ?? undefined, syncedAt: iso(r.synced_at),
-      metrics: json(r.metrics, undefined), nameStyle: r.u_name_style ?? undefined, title: r.u_title ?? undefined,
+      metrics: json(r.metrics, undefined), nameStyle: r.u_name_style ?? undefined, title: r.u_title ?? undefined, banner: r.u_banner ?? undefined,
     }));
   },
   async items() {

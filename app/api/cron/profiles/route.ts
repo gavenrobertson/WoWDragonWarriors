@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const raids = await rewardCompletedRaids().catch((e) => { console.error("raid rewards", e); return []; });
     for (const r of raids) if (r.paid) await notify("events", {
       title: `🐉 ${r.name}: raid complete`, color: 0xffd100, url: hubUrl("/arcade"),
-      description: `${r.paid} raider${r.paid === 1 ? "" : "s"} earned **${RAID_MARKS} Dragon Marks** for showing up (bench: half). Spend them in the arcade.`,
+      description: `${r.paid} raider${r.paid === 1 ? "" : "s"} earned **${RAID_MARKS.toLocaleString("en-US")} Dragon Marks** for showing up (bench: half). Spend them in the arcade.`,
     });
     const profiles = configured.battlenet() ? await syncAllProfiles() : { skipped: "Battle.net keys not configured" };
     return NextResponse.json({ ...profiles, reminders, raidsRewarded: raids.length });

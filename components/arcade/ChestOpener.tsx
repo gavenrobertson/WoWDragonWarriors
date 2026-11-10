@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { equipCosmetic, openChest } from "@/app/arcade/actions";
-import { DUPLICATE_REFUND, RARITY_COLOR, RARITY_LABEL, itemOdds, type Chest, type Cosmetic, type Rarity } from "@/lib/cosmetics";
+import { DUPLICATE_REFUND, RARITY_COLOR, RARITY_LABEL, itemOdds, themeAttr, type Chest, type Cosmetic, type Rarity } from "@/lib/cosmetics";
 import { fmt, useArcade, wowIconUrl } from "./ArcadeShell";
 import { CosmeticPreview } from "./CosmeticPreview";
 
@@ -54,7 +54,7 @@ export function ChestOpener({ chests, cosmetics, owned: owned0 }: { chests: Ches
   const equip = async () => {
     if (!won || won.item.kind === "marks") return;
     const r = await equipCosmetic({ kind: won.item.kind, id: won.item.id });
-    if (r.ok) { setEquipped(true); if (won.item.kind === "theme") location.reload(); }
+    if (r.ok) { setEquipped(true); if (won.item.kind === "theme") { const t = themeAttr(won.item.id); if (t) document.documentElement.dataset.theme = t; } }
     else setErr(r.error);
   };
 
@@ -79,7 +79,7 @@ export function ChestOpener({ chests, cosmetics, owned: owned0 }: { chests: Ches
         <div className="chest-won" role="status" style={{ ["--r" as string]: RARITY_COLOR[won.item.rarity] }}>
           <div className="chest-won-art"><CosmeticPreview c={won.item} sample="Your Name" /></div>
           <div className="stack" style={{ gap: 4 }}>
-            <span className="eyebrow" style={{ color: RARITY_COLOR[won.item.rarity] }}>{RARITY_LABEL[won.item.rarity]} {won.item.kind === "marks" ? "marks" : won.item.kind === "name" ? "name style" : won.item.kind === "title" ? "title" : "site theme"}</span>
+            <span className="eyebrow" style={{ color: RARITY_COLOR[won.item.rarity] }}>{RARITY_LABEL[won.item.rarity]} {won.item.kind === "marks" ? "marks" : won.item.kind === "name" ? "name style" : won.item.kind === "title" ? "title" : won.item.kind === "banner" ? "profile banner" : "site theme"}</span>
             <h2 style={{ color: RARITY_COLOR[won.item.rarity] }}>{won.item.name}</h2>
             <span className="soft">{won.item.kind === "marks" ? `${fmt(won.refund)} Dragon Marks added.` : won.duplicate ? `You already own this, so it became ${fmt(won.refund)} marks.` : won.item.blurb}</span>
             {!won.duplicate && won.item.kind !== "marks" && (

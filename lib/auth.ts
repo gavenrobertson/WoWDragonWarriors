@@ -25,9 +25,9 @@ export interface Viewer {
   main?: ViewerCharacter;
   perms: Perms;
   /** Arcade cosmetics the user has equipped. */
-  cosmetics: { nameStyle: string | null; title: string | null; theme: string | null };
+  cosmetics: { nameStyle: string | null; title: string | null; theme: string | null; banner: string | null };
 }
-const NO_COSMETICS = { nameStyle: null, title: null, theme: null };
+const NO_COSMETICS = { nameStyle: null, title: null, theme: null, banner: null };
 
 export function cookieOptions(maxAgeSeconds: number) {
   const prod = process.env.NODE_ENV === "production";
@@ -81,7 +81,7 @@ function demoViewer(): Viewer {
   return {
     demo: true, signedIn: true, battletag: "Korvath#1234", rankName: rank.name, siteRole: "super_admin", characters: chars, main: chars.find((c) => c.isMain),
     perms: mergePerms(rank, roleOf("super_admin")!.perms),
-    cosmetics: { nameStyle: "name-goldchrome", title: "title-hoard", theme: null },
+    cosmetics: { nameStyle: "name-goldchrome", title: "title-hoard", theme: null, banner: "banner-dragonfire" },
   };
 }
 
@@ -91,8 +91,8 @@ export const getViewer = cache(async (): Promise<Viewer> => {
   const session = await currentSession();
   if (!session) return { demo: false, signedIn: false, characters: [], perms: NO_PERMS, cosmetics: NO_COSMETICS };
 
-  const user = await sqlOne<{ id: string; battletag: string; main_character_id: string | null; site_role: SiteRole | null; name_style: string | null; title: string | null; site_theme: string | null }>(
-    "select id, battletag, main_character_id, site_role, name_style, title, site_theme from users where id = $1",
+  const user = await sqlOne<{ id: string; battletag: string; main_character_id: string | null; site_role: SiteRole | null; name_style: string | null; title: string | null; site_theme: string | null; profile_banner: string | null }>(
+    "select id, battletag, main_character_id, site_role, name_style, title, site_theme, profile_banner from users where id = $1",
     [session.user_id],
   );
   if (!user) return { demo: false, signedIn: false, characters: [], perms: NO_PERMS, cosmetics: NO_COSMETICS };
@@ -121,7 +121,7 @@ export const getViewer = cache(async (): Promise<Viewer> => {
     battletag: user.battletag,
     rankName: rank?.name,
     siteRole: user.site_role,
-    cosmetics: { nameStyle: user.name_style, title: user.title, theme: user.site_theme },
+    cosmetics: { nameStyle: user.name_style, title: user.title, theme: user.site_theme, banner: user.profile_banner },
     characters,
     main: characters.find((c) => c.isMain) ?? characters[0],
     // Guild rank permissions plus the hub role's (a role works even before characters are in the guild).

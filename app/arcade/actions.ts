@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import * as A from "@/lib/arcade";
 import { notify, hubUrl } from "@/lib/discord";
-import { RARITY_COLOR } from "@/lib/cosmetics";
+import { RARITY_COLOR, type EquipKind } from "@/lib/cosmetics";
 
 export type Res<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -108,7 +108,7 @@ export async function backContender(input: { itemId: number; characterId: string
   return r;
 }
 
-export async function equipCosmetic(input: { kind: "name" | "title" | "theme"; id: string | null }) {
+export async function equipCosmetic(input: { kind: EquipKind; id: string | null }) {
   const r = await play(async (u) => { await A.equip(u, input.kind, input.id); return {}; });
   if (r.ok) revalidatePath("/", "layout");
   return r;
