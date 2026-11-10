@@ -49,7 +49,7 @@ export function ArcadeShell({ initial, signedIn, children }: { initial: number; 
         </div>
         {!signedIn && (
           <div className="arcade-signin">
-            <span>Sign in with Battle.net to claim a <strong>2,500 Dragon Mark welcome bonus</strong> and a free name colour, then spin the daily wheel and play.</span>
+            <span>Sign in with Battle.net to claim a <strong>5,000 Dragon Mark welcome bonus</strong> and a free name colour, then spin the daily wheel and play.</span>
             <Link href="/sign-in" className="btn btn-primary btn-sm">Sign in</Link>
           </div>
         )}

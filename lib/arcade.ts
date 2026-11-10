@@ -5,7 +5,7 @@ import { sql, sqlOne, tx } from "./db";
 import { CHESTS, COSMETICS, DUPLICATE_REFUND, rollChest, type Cosmetic } from "./cosmetics";
 
 export const START_MARKS = 0; // new players claim the welcome bonus instead
-export const WELCOME_MARKS = 2500;
+export const WELCOME_MARKS = 5000;
 export const MIN_BET = 10;
 export const MAX_BET = 25_000;
 const EDGE = 0.97; // return to player on fair-priced games
@@ -58,7 +58,7 @@ export async function logPlay(userId: string, game: string, bet: number, payout:
 const pay = (bet: number, mult: number) => Math.floor(bet * mult);
 
 // ---------------------------------------------------------------- welcome bonus
-/** One-time welcome: 2,500 marks and a free uncommon name colour. */
+/** One-time welcome: 5,000 marks and a free uncommon name colour. */
 export async function claimWelcome(userId: string) {
   await wallet(userId);
   const r = await sqlOne<{ marks: number }>(
@@ -74,8 +74,8 @@ export async function claimWelcome(userId: string) {
 
 // ---------------------------------------------------------------- daily wheel
 export const WHEEL = [
-  { marks: 100, w: 26 }, { marks: 150, w: 22 }, { marks: 250, w: 19 }, { marks: 400, w: 13 },
-  { marks: 600, w: 9 }, { marks: 1000, w: 6 }, { marks: 2500, w: 3.5 }, { marks: 5000, w: 1.5 },
+  { marks: 300, w: 26 }, { marks: 500, w: 22 }, { marks: 750, w: 19 }, { marks: 1000, w: 13 },
+  { marks: 1500, w: 9 }, { marks: 2500, w: 6 }, { marks: 5000, w: 3.5 }, { marks: 10000, w: 1.5 },
 ];
 const dayKey = (d = new Date()) => d.toLocaleDateString("en-CA", { timeZone: "America/Chicago" }); // YYYY-MM-DD, Central
 export const canSpinToday = (lastDaily: string | null) => !lastDaily || dayKey(new Date(lastDaily)) !== dayKey();
@@ -434,7 +434,7 @@ export async function poolFor(itemIds: number[]) {
 }
 
 // ---------------------------------------------------------------- rewards for taking part
-export const RAID_MARKS = 500, BENCH_MARKS = 250, COUNCIL_VOTE_MARKS = 50, OBSERVER_MARKS = 25;
+export const RAID_MARKS = 2000, BENCH_MARKS = 1000, COUNCIL_VOTE_MARKS = 200, OBSERVER_MARKS = 100;
 
 /** Give marks to each user once (duplicates in the list are ignored). Never throws. */
 export async function grantMarks(grants: { userId: string; marks: number }[], reason: string, detail?: unknown) {
