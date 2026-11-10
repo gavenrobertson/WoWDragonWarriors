@@ -59,11 +59,16 @@ export function ArcadeShell({ initial, signedIn, chests: chests0 = {}, children 
       <div className="arcade">
         <div className="arcade-bar">
           <nav className="arcade-tabs" aria-label="Arcade">
-            <Link href="/arcade" aria-current={path === "/arcade" ? "page" : undefined}>Lobby</Link>
+            <Link href="/arcade" aria-current={path === "/arcade" ? "page" : undefined} aria-label="Lobby" className="tab-iconic">
+              <img src="/assets/crest-64.webp" alt="" width={22} height={22} className="tab-icon tab-crest" /><span className="tab-text">Lobby</span>
+            </Link>
             <GamesMenu path={path} />
             <Link href="/arcade/chests" aria-current={path === "/arcade/chests" ? "page" : undefined} aria-label={`Chests${chestCount ? `, ${chestCount} unopened` : ""}`} className="tab-iconic">
               <img src={wowIconUrl("inv_box_02", 36)} alt="" width={22} height={22} className="tab-icon" /><span className="tab-text">Chests</span>
               {chestCount > 0 && <span className="chest-badge" aria-hidden="true">{chestCount > 99 ? "99+" : chestCount}</span>}
+            </Link>
+            <Link href="/arcade/leaderboard" aria-current={path === "/arcade/leaderboard" ? "page" : undefined} aria-label="Leaderboard" className="tab-iconic">
+              <img src={wowIconUrl("inv_misc_trophy_argent", 36)} alt="" width={22} height={22} className="tab-icon" /><span className="tab-text">Leaderboard</span>
             </Link>
             <Link href="/arcade/collection" aria-current={path === "/arcade/collection" ? "page" : undefined} aria-label="Collection" className="tab-iconic">
               <img src={wowIconUrl("inv_misc_bag_10", 36)} alt="" width={22} height={22} className="tab-icon" /><span className="tab-text">Collection</span>
@@ -71,7 +76,7 @@ export function ArcadeShell({ initial, signedIn, chests: chests0 = {}, children 
           </nav>
           <div className="arcade-wallet" aria-live="polite">
             <span className="mark-coin" aria-hidden="true" />
-            <span className="arcade-balance">{signedIn ? balance.toLocaleString("en-US") : "—"}</span>
+            <span className="arcade-balance"><span className="bal-full">{signedIn ? balance.toLocaleString("en-US") : "—"}</span><span className="bal-short">{signedIn ? shortMarks(balance) : "—"}</span></span>
             <span className="micro muted">Dragon Marks</span>
             {delta && <span key={delta.k} className={`arcade-delta ${delta.n > 0 ? "up" : "down"}`}>{delta.n > 0 ? "+" : ""}{delta.n.toLocaleString("en-US")}</span>}
           </div>
@@ -94,6 +99,8 @@ export function ArcadeShell({ initial, signedIn, chests: chests0 = {}, children 
     </Ctx.Provider>
   );
 }
+
+const shortMarks = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}m` : n >= 1e5 ? `${Math.round(n / 1000)}k` : n >= 1e4 ? `${(n / 1000).toFixed(1)}k` : n.toLocaleString("en-US"));
 
 /** "Games" button in the arcade bar: opens a panel of every game with its icon. Shows the current game's name. */
 function GamesMenu({ path }: { path: string }) {

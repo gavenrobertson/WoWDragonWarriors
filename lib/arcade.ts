@@ -3,6 +3,7 @@ import "server-only";
 // (the browser only animates the result). Marks are play money: they buy cosmetics, never anything real.
 import { sql, sqlOne, tx } from "./db";
 import { CHESTS, COSMETICS, DUPLICATE_REFUND, rollChest, type Cosmetic, type EquipKind } from "./cosmetics";
+import { MONTHLY_PRIZES, SKILL_IDS, SKILL_META, isSkill, type SkillId } from "./skill-games";
 
 export const START_MARKS = 0; // new players claim the welcome bonus instead
 export const WELCOME_MARKS = 5000;
@@ -774,22 +775,47 @@ export async function bjAct(userId: string, id: string, action: "hit" | "stand" 
 
 // ---------------------------------------------------------------- skill games (free to play)
 // These run in the browser, so the server can't decide the outcome. A run costs nothing; a finished run
-// pays a few marks per point, capped per run and per rolling 24 hours, and a score that couldn't have been
-// reached in the time played is refused.
-export const SKILL_GAMES = {
-  snake: { perPoint: 15, maxRun: 1500, daily: 4000, maxPointsPerSec: 2, maxPoints: 600, minSecs: 0 },
+// pays a few marks per reward point, capped per run and per rolling 24 hours, and a score that couldn't
+// have been reached in the time played is refused. Scores feed the arcade leaderboard.
+type SkillRule = {
+  perPoint: number; maxRun: number; daily: number;
+  /** Shortest real run in seconds (anything quicker with a score is refused). */
+  minSecs: number; maxScore: number;
+  /** Is this score possible in `secs` seconds? */
+  ok: (score: number, secs: number) => boolean;
+  /** Reward points for a score (marks = points × perPoint). */
+  points: (score: number) => number;
+};
+export const SKILL_GAMES: Record<SkillGame, SkillRule> = {
+  snake: { perPoint: 15, maxRun: 1500, daily: 4000, minSecs: 0, maxScore: 600, ok: (s, t) => s <= 10 + t * 2, points: (s) => s },
   // 8-ball: a win is worth 1, 2 or 4 points by opponent level (150 / 300 / 600 marks); a real game takes minutes
-  pool: { perPoint: 150, maxRun: 600, daily: 1800, maxPointsPerSec: 1, maxPoints: 4, minSecs: 40 },
-} as const;
+  pool: { perPoint: 150, maxRun: 600, daily: 1800, minSecs: 40, maxScore: 4, ok: () => true, points: (s) => s },
+  // 60-second typing test, score = net words per minute
+  typing: { perPoint: 10, maxRun: 1000, daily: 2000, minSecs: 55, maxScore: 250, ok: (s) => s <= 220, points: (s) => s },
+  // average reaction in ms over 5 casts: lower is better; anything under 120 ms isn't human
+  reaction: { perPoint: 20, maxRun: 600, daily: 1500, minSecs: 6, maxScore: 5000, ok: (s) => s >= 120, points: (s) => Math.max(0, Math.round((500 - s) / 10)) },
+  // 30 seconds of bonking
+  murloc: { perPoint: 10, maxRun: 800, daily: 2000, minSecs: 28, maxScore: 150, ok: (s) => s <= 120, points: (s) => s },
+  // longest rune sequence repeated; each round takes a few seconds to show and repeat
+  runes: { perPoint: 40, maxRun: 1000, daily: 2000, minSecs: 0, maxScore: 100, ok: (s, t) => s <= 3 + t / 1.5, points: (s) => s },
+  // towers passed; they come about one a second at best
+  gryphon: { perPoint: 20, maxRun: 1000, daily: 2000, minSecs: 0, maxScore: 1000, ok: (s, t) => s <= 3 + t * 1.6, points: (s) => s },
+  // memory match score out of 1,000
+  pairs: { perPoint: 8, maxRun: 800, daily: 1600, minSecs: 8, maxScore: 1000, ok: (s, t) => s <= 1000 - Math.max(0, t - 4) * 4 + 1, points: (s) => Math.floor(s / 10) },
+  // tenths of a second survived
+  fire: { perPoint: 15, maxRun: 1000, daily: 2000, minSecs: 0, maxScore: 36000, ok: (s, t) => s <= (t + 3) * 10, points: (s) => Math.floor(s / 10) },
+  // 30 seconds of orb popping
+  barrage: { perPoint: 10, maxRun: 800, daily: 2000, minSecs: 28, maxScore: 150, ok: (s) => s <= 110, points: (s) => s },
+};
 export const POOL_LEVELS = { apprentice: 1, veteran: 2, champion: 4 } as const;
 export type PoolLevel = keyof typeof POOL_LEVELS;
-export type SkillGame = keyof typeof SKILL_GAMES;
+export type SkillGame = SkillId;
 const skillRules = (game: string) => {
-  const r = SKILL_GAMES[game as SkillGame];
-  if (!r) throw new ArcadeError("Unknown game.");
-  return r;
+  if (!isSkill(game)) throw new ArcadeError("Unknown game.");
+  return SKILL_GAMES[game];
 };
 const daySince = () => new Date(Date.now() - 24 * 3600_000).toISOString();
+const scoreExpr = "cast(json_extract(p.detail, '$.score') as integer)";
 
 export async function skillStart(userId: string, game: SkillGame, extra: Record<string, unknown> = {}) {
   skillRules(game);
@@ -803,39 +829,84 @@ export async function skillEarnedToday(userId: string, game: SkillGame) {
   return Number(r?.s ?? 0);
 }
 export async function skillBest(userId: string, game: SkillGame) {
-  const r = await sqlOne<{ b: number | null }>("select max(cast(json_extract(detail, '$.score') as integer)) as b from arcade_plays where user_id = $1 and game = $2", [userId, game]);
+  const low = SKILL_META[game].better === "low";
+  const r = await sqlOne<{ b: number | null }>(
+    `select ${low ? "min" : "max"}(${scoreExpr}) as b from arcade_plays p where p.user_id = $1 and p.game = $2 and ${scoreExpr} > 0`, [userId, game]);
   return Number(r?.b ?? 0);
 }
 
-/** `score` is the client's claim; `fromState` lets a game derive points from what the server stored at start. */
+/** `score` is the client's claim; `fromState` lets a game derive it from what the server stored at start. */
 export async function skillFinish(userId: string, game: SkillGame, id: string, score: unknown, fromState?: (state: any) => number) {
   const rules = skillRules(game);
   const r = await roundById(userId, id, game);
   if (r.status !== "active") throw new ArcadeError("That run already ended.");
   const raw = fromState ? fromState(r.state) : Number(score);
-  const pts = Math.max(0, Math.min(rules.maxPoints, Math.floor(raw) || 0));
+  const s = Math.max(0, Math.min(rules.maxScore, Math.floor(raw) || 0));
   const secs = (Date.now() - Number(r.state.startedAt)) / 1000;
-  if (!(await closeRound(r.id, { ...r.state, score: pts, secs: Math.round(secs) }, pts > 0 ? "won" : "lost"))) throw new ArcadeError("That run already ended.");
-  if (pts > 0 && secs < rules.minSecs) {
-    await logPlay(userId, game, 0, 0, { score: 0, claimed: pts, flagged: true });
-    throw new ArcadeError("That game was too quick to count.");
-  }
-  if (pts > 10 + secs * rules.maxPointsPerSec) {
-    await logPlay(userId, game, 0, 0, { score: 0, claimed: pts, flagged: true });
+  if (!(await closeRound(r.id, { ...r.state, score: s, secs: Math.round(secs) }, s > 0 ? "won" : "lost"))) throw new ArcadeError("That run already ended.");
+  if (s > 0 && (secs < rules.minSecs || !rules.ok(s, secs))) {
+    await logPlay(userId, game, 0, 0, { score: 0, claimed: s, flagged: true });
     throw new ArcadeError("That score doesn't add up, so it wasn't counted.");
   }
+  const pts = s > 0 ? Math.max(0, Math.floor(rules.points(s))) : 0;
   const today = await skillEarnedToday(userId, game);
   const earned = Math.max(0, Math.min(rules.maxRun, pts * rules.perPoint, rules.daily - today));
   const balance = earned ? await credit(userId, earned) : (await wallet(userId)).marks;
-  await logPlay(userId, game, 0, earned, { score: pts, ...(r.state.level ? { level: r.state.level } : {}) });
-  return { score: pts, earned, balance, best: await skillBest(userId, game), leftToday: Math.max(0, rules.daily - today - earned) };
+  await logPlay(userId, game, 0, earned, { score: s, ...(r.state.level ? { level: r.state.level } : {}) });
+  return { score: s, earned, balance, best: await skillBest(userId, game), leftToday: Math.max(0, rules.daily - today - earned) };
 }
 
-/** Top 10: best score, or (for win/lose games) number of wins. */
-export async function skillBoard(game: SkillGame, how: "best" | "wins" = "best") {
-  const agg = how === "wins" ? "sum(case when cast(json_extract(p.detail, '$.score') as integer) > 0 then 1 else 0 end)" : "max(cast(json_extract(p.detail, '$.score') as integer))";
-  return sql<{ score: number; name: string | null; surname: string | null; class: string | null; name_style: string | null; title: string | null }>(
-    `select ${agg} as score, c.name, c.surname, c.class, u.name_style, u.title
+export type BoardRow = { user_id: string; score: number; name: string | null; surname: string | null; class: string | null; name_style: string | null; title: string | null };
+/** Top players for a game: best score (or, for 8-ball, number of wins), optionally within [from, to). */
+export async function skillBoard(game: SkillGame, opts: { from?: string; to?: string; limit?: number } = {}) {
+  const meta = SKILL_META[game];
+  const agg = meta.agg === "wins" ? `sum(case when ${scoreExpr} > 0 then 1 else 0 end)` : `${meta.better === "low" ? "min" : "max"}(${scoreExpr})`;
+  return sql<BoardRow>(
+    `select p.user_id, ${agg} as score, c.name, c.surname, c.class, u.name_style, u.title
      from arcade_plays p join users u on u.id = p.user_id left join characters c on c.id = u.main_character_id
-     where p.game = $1 group by p.user_id having score > 0 order by score desc limit 10`, [game]);
+     where p.game = $1 and ${scoreExpr} > 0 and p.created_at >= $2 and p.created_at < $3
+     group by p.user_id having score > 0 order by score ${meta.better === "low" ? "asc" : "desc"} limit ${Math.min(50, opts.limit ?? 10)}`,
+    [game, opts.from ?? "0000", opts.to ?? "9999"]);
+}
+
+// ---------------------------------------------------------------- months (Central time)
+const ctParts = (d: Date) => {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", hourCycle: "h23" })
+    .formatToParts(d).map((x) => [x.type, x.value]));
+  return { y: Number(p.year), m: Number(p.month), d: Number(p.day), h: Number(p.hour) };
+};
+/** The UTC instant of midnight Central on y-m-d (handles daylight saving). */
+export function ctMidnight(y: number, m: number, d = 1) {
+  for (const off of [5, 6]) { const t = new Date(Date.UTC(y, m - 1, d, off)); const p = ctParts(t); if (p.h === 0 && p.d === d) return t; }
+  return new Date(Date.UTC(y, m - 1, d, 6));
+}
+export function monthRange(now = new Date(), back = 0) {
+  const { y, m } = ctParts(now);
+  const sy = m - back < 1 ? y - 1 : y, sm = ((m - back - 1 + 12) % 12) + 1;
+  const ny = sm === 12 ? sy + 1 : sy, nm = sm === 12 ? 1 : sm + 1;
+  return { key: `${sy}-${String(sm).padStart(2, "0")}`, label: new Date(Date.UTC(sy, sm - 1, 1)).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }),
+    from: ctMidnight(sy, sm).toISOString(), to: ctMidnight(ny, nm).toISOString() };
+}
+
+/** On the 1st (Central), pay last month's top three in every skill game. Runs once per month. */
+export async function crownMonthlyChampions(now = new Date()) {
+  if (ctParts(now).d !== 1) return null;
+  const month = monthRange(now, 1);
+  const claimed = await sqlOne<{ key: string }>("insert into settings (key, value) values ($1, $2) on conflict (key) do nothing returning key", [`champions:${month.key}`, new Date().toISOString()]);
+  if (!claimed) return null;
+  const winners: { game: SkillGame; rows: { name: string; score: number; place: string }[] }[] = [];
+  for (const game of SKILL_IDS) {
+    const top = await skillBoard(game, { from: month.from, to: month.to, limit: MONTHLY_PRIZES.length });
+    const rows: { name: string; score: number; place: string }[] = [];
+    for (let i = 0; i < top.length; i++) {
+      const prize = MONTHLY_PRIZES[i], row = top[i];
+      await wallet(row.user_id);
+      await credit(row.user_id, prize.marks);
+      await addChests(row.user_id, prize.chest, 1);
+      await logPlay(row.user_id, "reward:champion", 0, prize.marks, { game, month: month.key, place: prize.place, score: row.score, chest: prize.chest });
+      rows.push({ name: `${row.name ?? "Someone"} ${row.surname ?? ""}`.trim(), score: Number(row.score), place: prize.place });
+    }
+    if (rows.length) winners.push({ game, rows });
+  }
+  return { month: month.label, winners };
 }

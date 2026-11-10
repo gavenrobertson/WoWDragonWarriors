@@ -17,6 +17,26 @@ import { Scratch } from "@/components/arcade/Scratch";
 import { Leap } from "@/components/arcade/Leap";
 import { Snake } from "@/components/arcade/Snake";
 import { Pool } from "@/components/arcade/Pool";
+import { Typing } from "@/components/arcade/Typing";
+import { Reaction } from "@/components/arcade/Reaction";
+import { Murloc } from "@/components/arcade/Murloc";
+import { Runes } from "@/components/arcade/Runes";
+import { Gryphon } from "@/components/arcade/Gryphon";
+import { Pairs } from "@/components/arcade/Pairs";
+import { Fire } from "@/components/arcade/Fire";
+import { Barrage } from "@/components/arcade/Barrage";
+import type { SkillProps } from "@/components/arcade/SkillKit";
+
+const SKILL_UI: Record<string, { C: (p: SkillProps) => React.ReactNode; hint: (perPoint: number) => string }> = {
+  typing: { C: Typing, hint: (p) => `Each word per minute pays ${p} marks.` },
+  reaction: { C: Reaction, hint: (p) => `Every 10 ms under 500 pays ${p} marks.` },
+  murloc: { C: Murloc, hint: (p) => `Each bonk pays ${p} marks.` },
+  runes: { C: Runes, hint: (p) => `Each rune in your best sequence pays ${p} marks.` },
+  gryphon: { C: Gryphon, hint: (p) => `Each tower pays ${p} marks.` },
+  pairs: { C: Pairs, hint: (p) => `Every 10 points pays ${p} marks.` },
+  fire: { C: Fire, hint: (p) => `Each second survived pays ${p} marks.` },
+  barrage: { C: Barrage, hint: (p) => `Each orb pays ${p} marks.` },
+};
 import { getViewer } from "@/lib/auth";
 
 type Props = { params: Promise<{ game: string }> };
@@ -31,6 +51,17 @@ export default async function GamePage({ params }: Props) {
   const g = GAMES.find((x) => x.slug === game);
   if (!g) notFound();
   const body = await (async () => {
+    const ui = SKILL_UI[game];
+    if (ui) {
+      const sg = game as keyof typeof SKILL_GAMES;
+      const v = await getViewer();
+      const uid = !v.demo && v.signedIn ? v.userId : null;
+      const r = SKILL_GAMES[sg];
+      const [best, earned, board] = await Promise.all([
+        uid ? skillBest(uid, sg).catch(() => 0) : 0, uid ? skillEarnedToday(uid, sg).catch(() => 0) : 0, v.demo ? [] : skillBoard(sg).catch(() => []),
+      ]);
+      return <ui.C rules={{ perPoint: r.perPoint, maxRun: r.maxRun, daily: r.daily, pointsHint: ui.hint(r.perPoint) }} best0={best} leftToday0={Math.max(0, r.daily - earned)} board={board} />;
+    }
     switch (game) {
       case "plinko": {
         const tables: Record<string, number[]> = {};
@@ -56,7 +87,7 @@ export default async function GamePage({ params }: Props) {
         const v = await getViewer();
         const uid = !v.demo && v.signedIn ? v.userId : null;
         const rules = SKILL_GAMES.pool;
-        const [earned, board] = await Promise.all([uid ? skillEarnedToday(uid, "pool") : 0, v.demo ? [] : skillBoard("pool", "wins").catch(() => [])]);
+        const [earned, board] = await Promise.all([uid ? skillEarnedToday(uid, "pool") : 0, v.demo ? [] : skillBoard("pool").catch(() => [])]);
         return <Pool rules={{ perPoint: rules.perPoint, daily: rules.daily }} leftToday0={Math.max(0, rules.daily - earned)} board={board} me={v.main?.name?.split(" ")[0] ?? "You"} />;
       }
       case "snake": {

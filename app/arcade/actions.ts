@@ -183,3 +183,13 @@ export async function poolStart(input: { level: A.PoolLevel }) {
 export async function poolFinish(input: { id: string; won: boolean }) {
   return play((u) => A.skillFinish(u, "pool", String(input.id), 0, (s) => (input.won ? A.POOL_LEVELS[s.level as A.PoolLevel] ?? 1 : 0)));
 }
+
+// The newer skill games share one pair of actions; 8-ball keeps its own (its score comes from the server).
+const GENERIC_SKILL = ["typing", "reaction", "murloc", "runes", "gryphon", "pairs", "fire", "barrage"] as const;
+type GenericSkill = (typeof GENERIC_SKILL)[number];
+const generic = (g: string): GenericSkill => {
+  if (!(GENERIC_SKILL as readonly string[]).includes(g)) throw new A.ArcadeError("Unknown game.");
+  return g as GenericSkill;
+};
+export async function skillBegin(input: { game: string }) { return play((u) => A.skillStart(u, generic(input.game))); }
+export async function skillEnd(input: { game: string; id: string; score: number }) { return play((u) => A.skillFinish(u, generic(input.game), String(input.id), input.score)); }
