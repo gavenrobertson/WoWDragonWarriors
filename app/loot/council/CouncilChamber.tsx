@@ -3,7 +3,7 @@
 // council members' votes as portraits on each candidate, and an award button.
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { awardItem, castVote, overrideAward } from "@/app/actions";
+import { awardItem, castVote, councilPulse, overrideAward } from "@/app/actions";
 import { backContender } from "@/app/arcade/actions";
 import { PlayerName } from "@/components/PlayerName";
 import { CouncilRecap, type RecapItem } from "@/components/CouncilRecap";
@@ -27,10 +27,10 @@ export interface CouncilItem {
 // Practice mode swaps the server actions for local ones: nothing is saved and nothing posts to Discord.
 const practiceOk = (message?: string) => async () => ({ ok: true as const, message });
 
-export function CouncilChamber({ items: initial, members, me, canVote, canOverride, roster, practice = false, pool: pool0 = [], canObserve = false, marks: marks0 = 0 }: {
+export function CouncilChamber({ items: initial, members, me, canVote, canOverride, roster, practice = false, pool: pool0 = [], canObserve = false, marks: marks0 = 0, now }: {
   items: CouncilItem[]; members: CouncilMember[]; me: string; canVote: boolean; canOverride: boolean;
   roster: { id: string; name: string; className: string; level: number }[]; practice?: boolean;
-  pool?: PoolEntry[]; canObserve?: boolean; marks?: number;
+  pool?: PoolEntry[]; canObserve?: boolean; marks?: number; now?: string;
 }) {
   const [pool, setPool] = useState(pool0);
   const [marks, setMarks] = useState(marks0);
@@ -46,6 +46,57 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
   const [slam, setSlam] = useState<GavelMoment | null>(null);
   const [override, setOverride] = useState<{ characterId: string; reason: string } | null>(null);
   const { pending, run, toast } = useAction();
+  const hall = useRef<HTMLElement>(null);
+  // Bring the hall (and the gavel) into view and show the awarded item, on every screen watching.
+  const strike = (itemId: number, moment: GavelMoment) => {
+    setSel(itemId); setConfirm(null);
+    setSlam(moment);
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    hall.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+  };
+  // Live: other officers' votes and awards show up for everyone within a few seconds.
+  const awardedRef = useRef(awarded); awardedRef.current = awarded;
+  const mine = useRef(new Set<number>()); // awards this screen made itself (it plays its own gavel)
+  const pendingRef = useRef(pending); pendingRef.current = pending;
+  const itemsRef = useRef(items); itemsRef.current = items;
+  useEffect(() => {
+    if (practice || !now) return;
+    let stop = false, busy = false;
+    const tick = async () => {
+      if (stop || busy || document.hidden) return;
+      busy = true;
+      try {
+        const r = await councilPulse({ since: now, itemIds: initial.map((i) => i.id) });
+        if (stop || !r.ok) return;
+        const fresh = r.awards.filter((a) => !awardedRef.current[a.item_id] && !mine.current.has(a.item_id));
+        if (!pendingRef.current) {
+          setItems((is) => is.map((it) => {
+            if (awardedRef.current[it.id]) return it;
+            const votes = r.votes.filter((v) => v.item_id === it.id).map((v) => ({ voterUserId: v.voter_user_id, characterId: v.character_id }));
+            const same = votes.length === it.votes.length && votes.every((v) => it.votes.some((x) => x.voterUserId === v.voterUserId && x.characterId === v.characterId));
+            return same ? it : { ...it, votes };
+          }));
+        }
+        if (fresh.length) {
+          const next: Record<number, string> = {};
+          for (const a of fresh) next[a.item_id] = `${a.name} ${a.surname ?? ""}`.trim();
+          setAwarded((x) => ({ ...x, ...next }));
+          setLog((l) => [...l, ...fresh.flatMap((a) => {
+            const it = itemsRef.current.find((i) => i.id === a.item_id);
+            return it ? [{ id: it.id, name: it.name, quality: it.quality, iconUrl: it.iconUrl, overruled: a.method !== "council", detail: a.method === "council" ? "Council decision" : "Admin override",
+              winner: { name: next[a.item_id], className: a.class ?? "", avatarUrl: a.avatar_url, slug: a.slug } }] : [];
+          })]);
+          const last = fresh[fresh.length - 1], it = itemsRef.current.find((i) => i.id === last.item_id);
+          if (it) strike(it.id, { key: Date.now(), item: it.name, winner: next[last.item_id], color: qualityColor(it.quality), icon: it.iconUrl, word: last.method === "council" ? undefined : "Overruled" });
+        }
+      } catch { /* offline for a moment; try again next tick */ } finally { busy = false; }
+    };
+    const id = setInterval(tick, 4000);
+    const vis = () => { if (!document.hidden) void tick(); };
+    document.addEventListener("visibilitychange", vis);
+    return () => { stop = true; clearInterval(id); document.removeEventListener("visibilitychange", vis); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [practice, now]);
   const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
   // Practice: simulated officers vote a moment after you do, so a majority can form.
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -109,12 +160,13 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
     if (confirm !== c.characterId) { setConfirm(c.characterId); setTimeout(() => setConfirm((x) => (x === c.characterId ? null : x)), 4000); return; }
     setConfirm(null);
     const it = item;
+    mine.current.add(it.id);
     run(() => act.awardItem({ itemId: it.id, characterId: c.characterId }), () => {
       setAwarded((a) => ({ ...a, [it.id]: c.name }));
       const n = it.votes.filter((v) => v.characterId === c.characterId).length;
       setLog((l) => [...l, { id: it.id, name: it.name, quality: it.quality, iconUrl: it.iconUrl, overruled: false, detail: n ? `Council vote (${n} of ${members.length})` : "Council decision",
         winner: { name: c.name, className: c.className, avatarUrl: c.avatarUrl, slug: c.slug } }]);
-      setSlam({ key: Date.now(), item: it.name, winner: c.name, color: qualityColor(it.quality), icon: it.iconUrl });
+      strike(it.id, { key: Date.now(), item: it.name, winner: c.name, color: qualityColor(it.quality), icon: it.iconUrl });
     });
   };
 
@@ -149,7 +201,7 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
           })}
         </nav>
 
-        <section className="council-hall" aria-labelledby="council-item-name">
+        <section ref={hall} className="council-hall" aria-labelledby="council-item-name">
           <GavelSlam moment={slam} onDone={() => setSlam(null)} />
           <div className="council-dais">
             <div className="council-pedestal" aria-hidden="true">
@@ -178,13 +230,14 @@ export function CouncilChamber({ items: initial, members, me, canVote, canOverri
               e.preventDefault();
               const it = item, who = roster.find((r) => r.id === override.characterId);
               if (!who) return;
+              mine.current.add(it.id);
               run(() => act.overrideAward({ itemId: it.id, characterId: who.id, reason: override.reason }), () => {
                 setOverride(null);
                 setAwarded((a) => ({ ...a, [it.id]: who.name }));
                 const cand = it.candidates.find((x) => x.characterId === who.id);
                 setLog((l) => [...l, { id: it.id, name: it.name, quality: it.quality, iconUrl: it.iconUrl, overruled: true, detail: override.reason,
                   winner: { name: who.name, className: who.className, avatarUrl: cand?.avatarUrl ?? null, slug: cand?.slug } }]);
-                setSlam({ key: Date.now(), item: it.name, winner: who.name, color: qualityColor(it.quality), icon: it.iconUrl, word: "Overruled" });
+                strike(it.id, { key: Date.now(), item: it.name, winner: who.name, color: qualityColor(it.quality), icon: it.iconUrl, word: "Overruled" });
               });
             }}>
               <div className="row between baseline"><h3>⚖ Admin override</h3><span className="micro muted">Gives the item directly. Recorded in loot history with your reason.</span></div>

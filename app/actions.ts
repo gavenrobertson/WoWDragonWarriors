@@ -2,7 +2,7 @@
 // Every write goes through here and is permission-checked server-side (never trust the UI).
 // In demo mode the checks pass but nothing is persisted.
 import { revalidatePath } from "next/cache";
-import { Forbidden, ownsCharacter, requirePermission, type Permission, type Viewer } from "@/lib/auth";
+import { Forbidden, getViewer, ownsCharacter, requirePermission, type Permission, type Viewer } from "@/lib/auth";
 import { json, nowIso, sql, sqlOne, tx } from "@/lib/db";
 import { DISCORD_CATEGORIES, createDiscordEvent, discordConfig, hexColor, hubUrl, notify, validWebhook, type DiscordCategory } from "@/lib/discord";
 import { CLASS_COLOR, ROLE_LABEL, classIcon, qualityColor } from "@/lib/ui";
@@ -688,4 +688,20 @@ export async function overrideAward(input: { itemId: number; characterId: string
     revalidatePath("/loot/council");
     return { ok: true, message: `${item.name} given to ${ch.name} (council overruled)` };
   });
+}
+
+/** Live council state for everyone watching the chamber: awards since `since` and current votes. Polled every few seconds. */
+export async function councilPulse(input: { since: string; itemIds: number[] }) {
+  const v = await getViewer();
+  if (!v.signedIn || v.demo) return { ok: false as const, error: "Sign in to follow the council." };
+  const ids = (Array.isArray(input.itemIds) ? input.itemIds : []).map((n) => Math.floor(Number(n))).filter((n) => Number.isFinite(n) && n > 0).slice(0, 200);
+  if (!ids.length) return { ok: true as const, awards: [], votes: [], now: nowIso() };
+  const since = typeof input.since === "string" && /^\d{4}-\d\d-\d\dT/.test(input.since) ? input.since : nowIso();
+  const list = (from: number) => ids.map((_, i) => `$${i + from}`).join(",");
+  const awards = await sql<{ item_id: number; method: string; awarded_at: string; name: string; surname: string | null; class: string | null; avatar_url: string | null; slug: string }>(
+    `select a.item_id, a.method, a.awarded_at, c.name, c.surname, c.class, c.avatar_url, c.slug from loot_awards a join characters c on c.id = a.character_id
+     where a.awarded_at > $1 and a.item_id in (${list(2)}) order by a.awarded_at`, [since, ...ids]);
+  const votes = await sql<{ item_id: number; voter_user_id: string; character_id: string }>(
+    `select item_id, voter_user_id, character_id from council_votes where item_id in (${list(1)})`, ids);
+  return { ok: true as const, awards, votes, now: nowIso() };
 }

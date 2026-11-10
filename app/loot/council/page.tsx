@@ -4,6 +4,7 @@ import { getViewer } from "@/lib/auth";
 import { RAIDS, getCharacters, getItems, getWishlists, store } from "@/lib/store";
 import { CouncilChamber, type CouncilItem, type PoolEntry } from "./CouncilChamber";
 import { poolFor, wallet } from "@/lib/arcade";
+import { nowIso } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Loot council" };
 
@@ -65,6 +66,7 @@ export default async function CouncilPage() {
 
   return (
     <CouncilChamber
+      now={nowIso()}
       pool={pool}
       canObserve={canObserve}
       marks={w?.marks ?? 0}
