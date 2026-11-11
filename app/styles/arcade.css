@@ -81,7 +81,7 @@
 @keyframes rs-in { from { transform: translateX(-10px) scale(.6); opacity: 0; } }
 
 /* ---- celebrations ---- */
-.celebrate-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 85; pointer-events: none; }
+.celebrate-canvas { position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 85; pointer-events: none; }
 .celebrate-banner { position: fixed; z-index: 86; left: 50%; top: 32%; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 2px; padding: 18px 34px 16px; border-radius: 16px; pointer-events: none; text-align: center;
   background: radial-gradient(120% 120% at 50% 0%, rgba(40,26,10,.95), rgba(12,8,4,.95)); box-shadow: 0 0 0 1px #000, inset 0 0 0 2px var(--tc), 0 0 60px -6px var(--tc), 0 30px 60px -20px #000;
   animation: cb-in .5s cubic-bezier(.34,1.56,.64,1), cb-out .4s ease-in forwards; animation-delay: 0s, 1.6s; }
