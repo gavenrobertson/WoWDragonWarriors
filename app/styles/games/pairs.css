@@ -1,1 +1,90 @@
-/* pairs: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* pairs: Hoard Pairs. Ornate crest-backed cards on a treasure-lit screen; 3D spring flips, glowing matches. */
+.skill-stage > .pr-machine { justify-self: stretch; width: 100%; }
+.pr-machine .machine-screen { padding: 18px 14px; min-height: 0; }
+.pr-machine .machine-hud .result-strip { flex: 1 1 120px; }
+.pr-board { position: relative; width: 100%; max-width: 480px; justify-self: center; display: grid; justify-items: center; }
+.pr-board .pr-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(8px, 2vw, 12px); width: 100%; max-width: 480px; }
+
+/* a card: perspective on the button, the 3D turn on the inner face pair */
+.pr-board .pr-card { position: relative; aspect-ratio: 3 / 3.6; padding: 0; border: 0; background: none; cursor: pointer; perspective: 520px; border-radius: 12px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.pr-board .pr-card:focus-visible { outline: 2px solid #FFD100; outline-offset: 3px; }
+.pr-board .pr-inner { position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .42s cubic-bezier(.2,1.5,.4,1); }
+.pr-board .pr-card.up .pr-inner { transform: rotateY(180deg); }
+.pr-board .pr-back, .pr-board .pr-front { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 12px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+
+/* the back: amethyst velvet, a gold double frame, corner studs and the guild crest */
+.pr-board .pr-back {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(155,93,255,.5), transparent 55%),
+    repeating-linear-gradient(45deg, rgba(255,209,0,.07) 0 1.5px, transparent 1.5px 9px),
+    repeating-linear-gradient(-45deg, rgba(255,209,0,.07) 0 1.5px, transparent 1.5px 9px),
+    linear-gradient(160deg, #3d2468, #1a0f2e 70%);
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 2px #e0b04a, inset 0 0 0 4px #2a1a08, inset 0 0 0 5px #8a6a2c, inset 0 0 18px rgba(0,0,0,.6), 0 6px 14px -6px #000;
+  transition: filter .15s, box-shadow .15s; }
+.pr-board .pr-back::before { content: ""; position: absolute; inset: 7px; border-radius: 7px; pointer-events: none;
+  background:
+    radial-gradient(circle at 0 0, #ffe9a8 0 2.5px, #8a6a2c 3px, transparent 3.5px),
+    radial-gradient(circle at 100% 0, #ffe9a8 0 2.5px, #8a6a2c 3px, transparent 3.5px),
+    radial-gradient(circle at 0 100%, #ffe9a8 0 2.5px, #8a6a2c 3px, transparent 3.5px),
+    radial-gradient(circle at 100% 100%, #ffe9a8 0 2.5px, #8a6a2c 3px, transparent 3.5px);
+  box-shadow: inset 0 0 0 1px rgba(255,209,0,.25); }
+.pr-board .pr-back img { width: 56%; height: auto; filter: drop-shadow(0 0 8px rgba(192,140,255,.7)) drop-shadow(0 2px 2px #000); }
+.pr-board .pr-card:not(.up):hover .pr-back { filter: brightness(1.18); box-shadow: 0 0 0 1px #000, inset 0 0 0 2px #ffe27a, inset 0 0 0 4px #2a1a08, inset 0 0 0 5px #c9a13b, inset 0 0 18px rgba(0,0,0,.5), 0 0 18px -4px rgba(255,209,0,.55); }
+.pr-board .pr-card:not(.up):active .pr-back { filter: brightness(.95); }
+
+/* the face: dark leather with the loot icon in a gold socket */
+.pr-board .pr-front { transform: rotateY(180deg);
+  background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--q, #FFD100) 22%, #2a1d10), #120b05 75%);
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 2px #8a6a2c, inset 0 0 14px rgba(0,0,0,.7); }
+.pr-board .pr-front img { width: 64%; height: auto; border-radius: 8px; box-shadow: 0 0 0 1px #000, 0 0 0 2px #c9a13b, 0 4px 10px rgba(0,0,0,.6); }
+
+/* matched: a quality-coloured glow, a springy pop and a sweep of light */
+.pr-board .pr-card.found .pr-front { box-shadow: 0 0 0 1px #000, inset 0 0 0 2px var(--q), inset 0 0 18px color-mix(in srgb, var(--q) 30%, transparent), 0 0 22px -2px var(--q); }
+.pr-board .pr-card.found { animation: pr-pop .42s .26s cubic-bezier(.2,1.5,.4,1) both; }
+.pr-board .pr-card.found .pr-front::after { content: ""; position: absolute; inset: -20%; pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.55) 50%, transparent 62%); transform: translateX(-120%); animation: pr-shine .7s .3s ease-out forwards; }
+.pr-done .pr-card.found { filter: saturate(1.1); }
+/* mismatch: a short shake, then they turn back over */
+.pr-board .pr-card.miss { animation: pr-shake .3s cubic-bezier(.36,.07,.19,.97); }
+.pr-board .pr-card.miss .pr-front { box-shadow: 0 0 0 1px #000, inset 0 0 0 2px #ff6b5f, 0 0 16px -4px #ff3b2f; filter: brightness(.8); }
+
+/* the deal: cards fly in from a shoe above the table */
+.pr-dealt .pr-card { animation: pr-deal .36s calc(var(--i) * 38ms) cubic-bezier(.15,.8,.25,1) both; }
+.pr-dealt .pr-card.found { animation: pr-pop .42s .26s cubic-bezier(.2,1.5,.4,1) both; }
+.pr-dealt .pr-card.miss { animation: pr-shake .3s cubic-bezier(.36,.07,.19,.97); }
+
+.pr-streak { position: absolute; z-index: 3; left: 50%; top: -14px; transform: translateX(-50%); padding: 3px 12px; border-radius: 12px; white-space: nowrap; pointer-events: none;
+  font: 700 14px/1.3 var(--font-body); color: #1a1206; background: linear-gradient(180deg, #ffe27a, #e0a100); box-shadow: 0 0 0 1px #000, 0 0 18px rgba(255,209,0,.5);
+  animation: pr-badge 1.1s cubic-bezier(.2,1.5,.4,1) both; }
+
+/* overlays */
+.pr-board .skill-overlay { border-radius: 14px; inset: -8px; gap: 12px; background: radial-gradient(circle, rgba(18,10,4,.84), rgba(8,5,2,.94)); }
+.pr-ready .skill-overlay { background: radial-gradient(circle, rgba(18,10,4,.55), rgba(8,5,2,.8)); }
+.pr-done .skill-overlay { animation: pr-fade .4s .5s both; }
+.pr-done .skill-overlay .snake-big { animation: pr-stamp .42s .55s cubic-bezier(.2,1.5,.4,1) both; }
+.pr-final { font: 700 clamp(50px, 11vw, 72px)/1 var(--font-body); color: #FFD100; font-variant-numeric: tabular-nums; text-shadow: 0 3px 0 #000, 0 0 30px rgba(255,209,0,.45); }
+.pr-stats { display: grid; grid-template-columns: repeat(4, auto); gap: 4px 16px; justify-content: center; }
+.pr-stats > span { display: grid; justify-items: center; line-height: 1.15; }
+.pr-stats strong { font: 700 18px var(--font-body); color: #f2e8d0; font-variant-numeric: tabular-nums; }
+.pr-board .skill-result .skill-score { display: none; }
+
+@keyframes pr-deal { from { transform: translateY(-46px) rotate(-14deg) scale(.82); opacity: .2; } }
+@keyframes pr-pop { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes pr-shine { to { transform: translateX(120%); } }
+@keyframes pr-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-4px) rotate(-1.5deg); } 40% { transform: translateX(4px) rotate(1.5deg); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+@keyframes pr-badge { 0% { transform: translateX(-50%) scale(1.4); opacity: 0; } 25% { transform: translateX(-50%) scale(.96); opacity: 1; } 75% { opacity: 1; } 100% { transform: translateX(-50%) translateY(-6px); opacity: 0; } }
+@keyframes pr-fade { from { opacity: 0; } }
+@keyframes pr-stamp { from { transform: scale(1.35); opacity: 0; } 60% { transform: scale(.96); opacity: 1; } }
+
+@media (max-width: 600px) {
+  .pr-machine .machine-screen { padding: 14px 8px; }
+  .pr-machine { padding: 10px; }
+  .pr-stats { grid-template-columns: repeat(2, auto); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pr-board .pr-inner { transition-duration: .01s; }
+  .pr-board .pr-card.found, .pr-board .pr-card.miss, .pr-dealt .pr-card, .pr-board .pr-card.found .pr-front::after, .pr-streak,
+  .pr-done .skill-overlay, .pr-done .skill-overlay .snake-big { animation: none; }
+}
+.pr-machine .machine-hud .result-strip:empty { display: none; }
+.pr-machine .machine-hud { justify-content: flex-start; gap: 8px 24px; }

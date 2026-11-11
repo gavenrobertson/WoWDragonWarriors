@@ -1,1 +1,34 @@
-/* gryphon: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* gryphon: Gryphon Flight. A dusk sky canvas framed in the cabinet; overlays let the attract scene show through. */
+.gr-machine .machine-screen { padding: 10px; min-height: 0; }
+.gr-machine .machine-hud .result-strip { flex: 1 1 120px; }
+.gr-wrap { position: relative; width: 100%; display: grid; justify-items: center; touch-action: none; user-select: none; -webkit-user-select: none; }
+.gr-frame { position: relative; border-radius: 12px; line-height: 0; touch-action: none; cursor: pointer; }
+.gr-frame::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.8), inset 0 0 0 2px rgba(255,209,0,.18), inset 0 0 40px rgba(0,0,0,.45); }
+.gr-canvas { display: block; border-radius: 12px; box-shadow: 0 0 0 1px #000, 0 0 0 3px #8a6a2c, 0 0 0 4px #000, 0 20px 40px -18px #000, 0 0 60px -20px rgba(255,160,90,.55); }
+.gr-frame .skill-overlay { line-height: 1.3; border-radius: 12px; gap: 14px;
+  background: radial-gradient(90% 60% at 50% 50%, rgba(10,8,30,.55), rgba(6,4,18,.82)); backdrop-filter: blur(1.5px); -webkit-backdrop-filter: blur(1.5px); }
+.gr-ready .skill-overlay { background: linear-gradient(180deg, rgba(8,6,24,.2), rgba(8,6,24,.55) 45%, rgba(8,6,24,.3)); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.gr-frame .skill-overlay .snake-big { animation: gr-stamp .42s cubic-bezier(.2,1.5,.4,1) both; }
+.gr-frame .skill-overlay .soft { max-width: 30ch; text-shadow: 0 1px 2px #000; }
+.gr-done .skill-overlay > * { animation: gr-rise .36s cubic-bezier(.15,.8,.25,1) both; }
+.gr-done .skill-overlay > :nth-child(3) { animation-delay: .08s; }
+.gr-done .skill-overlay > :nth-child(4) { animation-delay: .16s; }
+.gr-done .skill-overlay > :nth-child(5) { animation-delay: .24s; }
+.gr-crest { width: 56px; height: 56px; border-radius: 50%; background: url("https://render.worldofwarcraft.com/us/icons/56/ability_mount_gryphon_01.jpg") center / cover;
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px #e0b04a, 0 0 26px rgba(255,209,0,.45); }
+.gr-final { display: inline-flex; align-items: baseline; gap: 6px; }
+.gr-final strong { font: 700 clamp(46px, 9vw, 66px)/1 var(--font-body); color: #fff; text-shadow: 0 3px 0 #000, 0 0 26px rgba(255,209,0,.45); font-variant-numeric: tabular-nums; }
+@keyframes gr-stamp { from { transform: scale(1.35); opacity: 0; } 60% { transform: scale(.96); opacity: 1; } }
+@keyframes gr-rise { from { transform: translateY(10px); opacity: 0; } }
+@media (max-width: 600px) {
+  .gr-machine .machine-screen { padding: 6px; }
+  .gr-machine { padding: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gr-frame .skill-overlay .snake-big, .gr-done .skill-overlay > * { animation: none; }
+}
+.skill-stage > .gr-machine { justify-self: stretch; width: 100%; }
+.gr-frame .skill-result .skill-score { display: none; }
+.gr-machine .machine-hud .result-strip:empty { display: none; }
+.gr-machine .machine-hud { justify-content: flex-start; gap: 8px 24px; }

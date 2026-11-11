@@ -3,6 +3,7 @@
 // ArcadeShell, plays the tier's sound, bursts coins and sparks from the game screen, and for big wins
 // shows a banner with the payout counting up. Also: CountUp (rolling numbers) and ResultStrip (recent chips).
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { buzz, play, tierFor, tierSound, type WinTier } from "./sfx";
 
 /** origin: element or selector to burst from (default: the game cabinet). noMult: hide the "×" figure (free rewards).
@@ -27,6 +28,8 @@ export function CelebrationLayer() {
   const raf = useRef(0);
   const [banner, setBanner] = useState<{ k: number; tier: WinTier; won: number; mult: number; label?: string; noMult?: boolean; noAmount?: boolean } | null>(null);
   const origin = useRef<Element | string | null>(null);
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => setHost(document.body), []);
   const hide = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -101,7 +104,9 @@ export function CelebrationLayer() {
     return () => { window.removeEventListener(EVT, on); cancelAnimationFrame(raf.current); };
   }, []);
 
-  return (
+  // Portalled to <body>: transformed ancestors (page entrance animations) would otherwise trap position: fixed.
+  if (!host) return null;
+  return createPortal(
     <>
       <canvas ref={cv} className="celebrate-canvas" aria-hidden="true" />
       {banner && (
@@ -111,7 +116,8 @@ export function CelebrationLayer() {
           {!banner.noMult && <span className="celebrate-mult">{banner.mult >= 100 ? Math.round(banner.mult) : banner.mult.toFixed(2)}×</span>}
         </div>
       )}
-    </>
+    </>,
+    host,
   );
 }
 

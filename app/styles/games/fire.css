@@ -1,1 +1,38 @@
-/* fire: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* fire: Don't Stand in the Fire. A raid-boss arena floor inside an ember-lit cabinet. */
+.skill-stage > .fr-machine { justify-self: stretch; width: 100%; }
+.fr-machine .machine-screen { padding: 10px; min-height: 0; }
+.fr-machine .machine-hud .result-strip { flex: 1 1 120px; }
+.fr-machine .readout.gold .readout-v { min-width: 4.2ch; }
+.fr-wrap { position: relative; width: 100%; display: grid; justify-items: center; touch-action: none; user-select: none; -webkit-user-select: none; }
+.fr-frame { position: relative; line-height: 0; border-radius: 12px; }
+.fr-canvas { display: block; border-radius: 12px; cursor: crosshair; touch-action: none;
+  box-shadow: 0 0 0 1px #000, 0 0 0 3px #8a6a2c, 0 0 0 4px #000, 0 20px 40px -18px #000, 0 0 70px -18px rgba(255,100,30,.55); }
+.fr-frame::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.8), inset 0 0 0 2px rgba(255,140,60,.2); }
+.fr-frame .skill-overlay { line-height: 1.3; border-radius: 12px; gap: 12px; background: radial-gradient(circle, rgba(26,8,4,.7), rgba(10,3,2,.9)); }
+.fr-frame .skill-overlay .soft { max-width: 32ch; }
+.fr-frame .skill-overlay .snake-big { color: #ffb347; text-shadow: 0 2px 0 #000, 0 0 22px rgba(255,110,30,.55); animation: fr-stamp .42s cubic-bezier(.2,1.5,.4,1) both; }
+.fr-done .skill-overlay { animation: fr-fade .35s both; }
+.fr-final { font: 700 clamp(48px, 10vw, 70px)/1 var(--font-body); color: #fff; font-variant-numeric: tabular-nums; text-shadow: 0 3px 0 #000, 0 0 30px rgba(255,140,40,.6); }
+.fr-final small { font-size: .45em; margin-left: 2px; color: #ffb347; }
+.fr-frame .skill-result .skill-score { display: none; }
+.fr-classes { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 290px; }
+.fr-class { width: 44px; height: 44px; padding: 0; display: grid; place-items: center; border-radius: 50%; border: 0; cursor: pointer; background: #120b06;
+  box-shadow: 0 0 0 1px #000, 0 0 0 2px #4a3a1a; transition: transform .09s cubic-bezier(.2,1.5,.4,1), box-shadow .15s; }
+.fr-class img { width: 34px; height: 34px; border-radius: 50%; filter: grayscale(.55) brightness(.75); transition: filter .15s; }
+.fr-class:hover img { filter: none; }
+.fr-class:active { transform: scale(.94); }
+.fr-class[aria-pressed="true"] { box-shadow: 0 0 0 1px #000, 0 0 0 3px var(--cc), 0 0 16px var(--cc); }
+.fr-class[aria-pressed="true"] img { filter: none; }
+.fr-class:focus-visible { outline: 2px solid #FFD100; outline-offset: 3px; }
+@keyframes fr-stamp { from { transform: scale(1.3); opacity: 0; } 60% { transform: scale(.97); opacity: 1; } }
+@keyframes fr-fade { from { opacity: 0; } }
+@media (max-width: 600px) {
+  .fr-machine .machine-screen { padding: 6px; }
+  .fr-machine { padding: 10px; }
+  .fr-frame .skill-overlay { gap: 8px; padding: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fr-frame .skill-overlay .snake-big, .fr-done .skill-overlay { animation: none; }
+}
+.fr-machine .machine-hud .result-strip:empty { display: none; }
+.fr-machine .machine-hud { justify-content: flex-start; gap: 8px 24px; }

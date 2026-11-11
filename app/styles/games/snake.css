@@ -1,1 +1,31 @@
-/* snake: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* snake: Wyrm Run. The hoard floor sits in a treasure-lit cabinet; the HUD score pops as it climbs. */
+.snake-stage > .sn-machine { justify-self: stretch; width: 100%; }
+.sn-machine .machine-screen { padding: 10px; min-height: 0; }
+.sn-machine .machine-hud .result-strip { flex: 1 1 120px; }
+.sn-machine .snake-wrap { max-width: none; width: 100%; display: grid; justify-items: center; outline: none; }
+.sn-frame { position: relative; line-height: 0; border-radius: 10px; }
+.sn-machine .snake-canvas { border-radius: 10px; box-shadow: 0 0 0 1px #000, 0 0 0 3px #8a6a2c, 0 0 0 4px #000, 0 20px 40px -18px #000, 0 0 60px -18px rgba(255,190,60,.45); }
+.sn-frame::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.7), inset 0 0 30px rgba(0,0,0,.35); }
+.sn-machine .snake-overlay { inset: 0; margin: 0; max-width: none; width: auto; aspect-ratio: auto; line-height: 1.3; border-radius: 10px; z-index: 2;
+  background: radial-gradient(circle, rgba(20,12,4,.6), rgba(8,5,2,.88)); }
+.sn-ready .snake-overlay { background: radial-gradient(circle, rgba(20,12,4,.35), rgba(8,5,2,.75)); }
+.sn-paused .snake-overlay { backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.sn-machine .snake-overlay .snake-big { animation: sn-stamp .42s cubic-bezier(.2,1.5,.4,1) both; }
+.sn-over .snake-overlay { animation: sn-fade .4s .35s both; }
+.sn-final { display: inline-grid; justify-items: center; font: 700 clamp(46px, 10vw, 66px)/1 var(--font-body); color: #FFD100; font-variant-numeric: tabular-nums; text-shadow: 0 3px 0 #000, 0 0 30px rgba(255,209,0,.45); }
+.sn-final small { font: 600 11px/1.6 var(--font-body); letter-spacing: .14em; text-transform: uppercase; color: #a8987a; text-shadow: none; }
+.sn-pop { display: inline-block; animation: sn-pop .32s cubic-bezier(.2,1.5,.4,1); }
+.snake-stage .snake-pad .btn { min-height: 48px; border-radius: 12px; }
+@keyframes sn-stamp { from { transform: scale(1.3); opacity: 0; } 60% { transform: scale(.97); opacity: 1; } }
+@keyframes sn-fade { from { opacity: 0; } }
+@keyframes sn-pop { from { transform: scale(1.45); color: #fff; } }
+@media (max-width: 600px) {
+  .sn-machine .machine-screen { padding: 6px; }
+  .sn-machine { padding: 10px; }
+  .sn-machine .snake-overlay { gap: 8px; padding: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sn-machine .snake-overlay .snake-big, .sn-over .snake-overlay, .sn-pop { animation: none; }
+}
+.sn-machine .machine-hud .result-strip:empty { display: none; }
+.sn-machine .machine-hud { justify-content: flex-start; gap: 8px 24px; }

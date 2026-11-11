@@ -45,7 +45,7 @@
   box-shadow: 0 0 0 1px #000, inset 0 0 0 2px #8a6a2c, inset 0 0 0 3px #000, inset 0 1px 0 4px rgba(255,226,154,.08), 0 26px 50px -24px #000, 0 0 40px -22px rgba(155,93,255,.45); }
 .machine-rivet { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffe9a8, #b8862e 55%, #4a3410); box-shadow: 0 0 0 1px #000; z-index: 2; }
 .machine-rivet.r1 { top: 6px; left: 6px; } .machine-rivet.r2 { top: 6px; right: 6px; } .machine-rivet.r3 { bottom: 6px; left: 6px; } .machine-rivet.r4 { bottom: 6px; right: 6px; }
-.machine-hud { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 2px 8px 0; min-height: 38px; }
+.machine-hud { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 8px 22px; padding: 2px 8px 0; min-height: 38px; }
 .machine-screen { position: relative; isolation: isolate; display: grid; place-items: center; min-height: 360px; padding: 16px; border-radius: 10px; overflow: hidden;
   background: var(--screen, #0d0814); box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px rgba(255,209,0,.12), inset 0 0 60px rgba(0,0,0,.85); }
 .machine-screen::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.55)); }
@@ -116,4 +116,6 @@
 }
 /* a full results strip must never widen the cabinet past a phone screen */
 .machine > .machine-hud, .machine > .machine-screen { min-width: 0; }
-.machine-hud .result-strip { flex: 1 1 150px; min-width: 0; justify-content: flex-end; }
+.machine-hud .result-strip { flex: 1 1 150px; min-width: 0; justify-content: flex-start; margin-left: auto; }
+/* pages with a pinned bottom bar (8-ball's shoot bar) lift the floating mute button above it */
+@media (max-width: 600px) { body:has(.pool-shootbar) .sound-toggle.floating { bottom: calc(150px + env(safe-area-inset-bottom)); } }
