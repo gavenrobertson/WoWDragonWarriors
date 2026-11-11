@@ -60,8 +60,20 @@ export function rack(rand = Math.random): Ball[] {
 export const clone = (b: Ball[]) => b.map((x) => ({ ...x }));
 export const moving = (balls: Ball[]) => balls.some((b) => !b.down && (b.vx !== 0 || b.vy !== 0));
 
-export type ShotLog = { first: number | null; potted: number[]; rails: number; railAfterHit: boolean };
-export const newLog = (): ShotLog => ({ first: null, potted: [], rails: 0, railAfterHit: false });
+/** Cue-ball spin: top +1 = full follow, -1 = full draw; side -1 = left english, +1 = right. */
+export type Spin = { top: number; side: number };
+export const NO_SPIN: Spin = { top: 0, side: 0 };
+/** How strongly spin acts: follow/draw adds this share of the impact speed along the shot line; side adds this
+ *  share of the cushion bounce speed sideways on the cue ball's first cushion. */
+export const FOLLOW = 0.7, ENGLISH = 0.35;
+export type ShotLog = {
+  first: number | null; potted: number[]; rails: number; railAfterHit: boolean;
+  spin?: Spin & { dx: number; dy: number; topUsed?: boolean; sideUsed?: boolean };
+};
+export const newLog = (spin?: Spin, angle = 0): ShotLog => ({
+  first: null, potted: [], rails: 0, railAfterHit: false,
+  ...(spin && (spin.top || spin.side) ? { spin: { ...spin, dx: Math.cos(angle), dy: Math.sin(angle) } } : {}),
+});
 
 /** Advance the table one frame. Mutates balls and the shot log. */
 export function step(balls: Ball[], log: ShotLog) {
@@ -84,9 +96,17 @@ export function step(balls: Ball[], log: ShotLog) {
         a.x -= nx * over; a.y -= ny * over; b.x += nx * over; b.y += ny * over;
         const vr = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
         if (vr <= 0) continue;
+        const cueBall = a.id === 0 ? a : b.id === 0 ? b : null;
+        const impact = cueBall ? Math.hypot(cueBall.vx, cueBall.vy) : 0;
         const jmp = ((1 + BALL_E) / 2) * vr;
         a.vx -= jmp * nx; a.vy -= jmp * ny; b.vx += jmp * nx; b.vy += jmp * ny;
         if (log.first === null) { if (a.id === 0) log.first = b.id; else if (b.id === 0) log.first = a.id; }
+        // follow / draw: on the cue ball's first contact, its spin carries it on or pulls it back along the shot line
+        const sp = log.spin;
+        if (cueBall && sp && sp.top && !sp.topUsed) {
+          sp.topUsed = true;
+          cueBall.vx += sp.dx * sp.top * FOLLOW * impact; cueBall.vy += sp.dy * sp.top * FOLLOW * impact;
+        }
       }
     }
     // cushions
@@ -101,8 +121,12 @@ export function step(balls: Ball[], log: ShotLog) {
         b.x = qx + nx * R; b.y = qy + ny * R;
         const vn = b.vx * nx + b.vy * ny;
         if (vn < 0) {
+          const sp = b.id === 0 ? log.spin : undefined;
+          const din = Math.hypot(b.vx, b.vy) || 1, rx = -b.vy / din, ry = b.vx / din; // right of travel
           b.vx -= (1 + RAIL_E) * vn * nx; b.vy -= (1 + RAIL_E) * vn * ny;
           b.vx *= 0.985; b.vy *= 0.985;
+          // english: the cue ball's first cushion kicks it left or right of where it would go
+          if (sp && sp.side && !sp.sideUsed) { sp.sideUsed = true; b.vx += rx * sp.side * ENGLISH * -vn; b.vy += ry * sp.side * ENGLISH * -vn; }
           log.rails++; if (log.first !== null) log.railAfterHit = true;
         }
       }
@@ -120,8 +144,8 @@ export function step(balls: Ball[], log: ShotLog) {
 }
 
 /** Run a whole shot to rest (or a frame cap). */
-export function simulate(balls0: Ball[], angle: number, power: number, cap = 1400) {
-  const balls = clone(balls0), log = newLog();
+export function simulate(balls0: Ball[], angle: number, power: number, cap = 1400, spin: Spin = NO_SPIN) {
+  const balls = clone(balls0), log = newLog(spin, angle);
   const cue = balls.find((b) => b.id === 0)!;
   const v = Math.max(0.05, Math.min(1, power)) * MAX_SPEED;
   cue.vx = Math.cos(angle) * v; cue.vy = Math.sin(angle) * v;

@@ -45,3 +45,23 @@
 }
 .pl-machine .machine-hud .result-strip:empty { display: none; }
 @media (max-width: 600px) { .pl-machine .pool-player .micro { font-size: 11px; } .pl-machine .machine-hud .result-strip { flex-basis: 100%; } }
+
+/* ---- controls: power + spin row, hold-to-turn arrows, fine aim ---- */
+.pool-shootbar .pl-bar-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.pool-shootbar .pl-power-field { display: grid; gap: 6px; min-width: 0; }
+.pool-stage > .pool-shootbar .pl-power-field { grid-template-columns: auto auto 1fr; align-items: center; gap: 8px; }
+.pl-spin { display: grid; justify-items: center; gap: 2px; }
+.pl-spin .micro { white-space: nowrap; font-size: 11px; }
+.pl-spin-ball { position: relative; width: 58px; height: 58px; padding: 0; border-radius: 50%; border: 0; cursor: crosshair; touch-action: none;
+  background: radial-gradient(circle at 36% 32%, #ffffff, #f2ead8 45%, #c9bfa8 80%, #8f866f);
+  box-shadow: 0 0 0 1px #000, 0 0 0 3px #6b5223, 0 4px 10px rgba(0,0,0,.55); }
+.pl-spin-ball::before, .pl-spin-ball::after { content: ""; position: absolute; background: rgba(0,0,0,.14); pointer-events: none; }
+.pl-spin-ball::before { left: 50%; top: 10%; bottom: 10%; width: 1px; } .pl-spin-ball::after { top: 50%; left: 10%; right: 10%; height: 1px; }
+.pl-spin-ball:focus-visible { outline: 2px solid #FFD100; outline-offset: 3px; }
+.pl-spin-ball:disabled { opacity: .55; cursor: default; }
+.pl-spin-dot { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8a7a, #c41a24 70%);
+  box-shadow: 0 0 0 1.5px #fff, 0 0 8px rgba(196,26,36,.7); transition: left .12s cubic-bezier(.2,1.5,.4,1), top .12s cubic-bezier(.2,1.5,.4,1); pointer-events: none; }
+.pool-shootbar .pl-nudge { min-width: 46px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.pool-shootbar .pl-fine { min-width: 52px; font-size: 13px; }
+.pool-shootbar .pl-fine.on { color: #1a1206; background: linear-gradient(180deg, #ffe27a, #e0a100); box-shadow: inset 0 0 0 1px #fff3b0, 0 0 12px rgba(255,209,0,.45); }
+@media (prefers-reduced-motion: reduce) { .pl-spin-dot { transition: none; } }

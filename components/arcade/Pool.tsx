@@ -62,6 +62,19 @@ export function Pool({ rules, leftToday0, board, me }: {
   const sparks = useRef<Fx[]>([]);
   const spins = useRef<Map<number, Spin>>(new Map());
   const dragCue = useRef(false);
+  // pull-back shooting: where the drag started and the power it's pulled to
+  const pull = useRef<{ x: number; y: number; power0: number; p: number } | null>(null);
+  const [pulling, setPulling] = useState(false);
+  const [pullPct, setPullPct] = useState(0);
+  // fine aim: horizontal drags turn the cue slowly instead of pointing it
+  const fineRef = useRef(false);
+  const [fine, setFine] = useState(false);
+  const fineDrag = useRef<{ sx: number; a0: number } | null>(null);
+  // cue-ball spin for the next shot (resets after each shot)
+  const cueSpin = useRef<P.Spin>({ top: 0, side: 0 });
+  const [spinUI, setSpinUI] = useState<P.Spin>({ top: 0, side: 0 });
+  const setCueSpin = (s: P.Spin) => { cueSpin.current = s; setSpinUI(s); };
+  const nudgeT = useRef<ReturnType<typeof setInterval> | null>(null);
   const runId = useRef<Promise<string | null> | null>(null);
   const crest = useRef<HTMLImageElement | null>(null);
   const tableDirty = useRef(true);
@@ -153,7 +166,7 @@ export function Pool({ rules, leftToday0, board, me }: {
     const nm: [string, string] = m === "ai" ? [me, LEVELS.find((l) => l.id === lvl)!.name] : ["Player 1", "Player 2"];
     namesRef.current = nm; setNames(nm);
     g.current = P.newGame(Math.random, 0);
-    g.current.note = `${nm[0]} breaks. Drag the cue ball to move it, or just aim and shoot.`;
+    g.current.note = `${nm[0]} breaks. Drag the cue ball to place it, then pull back on the cue to shoot.`;
     spins.current = new Map(); sinks.current = []; sparks.current = [];
     angle.current = 0; setPower(0.9); setResult(null); sync();
     runId.current = m === "ai" && signedIn ? poolStart({ level: lvl }).then((r) => (r.ok ? r.id : null)).catch(() => null) : null;
@@ -178,8 +191,20 @@ export function Pool({ rules, leftToday0, board, me }: {
       if (phaseRef.current !== "aim" || !human()) return;
       c.setPointerCapture(e.pointerId);
       const w = toWorld(e.clientX, e.clientY), s = g.current, cue = s.balls.find((b) => b.id === 0)!;
-      dragCue.current = s.inHand && Math.hypot(w.x - cue.x, w.y - cue.y) < P.R * 3.2;
-      if (!dragCue.current) aimAt(e);
+      const ax = Math.cos(angle.current), ay = Math.sin(angle.current), rx = w.x - cue.x, ry = w.y - cue.y;
+      const along = rx * ax + ry * ay, across = Math.abs(-rx * ay + ry * ax);
+      const onBall = Math.hypot(rx, ry) < P.R * 3.2;
+      // ball in hand: grabbing the ball itself moves it
+      if (s.inHand && onBall) { dragCue.current = true; return; }
+      // grabbing the cue ball (or the cue stick behind it) starts a pull-back shot
+      const onStick = along < -P.R * 1.2 && along > -P.R * 18 && across < P.R * 2.8;
+      if (onStick || onBall) {
+        pull.current = { x: w.x, y: w.y, power0: powerRef.current, p: 0 };
+        powerRef.current = 0.05; setPulling(true); setPullPct(0); play("click", { vol: .5 });
+        return;
+      }
+      if (fineRef.current) { fineDrag.current = { sx: e.clientX - e.clientY, a0: angle.current }; return; }
+      aimAt(e);
     };
     const move = (e: PointerEvent) => {
       if (phaseRef.current !== "aim" || !human()) return;
@@ -188,12 +213,40 @@ export function Pool({ rules, leftToday0, board, me }: {
         if (P.placeOk(s.balls, w.x, w.y, s.kitchen)) { const cue = s.balls.find((b) => b.id === 0)!; cue.x = w.x; cue.y = w.y; }
         return;
       }
+      const pl = pull.current;
+      if (pl) {
+        const w = toWorld(e.clientX, e.clientY);
+        const back = (pl.x - w.x) * Math.cos(angle.current) + (pl.y - w.y) * Math.sin(angle.current);
+        const p = Math.max(0, Math.min(1, back / 130));
+        if (Math.floor(p * 20) !== Math.floor(pl.p * 20)) { setPullPct(Math.round(p * 100)); if (p > pl.p) play("tick", { pitch: 0.8 + p * 0.8, vol: .35 }); }
+        pl.p = p; powerRef.current = Math.max(0.05, p);
+        return;
+      }
+      const fd = fineDrag.current;
+      if (fd) { angle.current = fd.a0 + ((e.clientX - e.clientY) - fd.sx) * 0.0015; return; }
+      if (e.pointerType === "mouse" && !e.buttons) {
+        // hover-aim, except over the cue ball or the stick: there the cursor is reaching to grab it
+        const w = toWorld(e.clientX, e.clientY), cue = g.current.balls.find((b) => b.id === 0)!;
+        const ax = Math.cos(angle.current), ay = Math.sin(angle.current), rx = w.x - cue.x, ry = w.y - cue.y;
+        const along = rx * ax + ry * ay, across = Math.abs(-rx * ay + ry * ax);
+        const overGrip = Math.hypot(rx, ry) < P.R * 3.2 || (along < -P.R * 1.2 && along > -P.R * 18 && across < P.R * 2.8);
+        c.style.cursor = overGrip ? "grab" : "crosshair";
+        if (overGrip) return;
+      }
       if (e.pointerType === "mouse" || e.buttons) aimAt(e);
     };
-    const up = () => { dragCue.current = false; };
+    const up = () => {
+      dragCue.current = false; fineDrag.current = null;
+      const pl = pull.current;
+      if (pl) {
+        pull.current = null; setPulling(false);
+        if (pl.p >= 0.04) { setPower(pl.p); shoot(); } // release to shoot
+        else setPower(pl.power0); // let go near the start: cancelled
+      }
+    };
     c.addEventListener("pointerdown", down); c.addEventListener("pointermove", move); c.addEventListener("pointerup", up); c.addEventListener("pointercancel", up);
     return () => { c.removeEventListener("pointerdown", down); c.removeEventListener("pointermove", move); c.removeEventListener("pointerup", up); c.removeEventListener("pointercancel", up); };
-  }, [toWorld]);
+  }, [toWorld, shoot]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -360,13 +413,30 @@ export function Pool({ rules, leftToday0, board, me }: {
       ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.beginPath(); ctx.arc(hit.x, hit.y, P.R, 0, Math.PI * 2); ctx.stroke();
       if (hit.ball) {
         const legal = P.targets(s, s.turn).includes(hit.ball.id);
-        const nx = hit.ball.x - hit.x, ny = hit.ball.y - hit.y, nl = Math.hypot(nx, ny) || 1;
-        ctx.strokeStyle = legal ? "rgba(255,225,120,.9)" : "rgba(255,90,90,.9)"; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(hit.ball.x, hit.ball.y); ctx.lineTo(hit.ball.x + (nx / nl) * 70, hit.ball.y + (ny / nl) * 70); ctx.stroke();
-        // cue ball deflects along the tangent
-        const tx = -ny / nl, ty = nx / nl, side = Math.sign(Math.cos(a) * tx + Math.sin(a) * ty) || 1;
-        ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.beginPath(); ctx.moveTo(hit.x, hit.y); ctx.lineTo(hit.x + tx * side * 40, hit.y + ty * side * 40); ctx.stroke();
-        if (!legal) { ctx.strokeStyle = "rgba(255,90,90,.9)"; ctx.beginPath(); ctx.arc(hit.ball.x, hit.ball.y, P.R + 4, 0, Math.PI * 2); ctx.stroke(); }
+        const ob = hit.ball, nx = ob.x - hit.x, ny = ob.y - hit.y, nl = Math.hypot(nx, ny) || 1, ux = nx / nl, uy = ny / nl;
+        // where the object ball heads: into a pocket (path clear of other balls) or toward a cushion
+        let pot: (typeof P.POCKETS)[number] | null = null, potT = Infinity;
+        for (const pk of P.POCKETS) {
+          const vx = pk.x - ob.x, vy = pk.y - ob.y, t = vx * ux + vy * uy;
+          if (t <= 0 || Math.abs(-vx * uy + vy * ux) > pk.r * 0.8 || t >= potT) continue;
+          const blocked = s.balls.some((o) => !o.down && o.id !== ob.id && o.id !== 0 && (() => { const wx = o.x - ob.x, wy = o.y - ob.y, k = wx * ux + wy * uy; return k > 0 && k < t && Math.abs(-wx * uy + wy * ux) < P.R * 2; })());
+          if (!blocked) { pot = pk; potT = t; }
+        }
+        const wallT = Math.min(ux > 0 ? (P.W - P.R - ob.x) / ux : ux < 0 ? (P.R - ob.x) / ux : 1e9, uy > 0 ? (P.H - P.R - ob.y) / uy : uy < 0 ? (P.R - ob.y) / uy : 1e9);
+        const len = pot ? potT : Math.min(wallT, 240);
+        const good = pot && legal;
+        ctx.strokeStyle = good ? "rgba(110,255,150,.95)" : legal ? "rgba(255,225,120,.9)" : "rgba(255,90,90,.9)"; ctx.lineWidth = good ? 2.5 : 2;
+        ctx.beginPath(); ctx.moveTo(ob.x, ob.y); ctx.lineTo(ob.x + ux * len, ob.y + uy * len); ctx.stroke();
+        if (good && pot) { ctx.strokeStyle = "rgba(110,255,150,.8)"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(pot.x, pot.y, pot.r + 6 + Math.sin(performance.now() / 160) * 2, 0, Math.PI * 2); ctx.stroke(); }
+        // the cue ball after contact: it keeps the sideways part of its speed, plus follow or draw from its spin
+        const ax = Math.cos(a), ay = Math.sin(a), tx = -uy, ty = ux, dt = ax * tx + ay * ty, top = cueSpin.current.top;
+        const cx = tx * dt + ax * top * P.FOLLOW, cy = ty * dt + ay * top * P.FOLLOW, cl = Math.hypot(cx, cy);
+        if (cl > 0.03) {
+          ctx.strokeStyle = top > 0.1 ? "rgba(140,200,255,.6)" : top < -0.1 ? "rgba(255,160,120,.6)" : "rgba(255,255,255,.4)";
+          ctx.setLineDash([4, 5]); ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(hit.x, hit.y); ctx.lineTo(hit.x + (cx / cl) * 30 + cx * 70, hit.y + (cy / cl) * 30 + cy * 70); ctx.stroke(); ctx.setLineDash([]);
+        }
+        if (!legal) { ctx.strokeStyle = "rgba(255,90,90,.9)"; ctx.beginPath(); ctx.arc(ob.x, ob.y, P.R + 4, 0, Math.PI * 2); ctx.stroke(); }
       }
       ctx.restore();
     };
@@ -428,7 +498,9 @@ export function Pool({ rules, leftToday0, board, me }: {
       }
       A.last = now;
       if (ph === "strike" && now - A.strikeAt > 140) {
-        log.current = P.newLog();
+        const sp = human() ? cueSpin.current : P.NO_SPIN;
+        log.current = P.newLog(sp, angle.current);
+        if (sp.top || sp.side) setCueSpin({ top: 0, side: 0 });
         const cue = s.balls.find((b) => b.id === 0)!, v = powerRef.current * P.MAX_SPEED;
         cue.vx = Math.cos(angle.current) * v; cue.vy = Math.sin(angle.current) * v;
         A.acc = 0; A.broke = false; setPhase("rolling");
@@ -476,6 +548,13 @@ export function Pool({ rules, leftToday0, board, me }: {
         ctx.globalAlpha = p.life; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2); ctx.fill();
       }
       ctx.globalAlpha = 1; sparks.current = sparks.current.filter((p) => p.life > 0);
+      // pulling back: a power ring around the cue ball, gold to red
+      const pl = pull.current;
+      if (ph === "aim" && myAim && pl && !cue0.down) {
+        const k = pl.p;
+        ctx.lineWidth = 4; ctx.strokeStyle = "rgba(0,0,0,.45)"; ctx.beginPath(); ctx.arc(cue0.x, cue0.y, P.R + 9, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = `hsl(${50 - k * 50} 100% ${60 - k * 8}%)`; ctx.beginPath(); ctx.arc(cue0.x, cue0.y, P.R + 9, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2); ctx.stroke();
+      }
       // cue stick
       if (ph === "aim" && myAim) cueStick(angle.current, 10 + powerRef.current * 70);
       else if (ph === "strike") { const k = Math.min(1, (now - A.strikeAt) / 140); cueStick(angle.current, (10 + powerRef.current * 70) * (1 - k * k)); }
@@ -500,16 +579,39 @@ export function Pool({ rules, leftToday0, board, me }: {
   };
   const yourTurn = phase === "aim" && (mode === "friend" || hud.turn === 0);
   const lvl = LEVELS.find((l) => l.id === level)!;
+  // hold an arrow to keep turning: slow at first for precision, then faster
+  const stopNudge = () => { if (nudgeT.current) { clearInterval(nudgeT.current); nudgeT.current = null; } };
+  const startNudge = (dir: 1 | -1) => {
+    stopNudge();
+    const t0 = performance.now();
+    angle.current += dir * 0.0025; play("tick", { vol: .4 });
+    nudgeT.current = setInterval(() => {
+      const held = performance.now() - t0;
+      if (held < 280) return;
+      angle.current += dir * (held < 900 ? 0.0025 : held < 2000 ? 0.008 : 0.02);
+    }, 30);
+  };
+  useEffect(() => stopNudge, []);
+  const nudgeProps = (dir: 1 | -1) => ({
+    onPointerDown: (e: React.PointerEvent) => { e.preventDefault(); if (yourTurn) startNudge(dir); },
+    onPointerUp: stopNudge, onPointerLeave: stopNudge, onPointerCancel: stopNudge,
+    onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); angle.current += dir * 0.0025; } },
+  });
   const shootBar = (
     <div className="pool-shootbar">
-      <label className="field">Power <span className="micro muted">{Math.round(power * 100)}%</span>
-        <input type="range" min={5} max={100} value={Math.round(power * 100)} disabled={!yourTurn} onChange={(e) => setPower(Number(e.target.value) / 100)}
-          style={{ ["--p" as string]: `${Math.round(power * 100)}%` }} className="pl-power" />
-      </label>
+      <div className="pl-bar-top">
+        <label className="field pl-power-field">Power <span className="micro muted">{pulling ? (pullPct < 4 ? "pull back…" : `${pullPct}% · let go to shoot`) : `${Math.round(power * 100)}%`}</span>
+          <input type="range" min={5} max={100} value={Math.round(power * 100)} disabled={!yourTurn} onChange={(e) => setPower(Number(e.target.value) / 100)}
+            style={{ ["--p" as string]: `${Math.round(power * 100)}%` }} className="pl-power" />
+        </label>
+        <SpinPicker spin={spinUI} onChange={(s) => { setCueSpin(s); play("click", { vol: .4 }); }} disabled={!yourTurn} />
+      </div>
       <div className="row" style={{ gap: 6 }}>
-        <button type="button" className="btn" aria-label="Turn aim left" disabled={!yourTurn} onClick={() => { angle.current -= 0.006; play("tick", { vol: .5 }); }}>◀</button>
+        <button type="button" className="btn pl-nudge" aria-label="Turn aim left (hold to keep turning)" disabled={!yourTurn} {...nudgeProps(-1)}>◀</button>
         <button type="button" className="btn btn-primary btn-lg" style={{ flex: 1 }} disabled={!yourTurn} onClick={shoot}>Shoot</button>
-        <button type="button" className="btn" aria-label="Turn aim right" disabled={!yourTurn} onClick={() => { angle.current += 0.006; play("tick", { vol: .5 }); }}>▶</button>
+        <button type="button" className="btn pl-nudge" aria-label="Turn aim right (hold to keep turning)" disabled={!yourTurn} {...nudgeProps(1)}>▶</button>
+        <button type="button" className={`btn pl-fine${fine ? " on" : ""}`} aria-pressed={fine} title="Fine aim: drag sideways on the table to turn the cue slowly"
+          onClick={() => { fineRef.current = !fine; setFine(!fine); play("click", { vol: .4 }); }}>Fine</button>
       </div>
     </div>
   );
@@ -569,7 +671,7 @@ export function Pool({ rules, leftToday0, board, me }: {
 
       <div className="game-controls panel pool-controls">
         {!vertical && shootBar}
-        <p className="micro muted">{vertical ? "Drag on the table to aim, fine-tune with the arrows, set power, shoot." : "Point to aim (arrow keys fine-tune, up/down for power), space or Shoot to hit."} With ball in hand, drag the cue ball to place it.</p>
+        <p className="micro muted">{vertical ? "Drag on the table to aim. To shoot, grab the cue stick (or the cue ball, when it isn't in hand) and pull back, then let go; or set power and tap Shoot." : "Point to aim, then grab the cue stick (or the cue ball, when it isn't in hand) and pull back to shoot; or use the power bar and Shoot (arrow keys fine-tune, Space shoots)."} Hold the arrows to keep turning; Fine makes drags turn the cue slowly. Tap the cue ball in the spin picker for follow, draw or side spin. With ball in hand, drag the cue ball to place it.</p>
         {phase !== "menu" && phase !== "over" && <button type="button" className="btn btn-sm" onClick={() => setPhase("menu")}>{mode === "ai" ? "Concede" : "Quit"}</button>}
         <p className="micro muted">Free to play. Beat {lvl.name} for +{fmt(lvl.pts * rules.perPoint)} marks; up to {fmt(rules.daily)} a day from 8-ball.{signedIn ? ` ${fmt(leftToday)} left today.` : " Sign in to earn."}</p>
         {board.length > 0 && (
@@ -585,6 +687,33 @@ export function Pool({ rules, leftToday0, board, me }: {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Pick where the cue strikes the cue ball: up = follow, down = draw, sides = english. */
+function SpinPicker({ spin, onChange, disabled }: { spin: P.Spin; onChange: (s: P.Spin) => void; disabled?: boolean }) {
+  const set = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (disabled) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    let x = ((e.clientX - r.left) / r.width) * 2 - 1, y = ((e.clientY - r.top) / r.height) * 2 - 1;
+    const d = Math.hypot(x, y); if (d > 1) { x /= d; y /= d; }
+    if (Math.hypot(x, y) < 0.18) { x = 0; y = 0; } // a tap in the middle clears it
+    onChange({ side: Math.round(x * 10) / 10, top: Math.round(-y * 10) / 10 });
+  };
+  const label = !spin.top && !spin.side ? "Centre" : [spin.top > 0.1 ? "Follow" : spin.top < -0.1 ? "Draw" : "", spin.side > 0.1 ? "Right" : spin.side < -0.1 ? "Left" : ""].filter(Boolean).join(" + ");
+  const nudge = (dx: number, dy: number) => onChange({ side: Math.max(-1, Math.min(1, Math.round((spin.side + dx) * 10) / 10)), top: Math.max(-1, Math.min(1, Math.round((spin.top + dy) * 10) / 10)) });
+  return (
+    <div className="pl-spin">
+      <button type="button" className="pl-spin-ball" disabled={disabled} aria-label={`Cue ball spin: ${label}. Tap a spot on the ball; arrow keys move it, Enter centres it.`}
+        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); set(e); }} onPointerMove={(e) => { if (e.buttons) set(e); }}
+        onKeyDown={(e) => {
+          const k: Record<string, [number, number]> = { ArrowUp: [0, .2], ArrowDown: [0, -.2], ArrowLeft: [-.2, 0], ArrowRight: [.2, 0] };
+          if (k[e.key]) { e.preventDefault(); e.stopPropagation(); nudge(...k[e.key]); } else if (e.key === "Enter") { e.preventDefault(); onChange({ top: 0, side: 0 }); }
+        }}>
+        <span className="pl-spin-dot" style={{ left: `${50 + spin.side * 38}%`, top: `${50 - spin.top * 38}%` }} />
+      </button>
+      <span className="micro muted">{label}</span>
     </div>
   );
 }
