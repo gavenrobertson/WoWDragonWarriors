@@ -8,7 +8,7 @@ import { DailyWheel } from "@/components/arcade/DailyWheel";
 import { WelcomeBonus } from "@/components/arcade/WelcomeBonus";
 import { GAMES, fmt, wowIconUrl } from "@/lib/arcade-games";
 
-export const metadata: Metadata = { title: "DW Arcade", description: "DW Arcade, the Dragon Warriors arcade: 30 games from Plinko and Blackjack to typing tests and 8-ball. Win Dragon Marks and open chests for name styles, titles and site themes." };
+export const metadata: Metadata = { title: "DW Arcade", description: "DW Arcade, the Dragon Warriors arcade: 23 games from Plinko and Blackjack to typing tests and 8-ball. Win Dragon Marks and open chests for name styles, titles and site themes." };
 
 const GAME_LABEL: Record<string, string> = { plinko: "Plinko", mines: "Mines", crash: "Dragonflight", hilo: "Higher or Lower", slots: "Dragon's Hoard", dice: "Dice", coinflip: "Faction Flip", wheel: "Daily Wheel" };
 
