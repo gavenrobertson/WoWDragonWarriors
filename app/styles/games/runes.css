@@ -1,1 +1,89 @@
-/* runes: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* runes: Rune Recall. Four big runes around a slowly turning rune circle in the arcane cabinet. A beam joins the lit
+   rune to the core, the ward flares gold when a sequence holds and cracks red when it breaks. */
+.rn-stage { justify-items: stretch; min-height: 0; }
+.rn-machine .machine-screen { padding: clamp(10px, 2.4vw, 22px); }
+
+.rn-circle { position: relative; width: min(100%, 440px); aspect-ratio: 1; }
+.rn-bg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.rn-ring { fill: none; stroke: rgba(192,140,255,.38); stroke-width: 1.2; transition: stroke .3s; }
+.rn-ring.thin { stroke: rgba(192,140,255,.2); stroke-width: .8; stroke-dasharray: 2 3; }
+.rn-mark { fill: none; stroke: rgba(205,170,255,.5); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.rn-star { fill: none; stroke: rgba(255,209,0,.16); stroke-width: .8; }
+.rn-turn { transform-box: view-box; transform-origin: 50% 50%; animation: rn-turn 80s linear infinite; }
+.rn-turn.back { animation-duration: 120s; animation-direction: reverse; }
+@keyframes rn-turn { to { transform: rotate(360deg); } }
+.rn-circle::before { content: ""; position: absolute; inset: 18%; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, rgba(155,93,255,.22), transparent 70%); transition: background .3s; }
+.rn-input::before { background: radial-gradient(circle, rgba(255,209,0,.14), transparent 70%); }
+.rn-circle.broken::before { background: radial-gradient(circle, rgba(255,59,47,.25), transparent 70%); }
+.rn-circle.broken .rn-ring { stroke: rgba(255,90,70,.5); }
+.rn-circle.broken .rn-turn { animation-play-state: paused; }
+
+/* the gold flare when a sequence holds */
+.rn-flare { position: absolute; inset: 3%; border-radius: 50%; pointer-events: none; border: 3px solid #FFD100;
+  box-shadow: 0 0 30px rgba(255,209,0,.7), inset 0 0 30px rgba(255,209,0,.45); animation: rn-flare .75s cubic-bezier(.15,.8,.25,1) forwards; }
+@keyframes rn-flare { from { transform: scale(.82); opacity: 1; } to { transform: scale(1.08); opacity: 0; } }
+
+/* beams from the core to the lit rune */
+.rn-beam { position: absolute; left: 50%; top: 50%; width: 4px; height: 24%; margin-left: -2px; transform-origin: 50% 0; border-radius: 2px; pointer-events: none; opacity: 0;
+  background: linear-gradient(180deg, transparent, var(--c)); box-shadow: 0 0 14px var(--c); transition: opacity .12s; }
+.rn-beam.p0 { transform: rotate(180deg); } .rn-beam.p1 { transform: rotate(-90deg); } .rn-beam.p2 { transform: rotate(0deg); } .rn-beam.p3 { transform: rotate(90deg); }
+.rn-beam.on { opacity: 1; }
+
+/* the core: status, count and progress pips */
+.rn-core { position: absolute; left: 50%; top: 50%; width: 34%; aspect-ratio: 1; transform: translate(-50%, -50%); z-index: 1; display: grid; place-content: center; justify-items: center; gap: 2px; text-align: center; border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #2a1a44, #0d0818 72%); box-shadow: 0 0 0 1px #000, 0 0 0 3px rgba(192,140,255,.4), 0 0 0 4px #000, 0 0 30px rgba(155,93,255,.35), inset 0 0 20px rgba(0,0,0,.7); transition: box-shadow .25s; }
+.rn-input .rn-core { box-shadow: 0 0 0 1px #000, 0 0 0 3px rgba(255,209,0,.65), 0 0 0 4px #000, 0 0 30px rgba(255,209,0,.3), inset 0 0 20px rgba(0,0,0,.7); }
+.rn-circle.broken .rn-core { box-shadow: 0 0 0 1px #000, 0 0 0 3px #ff3b2f, 0 0 0 4px #000, 0 0 34px rgba(255,59,47,.55), inset 0 0 20px rgba(0,0,0,.7); }
+.rn-status { font: 700 clamp(8px, 1.6vw, 10px)/1.2 var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: #c9b4ff; max-width: 90%; }
+.rn-input .rn-status { color: #FFD100; }
+.rn-circle.broken .rn-status { color: #ff8a7a; }
+.rn-count { font: 400 clamp(28px, 6vw, 46px)/1 var(--font-title); color: #fff; text-shadow: 0 3px 0 #000, 0 0 18px rgba(192,140,255,.7); font-variant-numeric: tabular-nums; }
+.rn-pips { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; max-width: 78%; min-height: 6px; }
+.rn-pips i { width: 6px; height: 6px; border-radius: 50%; background: rgba(192,140,255,.25); box-shadow: inset 0 0 0 1px rgba(192,140,255,.4); transition: background .1s, box-shadow .1s; }
+.rn-pips i.on { background: #FFD100; box-shadow: 0 0 6px rgba(255,209,0,.8); }
+.rn-pips em { font: 700 9px var(--font-body); font-style: normal; color: #c9b4ff; }
+
+/* the runes */
+.rn-rune { position: absolute; width: 27%; aspect-ratio: 1; margin: 0; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; cursor: pointer; z-index: 2;
+  color: var(--c); font: inherit; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--c) 22%, #1d1430), #0a0710 72%);
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px color-mix(in srgb, var(--c) 40%, #3a2a14), 0 0 0 5px #000, inset 0 0 22px color-mix(in srgb, var(--c) 28%, transparent), 0 10px 20px -8px #000;
+  transition: transform .14s cubic-bezier(.2,1.5,.4,1), box-shadow .14s, background .14s, filter .2s; }
+.rn-rune.p0 { left: 36.5%; top: 1%; } .rn-rune.p1 { right: 1%; top: 36.5%; } .rn-rune.p2 { left: 36.5%; bottom: 1%; } .rn-rune.p3 { left: 1%; top: 36.5%; }
+.rn-rune:disabled { cursor: default; opacity: 1; }
+.rn-rune svg { width: 52%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .75; filter: drop-shadow(0 0 4px var(--c)); transition: opacity .14s; }
+.rn-key { position: absolute; bottom: 9%; font: 700 10px var(--font-body); color: rgba(255,255,255,.45); }
+.rn-input .rn-rune:not(:disabled):hover { filter: brightness(1.25); }
+.rn-show .rn-rune:not(.lit) { filter: brightness(.7) saturate(.8); }
+.rn-rune.lit { transform: scale(1.09); filter: none;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--c) 55%, #fff), var(--c) 45%, color-mix(in srgb, var(--c) 45%, #000));
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px color-mix(in srgb, var(--c) 70%, #fff), 0 0 0 5px #000, 0 0 40px var(--c), 0 0 90px color-mix(in srgb, var(--c) 55%, transparent); }
+.rn-rune.lit svg { stroke: #fff; opacity: 1; }
+.rn-rune.lit .rn-key { color: rgba(0,0,0,.55); }
+.rn-rune.wrong { filter: none; animation: rn-wrong .5s ease-out;
+  background: radial-gradient(circle at 50% 40%, #ff8a7a, #c0200f 50%, #3a0604); box-shadow: 0 0 0 2px #000, 0 0 0 4px #ff3b2f, 0 0 0 5px #000, 0 0 40px #ff3b2f; }
+.rn-rune.wrong svg { stroke: #fff; opacity: 1; }
+@keyframes rn-wrong { 0%, 100% { transform: scale(1); } 20% { transform: scale(1.12); } 40% { transform: scale(.94) rotate(-4deg); } 60% { transform: scale(1.04) rotate(3deg); } }
+.rn-done .rn-rune:not(.wrong) { filter: brightness(.5) grayscale(.5); }
+
+/* start and end screens */
+.rn-stage .skill-overlay { background: radial-gradient(circle at 50% 40%, rgba(26,12,48,.86), rgba(6,3,14,.95)); backdrop-filter: blur(3px); animation: rn-in .35s ease-out; }
+@keyframes rn-in { from { opacity: 0; } }
+.rn-stage .skill-overlay .skill-score { display: none; }
+.rn-ov-glyphs { display: flex; gap: 12px; }
+.rn-ov-glyphs svg { width: 34px; height: 34px; fill: none; stroke: var(--c); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 6px var(--c)); animation: rn-glow 2s ease-in-out infinite; }
+.rn-ov-glyphs svg:nth-child(2) { animation-delay: .5s; } .rn-ov-glyphs svg:nth-child(3) { animation-delay: 1s; } .rn-ov-glyphs svg:nth-child(4) { animation-delay: 1.5s; }
+@keyframes rn-glow { 50% { opacity: .35; } }
+.rn-final { display: flex; align-items: baseline; gap: 8px; }
+.rn-final strong { font: 400 clamp(52px, 9vw, 80px)/1 var(--font-title); color: #FFD100; font-variant-numeric: tabular-nums; text-shadow: 0 4px 0 #000, 0 0 30px rgba(255,209,0,.4); }
+.rn-final span { font: 700 15px var(--font-display); color: #c9b4ff; letter-spacing: .06em; }
+
+@media (max-width: 600px) {
+  .rn-key { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rn-turn, .rn-flare, .rn-rune.wrong, .rn-ov-glyphs svg, .rn-stage .skill-overlay { animation: none; }
+  .rn-flare { opacity: .6; }
+  .rn-rune, .rn-beam { transition: none; }
+  .rn-rune.lit { transform: none; }
+}

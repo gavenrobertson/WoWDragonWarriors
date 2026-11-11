@@ -1,1 +1,90 @@
-/* dice: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* dice: a rune-carved stone slab. The marker gem and the big number are moved from Dice.tsx (rAF via refs). */
+.dc-machine > .machine-hud, .dc-machine > .machine-screen { min-width: 0; }
+.dc-machine .result-strip { flex: 1 1 150px; min-width: 0; }
+.dc-machine .machine-screen { padding: 14px 16px 18px; }
+.dc-screen { width: 100%; max-width: 760px; display: grid; gap: clamp(14px, 3vh, 26px); align-content: center; min-height: clamp(330px, 44vh, 420px); }
+
+/* ---- the big number ---- */
+.dc-readout { display: grid; justify-items: center; gap: 6px; }
+.dc-cap { font: 600 11px/1 var(--font-body); letter-spacing: .22em; text-transform: uppercase; color: #8fae98; }
+.dc-num { display: block; min-width: 4.2ch; text-align: center; font: 400 clamp(62px, 10vw, 104px)/1 var(--font-title); font-variant-numeric: tabular-nums; color: #f4ecd8;
+  text-shadow: 0 4px 0 #000, 0 0 34px rgba(150,220,170,.25); transition: color .2s, filter .3s; }
+.dc-screen.rolling .dc-num { color: #e6dcff; text-shadow: 0 4px 0 #000, 0 0 30px rgba(170,140,255,.55); }
+.dc-num.win { color: #6dff8a; text-shadow: 0 4px 0 #000, 0 0 40px rgba(76,217,100,.75); }
+.dc-num.lose { color: #a99c88; text-shadow: 0 4px 0 #000; filter: brightness(.78); }
+.dc-verdict { padding: 5px 14px; border-radius: 999px; font: 600 14px/1.2 var(--font-body); color: #cfc3a6; background: rgba(0,0,0,.45); box-shadow: 0 0 0 1px #2c3a30; white-space: nowrap; }
+.dc-verdict strong { color: #FFD100; }
+.dc-verdict.win { color: #1a1206; background: linear-gradient(180deg, #8dffa4, #2fae4f); box-shadow: 0 0 0 1px #000, 0 0 22px rgba(76,217,100,.5); animation: dc-pop .42s cubic-bezier(.2,1.5,.4,1); }
+.dc-verdict.win strong { color: #0b2e14; }
+.dc-verdict.lose { color: #b8a98c; animation: dc-pop .3s ease-out; }
+@keyframes dc-pop { from { transform: scale(1.2); opacity: 0; } }
+
+/* ---- the slab ---- */
+.dc-slab { position: relative; padding: 0 clamp(22px, 4vw, 34px) 14px; border-radius: 16px;
+  background: radial-gradient(90% 120% at 50% 0%, rgba(140,200,160,.08), transparent 60%),
+    repeating-linear-gradient(115deg, rgba(255,255,255,.018) 0 2px, transparent 2px 9px),
+    linear-gradient(180deg, #3a3f3a, #22261f 60%, #1a1c18);
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 2px #59604f, inset 0 0 0 3px #000, inset 0 2px 0 3px rgba(255,255,255,.06), 0 18px 30px -16px #000; }
+.dc-slab::before, .dc-slab::after { content: ""; position: absolute; top: 12px; width: 10px; height: 10px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffe9a8, #b8862e 55%, #4a3410); box-shadow: 0 0 0 1px #000; }
+.dc-slab::before { left: 10px; } .dc-slab::after { right: 10px; }
+.dc-lane { position: relative; height: 62px; }
+.dc-marker { position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); display: grid; justify-items: center; z-index: 2; filter: drop-shadow(0 6px 6px rgba(0,0,0,.6)); }
+.dc-marker::after { content: ""; width: 0; height: 0; margin-top: -1px; border: 8px solid transparent; border-top: 10px solid #c9a253; border-bottom: 0; }
+.dc-gem { display: grid; place-items: center; width: 50px; height: 44px; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  background: linear-gradient(180deg, #ffe9a8, #c9a253 50%, #7a5a1c); }
+.dc-gem > span { display: grid; place-items: center; width: 44px; height: 38px; clip-path: inherit; font: 800 17px/1 var(--font-body); font-variant-numeric: tabular-nums; color: #f4ecd8;
+  background: radial-gradient(circle at 50% 30%, #4a5a4e, #1a201b); }
+.dc-marker.live .dc-gem > span { background: radial-gradient(circle at 50% 30%, #9b7bff, #2c1660); color: #fff; }
+.dc-marker.live { filter: drop-shadow(0 0 10px rgba(155,93,255,.8)) drop-shadow(0 6px 6px rgba(0,0,0,.6)); }
+.dc-marker.win .dc-gem > span { background: radial-gradient(circle at 50% 30%, #7dffa0, #17702f); color: #04210c; }
+.dc-marker.win { filter: drop-shadow(0 0 14px rgba(76,217,100,.85)) drop-shadow(0 6px 6px rgba(0,0,0,.6)); }
+.dc-marker.lose .dc-gem > span { background: radial-gradient(circle at 50% 30%, #6a2a22, #2a0d0a); color: #e5b9ae; }
+
+/* ---- the track ---- */
+.dc-track { --t: 50%; position: relative; height: 30px; border-radius: 15px; background: #120f0c;
+  box-shadow: inset 0 3px 6px rgba(0,0,0,.85), inset 0 0 0 1px #000, 0 1px 0 rgba(255,255,255,.08); }
+.dc-zone { position: absolute; top: 3px; bottom: 3px; transition: left .38s cubic-bezier(.15,.8,.25,1), width .38s cubic-bezier(.15,.8,.25,1), right .38s cubic-bezier(.15,.8,.25,1); }
+.dc-track.over .dc-zone.lose { left: 3px; width: calc(var(--t) - 3px); border-radius: 12px 0 0 12px; }
+.dc-track.over .dc-zone.win { left: var(--t); right: 3px; width: auto; border-radius: 0 12px 12px 0; }
+.dc-track.under .dc-zone.win { left: 3px; width: calc(var(--t) - 3px); border-radius: 12px 0 0 12px; }
+.dc-track.under .dc-zone.lose { left: var(--t); right: 3px; width: auto; border-radius: 0 12px 12px 0; }
+.dc-zone.lose { background: radial-gradient(2px 2px at 20% 40%, rgba(255,120,60,.6), transparent), radial-gradient(2px 2px at 60% 70%, rgba(255,120,60,.45), transparent),
+  linear-gradient(180deg, #6e1d17, #3a0c09); box-shadow: inset 0 1px 0 rgba(255,160,140,.18); }
+.dc-zone.win { background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent) 0 0 / 40% 100% no-repeat, linear-gradient(180deg, #5fe07a, #1f8a3a 60%, #146428);
+  box-shadow: inset 0 1px 0 rgba(220,255,225,.45), 0 0 14px rgba(76,217,100,.35); animation: dc-sheen 3.2s linear infinite; }
+@keyframes dc-sheen { from { background-position: -60% 0, 0 0; } to { background-position: 160% 0, 0 0; } }
+.dc-screen.win .dc-zone.win { animation: dc-sheen 3.2s linear infinite, dc-flare .9s ease-out; }
+@keyframes dc-flare { 0% { box-shadow: inset 0 1px 0 rgba(220,255,225,.45), 0 0 0 rgba(76,217,100,0); filter: brightness(1.8); } 40% { box-shadow: inset 0 1px 0 rgba(220,255,225,.45), 0 0 34px rgba(76,217,100,.9); } }
+.dc-screen.lose .dc-zone.win { filter: brightness(.72) saturate(.7); }
+.dc-notches { position: absolute; inset: 3px; border-radius: 12px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, transparent 0 calc(25% - 1px), rgba(0,0,0,.65) calc(25% - 1px) 25%),
+    repeating-linear-gradient(90deg, transparent 0 calc(5% - 1px), rgba(0,0,0,.32) calc(5% - 1px) 5%); }
+.dc-pip { position: absolute; top: -9px; width: 7px; height: 7px; transform: translateX(-50%) rotate(45deg); background: #c56b5c; box-shadow: 0 0 0 1px #000; pointer-events: none; }
+.dc-pip.win { background: #6dff8a; }
+.dc-handle { position: absolute; left: var(--t); top: 50%; width: 42px; height: 42px; transform: translate(-50%, -50%); border-radius: 50%; display: grid; place-items: center; pointer-events: none; z-index: 1;
+  background: radial-gradient(circle at 35% 30%, #fff3c4, #e0b04a 45%, #7a5414); box-shadow: 0 0 0 2px #000, inset 0 -3px 0 rgba(0,0,0,.35), 0 0 0 4px rgba(255,209,0,.18), 0 6px 12px rgba(0,0,0,.7);
+  transition: left .05s linear; }
+.dc-handle > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font: 800 14px/1 var(--font-body); font-variant-numeric: tabular-nums; color: #2a1a04;
+  background: radial-gradient(circle at 50% 40%, #ffe9a8, #c9952e); box-shadow: inset 0 0 0 1px rgba(90,58,0,.5), inset 0 2px 3px rgba(0,0,0,.25); }
+.dc-track input[type=range] { position: absolute; left: -21px; right: -21px; top: -10px; bottom: -10px; width: calc(100% + 42px); height: auto; margin: 0; opacity: .001; cursor: grab; z-index: 3; touch-action: none; }
+.dc-track input[type=range]:active { cursor: grabbing; }
+.dc-track input[type=range]:disabled { cursor: default; }
+.dc-track:has(input:focus-visible) .dc-handle { box-shadow: 0 0 0 2px #000, 0 0 0 5px #fff, 0 0 18px rgba(255,209,0,.7); }
+.dc-track:has(input:hover:not(:disabled)) .dc-handle { filter: brightness(1.12); }
+.dc-scale { display: flex; justify-content: space-between; margin: 10px -6px 0; font: 600 12px var(--font-body); font-variant-numeric: tabular-nums; color: #8a9488; }
+.dc-scale span { width: 2.2em; text-align: center; }
+.game-controls .dc-go { transition: transform 90ms; }
+.game-controls .dc-go:active:not(:disabled) { transform: scale(.96); transition-duration: 40ms; }
+
+@media (max-width: 600px) {
+  .dc-machine .machine-screen { padding: 10px 8px 12px; min-height: 0; }
+  .dc-screen { min-height: 0; gap: 16px; padding-block: 6px; }
+  .dc-num { font-size: 64px; }
+  .dc-verdict { font-size: 13px; white-space: normal; text-align: center; }
+  .dc-lane { height: 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dc-zone, .dc-handle { transition: none; }
+  .dc-zone.win, .dc-screen.win .dc-zone.win, .dc-verdict.win, .dc-verdict.lose { animation: none; }
+}

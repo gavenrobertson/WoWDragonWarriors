@@ -1,1 +1,115 @@
-/* murloc: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* murloc: Murloc Mayhem. Nine rippling pools in the forest cabinet; murlocs squash-and-stretch up out of the
+   water and duck back down, bonks land with an impact star, whelps glow red, and a Mrgl-o-meter tracks the combo. */
+.ml-stage { justify-items: stretch; min-height: 0; }
+.ml-machine .machine-screen { padding: clamp(10px, 2.4vw, 22px); }
+.ml-machine .machine-screen::after { content: ""; position: absolute; inset: auto 0 0 0; height: 45%; z-index: -1; pointer-events: none;
+  background: radial-gradient(60% 70% at 30% 100%, rgba(120,200,190,.12), transparent 70%), radial-gradient(60% 70% at 75% 100%, rgba(140,220,200,.1), transparent 70%); }
+.ml-bump { display: inline-block; animation: ml-bump .26s cubic-bezier(.2,1.5,.4,1); }
+@keyframes ml-bump { from { transform: scale(1.35); } }
+
+.ml-field { width: 100%; max-width: 470px; display: grid; justify-items: center; gap: clamp(10px, 2vw, 16px); }
+
+/* combo meter */
+.ml-meter { display: grid; grid-template-columns: auto minmax(0, 1fr) 3.2em; align-items: center; gap: 10px; width: 100%; }
+.ml-meter-l { font: 700 10px var(--font-body); letter-spacing: .14em; text-transform: uppercase; color: #9fd8c8; }
+.ml-meter-bar { position: relative; height: 10px; border-radius: 5px; background: rgba(0,0,0,.5); box-shadow: inset 0 0 0 1px rgba(160,230,210,.25), inset 0 2px 4px rgba(0,0,0,.6); overflow: hidden; }
+.ml-meter-bar > span { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: linear-gradient(90deg, #2aa8a0, #5cff8a 60%, #ffe27a); box-shadow: 0 0 10px rgba(92,255,138,.6);
+  transition: width .28s cubic-bezier(.2,1.5,.4,1); }
+.ml-meter-bar > i { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.25); }
+.ml-meter-n { justify-self: end; font: 700 18px/1 var(--font-display); color: #cfeee4; font-variant-numeric: tabular-nums; animation: ml-bump .26s cubic-bezier(.2,1.5,.4,1); }
+.ml-meter.hot .ml-meter-n { color: #5cff8a; text-shadow: 0 0 12px rgba(92,255,138,.7); }
+.ml-meter.blaze .ml-meter-n { color: #FFD100; text-shadow: 0 0 14px rgba(255,209,0,.8); }
+.ml-meter.blaze .ml-meter-bar { box-shadow: inset 0 0 0 1px rgba(255,209,0,.6), 0 0 14px rgba(255,209,0,.35); }
+
+/* the pools */
+.ml-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(6px, 2.4vw, 18px); width: 100%; max-width: none; }
+.ml-hole { position: relative; aspect-ratio: 5 / 4; padding: 0; border: 0; border-radius: 0; overflow: visible; background: none; box-shadow: none; cursor: pointer; font: inherit;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.ml-hole:focus-visible { outline: 2px solid #FFD100; outline-offset: 2px; border-radius: 12px; }
+.ml-pool { position: absolute; left: 4%; right: 4%; bottom: 6%; height: 44%; border-radius: 50%; overflow: hidden;
+  background: radial-gradient(ellipse 70% 60% at 45% 35%, rgba(170,240,255,.35), transparent 60%), radial-gradient(ellipse at 50% 45%, #2fa3b8 0%, #17708a 38%, #0b4256 70%, #05202a 100%);
+  box-shadow: 0 0 0 3px #3b3220, 0 0 0 5px #5f5030, 0 0 0 6px #000, inset 0 7px 12px rgba(0,0,0,.55), 0 10px 14px -6px #000; }
+/* a lily pad drifts on some pools */
+.ml-hole:nth-child(3n+1) .ml-pool::after, .ml-hole:nth-child(4) .ml-pool::after, .ml-hole:nth-child(8) .ml-pool::after { content: ""; position: absolute; right: 10%; top: 28%; width: 22%; height: 30%; border-radius: 50%;
+  background: conic-gradient(from 20deg, transparent 0 22deg, #3e8a3a 22deg); box-shadow: inset 0 -2px 3px rgba(0,0,0,.4); opacity: .9; }
+.ml-hole:nth-child(4) .ml-pool::after { left: 8%; right: auto; top: 46%; }
+.ml-ripple { position: absolute; left: 50%; top: 50%; width: 70%; height: 70%; margin: -35% 0 0 -35%; border-radius: 50%; border: 1.5px solid rgba(190,245,255,.5);
+  animation: ml-ripple 2.8s ease-out infinite; animation-delay: calc(var(--i, 0) * -.37s); opacity: 0; }
+.ml-ripple.b { animation-delay: calc(var(--i, 0) * -.37s - 1.4s); }
+@keyframes ml-ripple { 0% { transform: scale(.25); opacity: .8; } 100% { transform: scale(1.5); opacity: 0; } }
+.ml-splash { position: absolute; left: 50%; top: 50%; width: 80%; height: 80%; margin: -40% 0 0 -40%; border-radius: 50%; border: 3px solid rgba(230,252,255,.85);
+  animation: ml-splash .45s cubic-bezier(.15,.8,.25,1) forwards; pointer-events: none; }
+.ml-splash.up { border-width: 2px; animation-duration: .35s; }
+@keyframes ml-splash { from { transform: scale(.2); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+
+/* the creature rises out of a clipped pit whose floor is the water line */
+.ml-pit { position: absolute; left: 14%; right: 14%; top: 0; bottom: 28%; overflow: hidden; pointer-events: none; }
+.ml-mob { position: absolute; left: 50%; bottom: 0; width: 72%; aspect-ratio: 1; transform: translate(-50%, 4%); transform-origin: 50% 100%;
+  animation: ml-rise .3s cubic-bezier(.2,1,.4,1), ml-bob .55s ease-in-out .3s infinite alternate; }
+.ml-mob img { display: block; width: 100%; height: 100%; border-radius: 44% 44% 20% 20%; object-fit: cover;
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px #4fd0c0, 0 0 16px rgba(79,208,192,.45); }
+.ml-mob.whelp img { box-shadow: 0 0 0 2px #000, 0 0 0 4px #ff5a3f, 0 0 18px rgba(255,80,40,.85); }
+.ml-warn { position: absolute; top: 4%; right: -2%; width: 22%; aspect-ratio: 1; min-width: 16px; display: grid; place-items: center; border-radius: 50%;
+  font: 900 12px/1 var(--font-body); color: #fff; background: radial-gradient(circle at 35% 35%, #ff8a6a, #d0200f); box-shadow: 0 0 0 1.5px #000, 0 0 10px rgba(255,60,30,.9); animation: ml-warn .5s ease-in-out infinite alternate; }
+@keyframes ml-warn { to { transform: scale(1.18); } }
+@keyframes ml-rise {
+  0% { transform: translate(-50%, 108%) scale(.82, 1.22); }
+  55% { transform: translate(-50%, -8%) scale(.9, 1.14); }
+  78% { transform: translate(-50%, 6%) scale(1.14, .86); }
+  100% { transform: translate(-50%, 4%) scale(1, 1); }
+}
+@keyframes ml-bob { from { transform: translate(-50%, 4%) scale(1, 1); } to { transform: translate(-50%, 0) scale(.98, 1.03); } }
+.ml-mob.out-duck { animation: ml-duck .22s cubic-bezier(.5,0,.8,.4) forwards; }
+@keyframes ml-duck { 0% { transform: translate(-50%, 4%) scale(1, 1); } 35% { transform: translate(-50%, 8%) scale(1.14, .84); } 100% { transform: translate(-50%, 115%) scale(.88, 1.16); } }
+.ml-mob.out-bonk { animation: ml-bonked .32s cubic-bezier(.5,0,.8,.4) forwards; }
+.ml-mob.out-bonk img { filter: brightness(1.5) saturate(1.2); }
+@keyframes ml-bonked { 0% { transform: translate(-50%, 12%) scale(1.3, .62); } 40% { transform: translate(-50%, 14%) scale(1.22, .7); } 100% { transform: translate(-50%, 118%) scale(1, .8); } }
+.ml-mob.out-oops { animation: ml-oops .32s ease-in forwards; }
+@keyframes ml-oops { 0% { transform: translate(-50%, 4%) rotate(0); } 20% { transform: translate(-50%, 4%) rotate(-12deg); } 40% { transform: translate(-50%, 4%) rotate(10deg); } 100% { transform: translate(-50%, 115%) rotate(0); } }
+.ml-hole.up .ml-pool { box-shadow: 0 0 0 3px #3b3220, 0 0 0 5px #5f5030, 0 0 0 6px #000, inset 0 7px 12px rgba(0,0,0,.55), 0 10px 14px -6px #000, 0 0 18px -4px rgba(79,208,192,.6); }
+.ml-hole.up.whelp .ml-pool { box-shadow: 0 0 0 3px #3b3220, 0 0 0 5px #5f5030, 0 0 0 6px #000, inset 0 7px 12px rgba(0,0,0,.55), 0 10px 14px -6px #000, 0 0 20px -2px rgba(255,80,40,.7); }
+/* a ring of disturbed water where the creature breaks the surface */
+.ml-lip { position: absolute; left: 18%; right: 18%; bottom: calc(28% - 5%); height: 10%; border-radius: 50%; pointer-events: none; opacity: 0;
+  border: 2px solid rgba(210,250,255,.7); border-top-color: transparent; transition: opacity .12s; }
+.ml-hole.up .ml-lip { opacity: 1; }
+
+/* bonk */
+.ml-hit { position: absolute; inset: 0; z-index: 3; pointer-events: none; transform: none; left: 0; top: 0; animation: none; font: inherit; }
+.ml-star { position: absolute; left: 50%; top: 34%; width: 66%; aspect-ratio: 1; margin: -33% 0 0 -33%;
+  clip-path: polygon(50% 0, 60% 34%, 96% 22%, 70% 50%, 100% 74%, 62% 66%, 50% 100%, 40% 66%, 4% 78%, 30% 50%, 0 22%, 40% 34%);
+  background: radial-gradient(circle, #fff 0 18%, #fff3b0 30%, #FFD100 60%, #ff9433); animation: ml-star .34s cubic-bezier(.2,1.5,.4,1) forwards; }
+@keyframes ml-star { 0% { transform: scale(.3) rotate(-20deg); opacity: 1; } 55% { transform: scale(1.1) rotate(8deg); opacity: 1; } 100% { transform: scale(1.2) rotate(14deg); opacity: 0; } }
+.ml-cry { position: absolute; left: 50%; top: 2%; font: 700 clamp(12px, 2.2vw, 16px)/1 var(--font-display); color: #7dff6b; white-space: nowrap;
+  text-shadow: 0 2px 0 #000, 0 0 10px rgba(80,255,120,.55); animation: ml-cry .62s cubic-bezier(.15,.8,.25,1) forwards; }
+@keyframes ml-cry { 0% { transform: translate(-50%, 8px) scale(.6); opacity: 0; } 22% { transform: translate(-50%, 0) scale(1.15); opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(-50%, -22px) scale(1); opacity: 0; } }
+.ml-hit.bad .ml-star { background: radial-gradient(circle, #fff 0 14%, #ffb0a0 30%, #ff3b2f 65%, #8a0e06); }
+.ml-hit.bad .ml-cry { color: #ff6b5f; text-shadow: 0 2px 0 #000, 0 0 10px rgba(255,60,40,.6); }
+.ml-hit.big .ml-cry { color: #FFD100; font-size: clamp(14px, 2.6vw, 19px); text-shadow: 0 2px 0 #000, 0 0 14px rgba(255,209,0,.8); }
+
+/* start and end screens */
+.ml-stage .skill-overlay { background: radial-gradient(circle at 50% 40%, rgba(8,30,30,.86), rgba(3,10,10,.95)); backdrop-filter: blur(3px); animation: ml-in .3s ease-out; }
+@keyframes ml-in { from { opacity: 0; } }
+.ml-stage .skill-overlay .skill-score { display: none; }
+.ml-ov-icon { border-radius: 44% 44% 20% 20%; box-shadow: 0 0 0 2px #000, 0 0 0 4px #4fd0c0, 0 0 24px rgba(79,208,192,.6); }
+.ml-ov-icon.bob { animation: ml-ovbob .9s ease-in-out infinite alternate; }
+@keyframes ml-ovbob { to { transform: translateY(-6px) rotate(4deg); } }
+.ml-legend { display: flex; gap: 18px; }
+.ml-legend > span { display: inline-flex; align-items: center; gap: 6px; font: 700 15px var(--font-body); color: #7dff6b; }
+.ml-legend > span.bad { color: #ff6b5f; }
+.ml-legend img { border-radius: 44% 44% 20% 20%; box-shadow: 0 0 0 1.5px #000, 0 0 0 3px #4fd0c0; }
+.ml-legend .bad img { box-shadow: 0 0 0 1.5px #000, 0 0 0 3px #ff5a3f; }
+.ml-final { display: flex; align-items: baseline; gap: 8px; }
+.ml-final strong { font: 400 clamp(52px, 9vw, 80px)/1 var(--font-title); color: #FFD100; font-variant-numeric: tabular-nums; text-shadow: 0 4px 0 #000, 0 0 30px rgba(255,209,0,.4); }
+.ml-final span { font: 700 15px var(--font-display); color: #b8d8c8; letter-spacing: .08em; }
+
+@media (max-width: 600px) {
+  .ml-meter-l { font-size: 9px; letter-spacing: .08em; }
+  .ml-pool { box-shadow: 0 0 0 2px #3b3220, 0 0 0 4px #5f5030, 0 0 0 5px #000, inset 0 5px 10px rgba(0,0,0,.55), 0 8px 12px -6px #000; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ml-bump, .ml-meter-n, .ml-ripple, .ml-splash, .ml-mob, .ml-warn, .ml-star, .ml-ov-icon.bob, .ml-stage .skill-overlay { animation: none; }
+  .ml-ripple, .ml-splash, .ml-star, .ml-mob[class*="out-"] { display: none; }
+  .ml-cry { animation: ml-fade .62s linear forwards; transform: translateX(-50%); }
+  @keyframes ml-fade { 70% { opacity: 1; } to { opacity: 0; } }
+  .ml-meter-bar > span { transition: none; }
+}

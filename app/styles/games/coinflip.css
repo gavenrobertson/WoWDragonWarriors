@@ -1,1 +1,79 @@
-/* coinflip: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* coinflip (Faction Flip): two faction banners and a 3D coin. Toss motion is written from CoinFlip.tsx. */
+.cf-machine > .machine-hud, .cf-machine > .machine-screen { min-width: 0; }
+.cf-machine .result-strip { flex: 1 1 150px; min-width: 0; }
+.cf-machine .machine-screen { padding: 12px; }
+.cf-screen { --cs: 172px; position: relative; width: 100%; min-height: clamp(350px, 46vh, 440px); display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-rows: 1fr auto; align-items: center; justify-items: center; gap: 4px 8px; isolation: isolate; }
+/* faction glows from either side; the called side burns brighter */
+.cf-screen::before, .cf-screen::after { content: ""; position: absolute; top: -20%; bottom: -20%; width: 55%; z-index: -1; pointer-events: none; transition: opacity .4s; }
+.cf-screen::before { left: -12%; background: radial-gradient(50% 50% at 30% 50%, rgba(60,122,214,.45), transparent 70%); opacity: .45; }
+.cf-screen::after { right: -12%; background: radial-gradient(50% 50% at 70% 50%, rgba(200,50,40,.45), transparent 70%); opacity: .45; }
+.cf-screen.call-alliance::before, .cf-screen.call-horde::after { opacity: 1; }
+
+/* ---- banners (also the side picker) ---- */
+.cf-banner { position: relative; display: grid; justify-items: center; align-content: start; gap: 10px; width: clamp(78px, 13vw, 116px); padding: 16px 6px 38px; border: 0; cursor: pointer;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 84%, 0 100%); font: 400 15px/1.1 var(--font-title); letter-spacing: .04em; color: #f2e8d0; text-shadow: 0 2px 0 #000;
+  filter: brightness(.55) saturate(.6); transition: filter .25s, transform .25s cubic-bezier(.2,1.5,.4,1); }
+.cf-banner.alliance { grid-column: 1; grid-row: 1; background: linear-gradient(180deg, #e0b04a 0 6px, #000 6px 7px, #2a5aa8 7px, #163566 70%, #0d2244); }
+.cf-banner.horde { grid-column: 3; grid-row: 1; background: linear-gradient(180deg, #e0b04a 0 6px, #000 6px 7px, #a82a22 7px, #6a1610 70%, #420c08); }
+.cf-banner img { width: clamp(44px, 7vw, 60px); height: auto; border-radius: 50%; box-shadow: 0 0 0 2px #000, 0 0 0 4px #c9a253, 0 6px 12px rgba(0,0,0,.6); }
+.cf-banner[aria-pressed="true"] { filter: none; transform: translateY(4px); }
+.cf-banner.alliance[aria-pressed="true"] { box-shadow: none; }
+.cf-banner:not(:disabled):hover { filter: brightness(.85); }
+.cf-banner[aria-pressed="true"]:not(:disabled):hover { filter: brightness(1.08); }
+.cf-banner:disabled { cursor: default; }
+.cf-banner:focus-visible { outline: none; filter: brightness(1.1); }
+.cf-banner:focus-visible span { text-decoration: underline; text-underline-offset: 4px; }
+.cf-screen.landed-alliance .cf-banner.alliance, .cf-screen.landed-horde .cf-banner.horde { animation: cf-wave .7s cubic-bezier(.2,1.5,.4,1); }
+@keyframes cf-wave { 0% { transform: translateY(4px); } 30% { transform: translateY(-6px) scale(1.06); filter: brightness(1.5); } 100% { transform: translateY(4px); } }
+
+/* ---- the arena and coin ---- */
+.cf-arena { grid-column: 2; grid-row: 1; position: relative; width: calc(var(--cs) + 60px); height: clamp(300px, 40vh, 380px); }
+.cf-arena::before { content: ""; position: absolute; left: 50%; bottom: 0; width: 200px; height: 46px; transform: translateX(-50%); border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255,209,0,.22), rgba(120,80,20,.12) 60%, transparent); }
+.cf-shadow { position: absolute; left: 50%; bottom: 18px; width: calc(var(--cs) * .82); height: 22px; border-radius: 50%; transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(0,0,0,.85), rgba(0,0,0,.4) 60%, transparent); opacity: .75; }
+.cf-toss { position: absolute; left: 50%; bottom: 30px; width: var(--cs); height: var(--cs); margin-left: calc(var(--cs) / -2); perspective: 720px; transform-origin: 50% 100%; transition: filter .3s; }
+.cf-coin { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
+.cf-edge { position: absolute; inset: 0; border-radius: 50%; background: repeating-conic-gradient(#7a5410 0 3deg, #b88a2a 3deg 6deg); box-shadow: inset 0 0 0 2px #4a3006; }
+.cf-face { position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background: radial-gradient(circle at 34% 28%, #fff4c2, #f0c75a 30%, #b8862e 62%, #6b4510 88%, #3e2806);
+  box-shadow: inset 0 0 0 2px #3a2506, inset 0 -6px 14px rgba(0,0,0,.35), inset 0 4px 10px rgba(255,255,255,.35); }
+.cf-face.alliance { transform: translateZ(7px); }
+.cf-face.horde { transform: rotateX(180deg) translateZ(7px); }
+.cf-ring { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cf-rim { fill: none; stroke: rgba(58,36,6,.55); stroke-width: 2; }
+.cf-band { fill: none; stroke: rgba(58,36,6,.45); stroke-width: 1.5; }
+.cf-legend { font: 700 13px var(--font-body); letter-spacing: .06em; fill: #4a2e06; }
+.cf-field { stroke: #3a2506; stroke-width: 3; }
+.cf-face.alliance .cf-field { fill: #17386e; } .cf-face.horde .cf-field { fill: #6e1712; }
+.cf-face img { position: relative; width: 54%; height: 54%; border-radius: 50%; box-shadow: 0 0 0 2px #000, 0 0 0 4px #c9a253, 0 0 14px rgba(0,0,0,.6); }
+.cf-screen.win .cf-arena::after { content: ""; position: absolute; left: 50%; bottom: 30px; width: var(--cs); height: var(--cs); margin-left: calc(var(--cs) / -2); border-radius: 50%; z-index: -1;
+  box-shadow: 0 0 40px 14px rgba(255,209,0,.55), 0 0 90px 30px rgba(255,209,0,.2); animation: cf-halo 1.2s ease-out forwards; }
+@keyframes cf-halo { 0% { transform: scale(.7); opacity: 0; } 25% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); opacity: .7; } }
+.cf-screen.lose .cf-toss { filter: brightness(.72) saturate(.8); }
+
+/* ---- verdict ---- */
+.cf-verdict { grid-column: 1 / -1; grid-row: 2; display: grid; justify-items: center; gap: 2px; min-height: 58px; text-align: center; }
+.cf-verdict strong { font: 400 clamp(24px, 3.6vw, 34px)/1.1 var(--font-title); color: #FFD100; text-shadow: 0 3px 0 #000, 0 0 22px rgba(255,209,0,.4); animation: cf-pop .42s cubic-bezier(.2,1.5,.4,1); }
+.cf-verdict span { font: 700 16px var(--font-body); font-variant-numeric: tabular-nums; color: #e9dcc0; }
+.cf-screen.win .cf-verdict span:not(.cf-wait) { color: #6dff8a; }
+.cf-screen.lose .cf-verdict strong { color: #cbbd9e; text-shadow: 0 3px 0 #000; }
+.cf-screen.lose .cf-verdict span:not(.cf-wait) { color: #a8987a; }
+.cf-verdict .cf-wait { align-self: center; font: 500 14px var(--font-body); color: #b9ab89; letter-spacing: .02em; }
+@keyframes cf-pop { from { transform: scale(1.25); opacity: 0; } }
+.game-controls .cf-go { transition: transform 90ms; }
+.game-controls .cf-go:active:not(:disabled) { transform: scale(.96); transition-duration: 40ms; }
+
+@media (max-width: 600px) {
+  .cf-machine .machine-screen { padding: 8px 6px; min-height: 0; }
+  .cf-screen { --cs: 128px; min-height: 0; gap: 2px 4px; }
+  .cf-arena { width: calc(var(--cs) + 24px); height: 280px; }
+  .cf-arena::before { width: 150px; }
+  .cf-banner { width: 72px; padding: 12px 2px 30px; font-size: 11.5px; letter-spacing: 0; gap: 8px; }
+  .cf-banner img { width: 40px; }
+  .cf-legend { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cf-banner, .cf-screen.landed-alliance .cf-banner.alliance, .cf-screen.landed-horde .cf-banner.horde, .cf-verdict strong, .cf-screen.win .cf-arena::after { animation: none; transition: none; }
+}

@@ -88,6 +88,7 @@ export function CelebrationLayer() {
       }
       const tier = d.won > 0 ? tierFor(d.mult) : "none";
       if (d.won <= 0) { play("lose"); buzz("fail"); return; }
+      if (d.mult > 0 && d.mult < 1) { play("reveal", { pitch: 0.8 }); return; } // a partial return: soft, no coins
       const s = tierSound[tier] ?? "coin"; play(s); buzz(tier === "win" || tier === "none" ? "win" : "big");
       burst(tier === "none" ? "win" : tier);
       if (tier === "big" || tier === "epic" || tier === "legendary") {
@@ -136,12 +137,13 @@ export function CountUp({ value, from, duration = 700, format = (n: number) => M
   return <>{format(shown)}</>;
 }
 
-export type Chip = { k: number | string; label: string; tone: "win" | "lose" | "big" | "neutral" };
+/** cls: an extra class for game-specific colouring (e.g. roulette red/black/green). */
+export type Chip = { k: number | string; label: string; tone: "win" | "lose" | "big" | "neutral"; cls?: string };
 /** Recent results as chips, newest first. */
 export function ResultStrip({ items, label = "Recent results" }: { items: Chip[]; label?: string }) {
   return (
     <div className="result-strip" role="group" aria-label={label}>
-      {items.slice(0, 14).map((c, i) => <span key={c.k} className={`rs-chip ${c.tone}${i === 0 ? " fresh" : ""}`}>{c.label}</span>)}
+      {items.slice(0, 14).map((c, i) => <span key={c.k} className={`rs-chip ${c.tone}${c.cls ? ` ${c.cls}` : ""}${i === 0 ? " fresh" : ""}`}>{c.label}</span>)}
     </div>
   );
 }

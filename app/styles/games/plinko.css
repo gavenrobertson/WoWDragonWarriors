@@ -1,1 +1,37 @@
-/* plinko: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* plinko: an arcane tower of gold pegs; the orb, slot pops and shakes are driven from Plinko.tsx. */
+.pk-machine .machine-screen { padding: 10px 10px 12px; }
+.pk-machine .machine-screen::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(90deg, rgba(155,93,255,.12), transparent 14%, transparent 86%, rgba(155,93,255,.12)),
+    repeating-linear-gradient(0deg, rgba(255,209,0,.035) 0 1px, transparent 1px 28px); }
+.pk-board { width: 100%; display: grid; place-items: center; will-change: transform; }
+.pk-svg { display: block; width: 100%; height: auto; max-height: clamp(380px, calc(100vh - 340px), 660px); overflow: visible; }
+.pk-svg .pk-halo { transform-box: fill-box; transform-origin: center; pointer-events: none; }
+.pk-slot { transform-box: fill-box; transform-origin: center top; }
+.pk-slot .pk-mult { font-family: var(--font-body); font-variant-numeric: tabular-nums; paint-order: stroke; }
+.pk-slot.t5 rect:first-child, .pk-slot.t6 rect:first-child { filter: drop-shadow(0 0 4px rgba(255,90,60,.55)); }
+.pk-slot.t6 rect:first-child { filter: drop-shadow(0 0 5px rgba(255,95,208,.7)); }
+.pk-slot.t0 .pk-mult, .pk-slot.t1 .pk-mult { opacity: .9; }
+.pk-spout { animation: pk-breathe 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes pk-breathe { 50% { opacity: .55; transform: scale(.9); } }
+.pk-trail { pointer-events: none; }
+.pk-pop { font: 800 14px var(--font-body); fill: #FFD100; stroke: #000; stroke-width: 3px; paint-order: stroke; pointer-events: none;
+  transform-box: fill-box; transform-origin: center bottom; animation: pk-pop .95s cubic-bezier(.2,1.5,.4,1) forwards; }
+.pk-pop.t0, .pk-pop.t1 { fill: #b9a8e0; }
+.pk-pop.t2 { fill: #f2d48a; }
+.pk-pop.t4 { fill: #ffb05a; } .pk-pop.t5 { fill: #ff7a5a; } .pk-pop.t6 { fill: #ff7ae0; }
+@keyframes pk-pop {
+  0% { opacity: 0; transform: translateY(6px) scale(.5); }
+  25% { opacity: 1; transform: translateY(-4px) scale(1.15); }
+  70% { opacity: 1; transform: translateY(-10px) scale(1); }
+  100% { opacity: 0; transform: translateY(-18px) scale(.95); }
+}
+.game-controls .pk-drop:active:not(:disabled) { transform: scale(.96); transition: transform 40ms; }
+.game-controls .pk-drop { transition: transform 90ms; }
+@media (max-width: 600px) {
+  .pk-machine .machine-screen { padding: 6px 4px 8px; min-height: 0; }
+  .pk-svg { max-height: none; }
+}
+@media (prefers-reduced-motion: reduce) { .pk-spout, .pk-pop { animation: none; } .pk-pop { opacity: 0; } }
+/* keep the HUD inside the cabinet however many chips pile up */
+.pk-machine > .machine-hud, .pk-machine > .machine-screen { min-width: 0; }
+.pk-machine .result-strip { flex: 1 1 150px; min-width: 0; }

@@ -1,1 +1,91 @@
-/* keno: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* keno: Rune Keno. An arcane board of runestones under a rune drum (the orb) and a tray of drawn runes;
+   the paytable ladder for the current pick count sits underneath and lights up as hits land. */
+.kn-wrap { width: 100%; max-width: 660px; display: grid; gap: 14px; container: kn / inline-size; }
+
+/* ---- the drum and the tray ---- */
+.kn-head { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 16px; padding: 10px 14px; border-radius: 16px;
+  background: linear-gradient(180deg, rgba(20,10,40,.75), rgba(10,6,20,.6)); box-shadow: 0 0 0 1px #000, inset 0 0 0 1px rgba(192,140,255,.35), 0 10px 26px -14px #000; }
+.kn-orb { position: relative; width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; overflow: hidden; isolation: isolate;
+  background: radial-gradient(circle at 40% 32%, #6b3fc0 0%, #2a1258 55%, #0c0520 100%);
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px #c99a2e, 0 0 0 5px #000, 0 0 30px rgba(155,93,255,.55), inset 0 -10px 20px rgba(0,0,0,.6); transition: box-shadow .25s; }
+.kn-orb-swirl { position: absolute; inset: -20%; z-index: -1; border-radius: 50%; opacity: .55;
+  background: conic-gradient(from 0deg, transparent 0 10%, rgba(205,170,255,.55) 18%, transparent 30% 45%, rgba(155,93,255,.6) 55%, transparent 68% 80%, rgba(255,220,140,.35) 90%, transparent);
+  animation: kn-swirl 6s linear infinite; }
+.kn-orb.winding .kn-orb-swirl { animation-duration: .45s; opacity: .95; }
+.kn-orb.winding { animation: kn-wind .7s ease-in both; }
+@keyframes kn-swirl { to { transform: rotate(360deg); } }
+@keyframes kn-wind { 0% { transform: scale(1); } 70% { transform: scale(.92) rotate(-6deg); } 100% { transform: scale(1.04); } }
+.kn-orb-rune { display: grid; justify-items: center; line-height: 1; animation: kn-orb-pop .3s cubic-bezier(.2,1.5,.4,1); }
+.kn-orb-rune b { font: 400 44px/1 var(--font-title), serif; color: #f4ecff; text-shadow: 0 0 12px rgba(205,170,255,.9), 0 2px 0 #000; }
+.kn-orb-rune small { margin-top: 2px; font: 700 12px var(--font-body); color: #d6c4ff; font-variant-numeric: tabular-nums; }
+.kn-orb-rune.idle b { color: #a98ce0; opacity: .8; }
+.kn-orb.hit { box-shadow: 0 0 0 2px #000, 0 0 0 4px #ffd34d, 0 0 0 5px #000, 0 0 36px rgba(255,209,0,.75), inset 0 -10px 20px rgba(0,0,0,.6); }
+.kn-orb.hit .kn-orb-rune b { color: #fff3c4; text-shadow: 0 0 14px rgba(255,209,0,.95), 0 2px 0 #000; }
+@keyframes kn-orb-pop { from { transform: scale(.4) rotate(-20deg); opacity: 0; } }
+.kn-tray { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; }
+.kn-slot { display: grid; justify-items: center; align-content: center; aspect-ratio: .82; border-radius: 8px; line-height: 1;
+  background: rgba(0,0,0,.45); box-shadow: inset 0 0 0 1px rgba(192,140,255,.22), inset 0 4px 8px rgba(0,0,0,.6); }
+.kn-slot b { font: 400 20px/1 var(--font-title), serif; }
+.kn-slot small { font: 700 9px/1.3 var(--font-body); font-variant-numeric: tabular-nums; opacity: .8; }
+.kn-slot.in { color: #e6cf8a; background: linear-gradient(180deg, #3a2c52, #1d1430); box-shadow: inset 0 0 0 1px rgba(214,167,66,.5); animation: kn-slot-in .3s cubic-bezier(.2,1.5,.4,1); }
+.kn-slot.hit { color: #2a1406; background: linear-gradient(180deg, #fff0b0, #e0a100); box-shadow: 0 0 0 1px #000, 0 0 14px rgba(255,209,0,.7); animation: kn-slot-in .36s cubic-bezier(.2,1.5,.4,1); }
+@keyframes kn-slot-in { from { transform: translateY(-10px) scale(.5); opacity: 0; } }
+
+/* ---- the board ---- */
+.kn-board { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 7px; padding: 10px; border-radius: 16px;
+  background: radial-gradient(90% 80% at 50% 40%, rgba(155,93,255,.14), transparent 70%), rgba(6,3,14,.55); box-shadow: 0 0 0 1px #000, inset 0 0 0 1px rgba(192,140,255,.25); }
+.kn-cell { position: relative; aspect-ratio: 1; display: grid; place-items: center; min-width: 0; padding: 0; border: 0; border-radius: 12px; cursor: pointer; color: #8f84b8;
+  background: radial-gradient(circle at 38% 28%, #3a3354, #1b1730 62%, #110e1e); -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 0 0 1px #000, inset 0 1px 0 rgba(255,255,255,.08), inset 0 -4px 8px rgba(0,0,0,.55), 0 3px 0 rgba(0,0,0,.45);
+  transition: transform .09s ease-out, box-shadow .2s, filter .2s, color .2s; }
+.kn-cell:hover:not(:disabled) { color: #cdb8ff; box-shadow: 0 0 0 1px #000, inset 0 0 0 1px rgba(192,140,255,.6), inset 0 -4px 8px rgba(0,0,0,.55), 0 3px 0 rgba(0,0,0,.45); }
+.kn-cell:active:not(:disabled) { transform: scale(.96); transition-duration: .04s; }
+.kn-cell:focus-visible { outline: 2px solid #ffd34d; outline-offset: 2px; }
+.kn-cell:disabled { cursor: default; }
+.kn-glyph { font: 400 clamp(20px, 3.2vw, 30px)/1 var(--font-title), serif; transition: transform .2s; }
+.kn-n { position: absolute; right: 6px; bottom: 4px; font: 700 10px var(--font-body); color: rgba(220,210,255,.45); font-variant-numeric: tabular-nums; }
+.kn-cell.picked { color: #fff; background: radial-gradient(circle at 38% 28%, #8a5ae0, #4a2290 60%, #26104e);
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #c08cff, 0 0 16px rgba(155,93,255,.55), 0 3px 0 rgba(0,0,0,.45); animation: kn-pick .26s cubic-bezier(.2,1.5,.4,1); }
+.kn-cell.picked .kn-glyph { text-shadow: 0 0 10px rgba(220,190,255,.9); }
+.kn-cell.picked .kn-n { color: rgba(255,255,255,.7); }
+@keyframes kn-pick { from { transform: scale(.88); } }
+.kn-cell.drawn { color: #e6cf8a; box-shadow: 0 0 0 1px #000, inset 0 0 0 1px rgba(214,167,66,.6), inset 0 -4px 8px rgba(0,0,0,.55); animation: kn-drawn .32s ease-out; }
+.kn-cell.drawn .kn-glyph { transform: scale(.82); }
+@keyframes kn-drawn { 0% { box-shadow: 0 0 0 1px #000, inset 0 0 0 2px #ffe27a, 0 0 18px rgba(255,209,0,.6); } }
+.kn-cell.hit { z-index: 1; color: #2a1406; background: radial-gradient(circle at 38% 28%, #fff6c8, #ffd34d 45%, #c98a10 85%);
+  box-shadow: 0 0 0 1px #000, 0 0 0 3px rgba(255,236,160,.9), 0 0 26px 4px rgba(255,200,40,.75); transform: scale(1.06); animation: kn-hit .42s cubic-bezier(.2,1.5,.4,1); }
+.kn-cell.hit .kn-glyph { transform: scale(1.12); text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+.kn-cell.hit .kn-n { color: rgba(60,30,0,.75); }
+@keyframes kn-hit { 0% { transform: scale(.8); } 55% { transform: scale(1.22); } 100% { transform: scale(1.06); } }
+.kn-cell.dud { color: #d9c8ff; background: radial-gradient(circle at 38% 28%, #5a3a96, #2e1a5a 62%, #1a0e34); box-shadow: 0 0 0 1px #000, inset 0 0 0 1px rgba(192,140,255,.7), 0 3px 0 rgba(0,0,0,.45); filter: brightness(.78) saturate(.75); }
+.kn-cell.dud .kn-glyph { opacity: .75; }
+.kn-board.shudder { animation: kn-shudder .32s linear; }
+@keyframes kn-shudder { 20% { transform: translate(-3px, 1px); } 40% { transform: translate(3px, -1px); } 60% { transform: translate(-2px, -1px); } 80% { transform: translate(2px, 1px); } }
+.kn-wrap.lost .kn-board { filter: brightness(.9); }
+
+/* ---- paytable ladder ---- */
+.kn-ladder { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; min-height: 40px; }
+.kn-rung { display: inline-grid; justify-items: center; min-width: 64px; padding: 5px 10px; border-radius: 10px; line-height: 1.15;
+  background: rgba(0,0,0,.45); box-shadow: 0 0 0 1px #000, inset 0 0 0 1px rgba(192,140,255,.3); transition: transform .2s, box-shadow .2s, background .2s; }
+.kn-rung-h { font: 600 10px var(--font-body); letter-spacing: .08em; text-transform: uppercase; color: #b8a8dc; }
+.kn-rung strong { font: 700 15px var(--font-body); color: #FFD100; font-variant-numeric: tabular-nums; }
+.kn-rung.live { transform: translateY(-2px); box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #ffd34d, 0 0 16px rgba(255,209,0,.45); }
+.kn-rung.got { background: linear-gradient(180deg, #ffe27a, #e0a100); box-shadow: 0 0 0 1px #000, 0 0 22px rgba(255,209,0,.65); animation: kn-got .45s cubic-bezier(.2,1.5,.4,1); }
+.kn-rung.got .kn-rung-h, .kn-rung.got strong { color: #1a1206; }
+@keyframes kn-got { from { transform: scale(1.3); } }
+.kn-ladder-empty { align-self: center; font: italic 13px var(--font-body); color: #a898cc; }
+
+@container kn (max-width: 520px) {
+  .kn-head { gap: 12px; padding: 10px; }
+  .kn-orb { width: 72px; height: 72px; }
+  .kn-orb-rune b { font-size: 34px; }
+  .kn-tray { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .kn-slot { aspect-ratio: auto; height: 32px; }
+  .kn-slot b { font-size: 16px; } .kn-slot small { display: none; }
+  .kn-board { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+  .kn-glyph { font-size: 26px; }
+  .kn-rung { min-width: 0; padding: 4px 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kn-orb-swirl, .kn-orb.winding, .kn-orb-rune, .kn-slot.in, .kn-slot.hit, .kn-cell.picked, .kn-cell.drawn, .kn-cell.hit, .kn-board.shudder, .kn-rung.got { animation: none !important; }
+}

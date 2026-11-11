@@ -1,1 +1,86 @@
-/* barrage: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* barrage: Arcane Barrage. Glowing arcane orbs with a shrinking timer ring over a turning sigil in the void cabinet;
+   pops burst into sparks with a shockwave, the combo counter climbs, misses fizzle. */
+.ab-stage { justify-items: stretch; min-height: 0; }
+.ab-machine .machine-screen { padding: clamp(8px, 2vw, 18px); }
+.ab-bump { display: inline-block; animation: ab-bump .24s cubic-bezier(.2,1.5,.4,1); }
+@keyframes ab-bump { from { transform: scale(1.35); } }
+
+.ab-arena { position: relative; width: 100%; max-width: 620px; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; cursor: crosshair; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  background: radial-gradient(circle at 50% 50%, rgba(155,93,255,.16), transparent 65%), rgba(4,2,10,.45);
+  box-shadow: inset 0 0 0 1px rgba(155,93,255,.38), inset 0 0 0 2px rgba(0,0,0,.6), inset 0 0 60px rgba(0,0,0,.7); }
+.ab-arena.on { box-shadow: inset 0 0 0 1px rgba(192,140,255,.6), inset 0 0 0 2px rgba(0,0,0,.6), inset 0 0 60px rgba(0,0,0,.7), 0 0 30px -10px rgba(155,93,255,.6); }
+.ab-sigil { position: absolute; left: 50%; top: 50%; width: 62%; aspect-ratio: 1; margin: -31% 0 0 -31%; border-radius: 50%; pointer-events: none; opacity: .5;
+  background: radial-gradient(circle, transparent 47%, rgba(192,140,255,.35) 47.5% 48.5%, transparent 49% 62%, rgba(192,140,255,.2) 62.5% 63.5%, transparent 64% 69%, rgba(192,140,255,.4) 69.5% 70.5%, transparent 71%),
+    repeating-conic-gradient(from 0deg, rgba(192,140,255,.18) 0 2deg, transparent 2deg 15deg);
+  -webkit-mask: radial-gradient(circle, transparent 30%, #000 31% 70%, transparent 71%); mask: radial-gradient(circle, transparent 30%, #000 31% 70%, transparent 71%);
+  animation: ab-turn 70s linear infinite; }
+@keyframes ab-turn { to { transform: rotate(360deg); } }
+.ab-arena.on .ab-sigil { opacity: .8; }
+.ab-time { position: absolute; left: 0; top: 0; height: 3px; width: 100%; pointer-events: none; transform-origin: 0 50%; z-index: 4;
+  background: linear-gradient(90deg, #6a2cff, #c08cff 60%, #ffe27a); box-shadow: 0 0 10px rgba(192,140,255,.8); animation: ab-drain 30s linear forwards; }
+@keyframes ab-drain { to { transform: scaleX(0); } }
+
+.ab-combo { position: absolute; left: 12px; top: 12px; display: grid; justify-items: start; line-height: 1; pointer-events: none; z-index: 4; }
+.ab-combo-n { font: 700 clamp(20px, 3.4vw, 28px)/1 var(--font-display); color: #d6ccff; font-variant-numeric: tabular-nums; text-shadow: 0 2px 0 #000; animation: ab-bump .24s cubic-bezier(.2,1.5,.4,1); }
+.ab-combo-l { font: 700 9px var(--font-body); letter-spacing: .16em; text-transform: uppercase; color: rgba(214,204,255,.6); }
+.ab-combo.warm .ab-combo-n { color: #FFD100; text-shadow: 0 2px 0 #000, 0 0 12px rgba(255,209,0,.6); }
+.ab-combo.hot .ab-combo-n { color: #ff9cf0; text-shadow: 0 2px 0 #000, 0 0 16px rgba(255,120,240,.8), 0 0 30px rgba(155,93,255,.8); }
+
+/* orbs: the button itself is faded and shrunk from the game loop; the core and ring are drawn here */
+.ab-orb { position: absolute; z-index: 2; padding: 0; border: 0; border-radius: 50%; background: none; box-shadow: none; cursor: crosshair; transform: translate(-50%, -50%);
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.ab-core { position: absolute; inset: 13%; border-radius: 50%; overflow: hidden; pointer-events: none;
+  background: radial-gradient(circle at 36% 30%, #fff 0 7%, #efe4ff 16%, #b98aff 40%, #7432ff 66%, #2a0a6a 100%);
+  box-shadow: 0 0 16px rgba(170,120,255,.95), 0 0 34px rgba(120,60,255,.55), inset 0 0 8px rgba(255,255,255,.6), inset 0 -4px 10px rgba(40,0,90,.6);
+  animation: ab-flare .34s cubic-bezier(.2,1.5,.4,1); }
+.ab-core::after { content: ""; position: absolute; inset: 0; border-radius: 50%; mix-blend-mode: screen; opacity: .7;
+  background: conic-gradient(from 0deg, transparent, rgba(255,255,255,.55) 12%, transparent 26%, transparent 50%, rgba(214,184,255,.6) 62%, transparent 76%);
+  animation: ab-turn 1.1s linear infinite; }
+@keyframes ab-flare { 0% { transform: scale(0); filter: brightness(2.2); } 60% { transform: scale(1.18); } 100% { transform: scale(1); filter: none; } }
+.ab-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; overflow: visible; }
+.ab-track { fill: none; stroke: rgba(192,140,255,.2); stroke-width: 2.4; }
+.ab-timer { fill: none; stroke: #e6d6ff; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: calc(var(--k, 0) * 100); filter: drop-shadow(0 0 2px rgba(214,184,255,.9)); }
+.ab-orb.late .ab-timer { stroke: #ff8a6a; filter: drop-shadow(0 0 3px rgba(255,100,60,.9)); }
+.ab-orb.late .ab-core { box-shadow: 0 0 14px rgba(255,120,160,.8), 0 0 28px rgba(120,60,255,.45), inset 0 0 8px rgba(255,255,255,.5), inset 0 -4px 10px rgba(40,0,90,.6); }
+
+/* pops and misses */
+.ab-burst { position: absolute; width: 0; height: 0; z-index: 3; pointer-events: none; }
+.ab-wave { position: absolute; left: -32px; top: -32px; width: 64px; height: 64px; border-radius: 50%; border: 2.5px solid #e0ccff; box-shadow: 0 0 16px rgba(192,140,255,.9), inset 0 0 12px rgba(192,140,255,.6);
+  animation: ab-wave .45s cubic-bezier(.15,.8,.25,1) forwards; }
+@keyframes ab-wave { from { transform: scale(.3); opacity: 1; } to { transform: scale(1.7); opacity: 0; } }
+.ab-spark { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: #f4ecff; box-shadow: 0 0 8px #b07bff, 0 0 2px #fff;
+  opacity: 0; animation: ab-spark .5s cubic-bezier(.15,.8,.25,1) forwards; }
+@keyframes ab-spark { 0% { opacity: 1; transform: rotate(var(--a)) translateX(6px) scale(1.2); } 100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--d)) scale(.3); } }
+.ab-plus { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); white-space: nowrap; font: 700 16px var(--font-display); color: #fff; font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 0 #000, 0 0 10px rgba(192,140,255,.9); animation: ab-plus .65s cubic-bezier(.15,.8,.25,1) forwards; }
+@keyframes ab-plus { 0% { transform: translate(-50%, -50%) scale(.6); opacity: 0; } 25% { transform: translate(-50%, -90%) scale(1.15); opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(-50%, -170%) scale(1); opacity: 0; } }
+.ab-burst.big .ab-plus { font-size: 20px; color: #FFD100; text-shadow: 0 2px 0 #000, 0 0 14px rgba(255,209,0,.9); }
+.ab-burst.big .ab-wave { border-color: #FFD100; box-shadow: 0 0 22px rgba(255,209,0,.9), inset 0 0 14px rgba(255,209,0,.6); }
+.ab-burst.big .ab-spark { background: #fff3b0; box-shadow: 0 0 8px #FFD100; }
+.ab-fizz { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; pointer-events: none; border: 1.5px dashed rgba(200,190,220,.6);
+  animation: ab-fizz .42s ease-out forwards; }
+.ab-fizz::before, .ab-fizz::after { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; margin: -.75px 0 0 -5px; background: rgba(255,140,120,.8); transform: rotate(45deg); }
+.ab-fizz::after { transform: rotate(-45deg); }
+@keyframes ab-fizz { from { transform: scale(.5); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+
+/* start and end screens */
+.ab-stage .skill-overlay { background: radial-gradient(circle at 50% 40%, rgba(22,8,44,.86), rgba(4,2,10,.95)); backdrop-filter: blur(3px); animation: ab-in .3s ease-out; }
+@keyframes ab-in { from { opacity: 0; } }
+.ab-stage .skill-overlay .skill-score { display: none; }
+.ab-ov-orb { position: relative; width: 64px; height: 64px; animation: ab-float 1.6s ease-in-out infinite alternate; }
+.ab-ov-orb .ab-core { inset: 0; animation: none; }
+@keyframes ab-float { to { transform: translateY(-6px) scale(1.05); } }
+.ab-final { display: flex; align-items: baseline; gap: 8px; }
+.ab-final strong { font: 400 clamp(52px, 9vw, 80px)/1 var(--font-title); color: #FFD100; font-variant-numeric: tabular-nums; text-shadow: 0 4px 0 #000, 0 0 30px rgba(255,209,0,.4); }
+.ab-final span { font: 700 15px var(--font-display); color: #c9b4ff; letter-spacing: .08em; }
+
+@media (max-width: 600px) {
+  .ab-arena { aspect-ratio: 1; }
+  .ab-combo { left: 8px; top: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ab-bump, .ab-sigil, .ab-core, .ab-core::after, .ab-combo-n, .ab-ov-orb, .ab-stage .skill-overlay { animation: none; }
+  .ab-wave, .ab-spark { display: none; }
+  .ab-plus { animation: ab-fade .65s linear forwards; }
+  @keyframes ab-fade { 70% { opacity: 1; } to { opacity: 0; } }
+}
