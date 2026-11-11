@@ -1,1 +1,125 @@
-/* dragonspire: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* dragonspire: a stone tower, floors stacked bottom to top, arched doors that swing open on treasure or a
+   dragon. The hero token climbs the ladder on the left; the multiplier rungs light up as it passes. */
+.sp-machine .machine-screen { padding: 12px; }
+.sp { --row: 50px; --gap: 6px; --rail: 30px; --rungw: 64px; --hero: 30px;
+  position: relative; width: 100%; max-width: 580px; margin: 0 auto; display: grid; gap: var(--gap); padding-top: 18px; }
+
+/* summit */
+.sp-roof { position: relative; height: var(--row); display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 1; }
+.sp-roof::before { content: ""; position: absolute; left: 50%; bottom: 8px; width: min(62%, 300px); height: calc(var(--row) + 26px); transform: translateX(-50%); z-index: -1;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%); background: linear-gradient(90deg, #1b1512 0 50%, #2c231d 50%), #241c17;
+  filter: drop-shadow(0 0 1px #000); }
+.sp-roof::after { content: ""; position: absolute; left: 4%; right: 4%; bottom: 0; height: 9px; z-index: -1;
+  background: repeating-linear-gradient(90deg, #4a3f36 0 16px, transparent 16px 26px); box-shadow: 0 1px 0 #000; }
+.sp-boss { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; flex: none; box-shadow: 0 0 0 2px #000, 0 0 0 4px #8a1a10, 0 0 22px rgba(255,80,20,.6); transition: filter .4s, box-shadow .4s; }
+.sp-boss img { width: 100%; height: 100%; display: block; }
+.sp-summit { padding: 4px 12px; border-radius: 999px; font: 700 12px/1.2 var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: #e9dfc6;
+  background: rgba(0,0,0,.65); box-shadow: inset 0 0 0 1px rgba(255,209,0,.35); white-space: nowrap; }
+.sp-summit b { color: #FFD100; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.sp-roof.reached .sp-boss { filter: grayscale(1) brightness(.6); box-shadow: 0 0 0 2px #000, 0 0 0 4px #FFD100; }
+.sp-roof.reached .sp-summit { color: #1a1206; background: linear-gradient(180deg, #ffe27a, #e0a100); box-shadow: 0 0 0 1px #000, 0 0 24px rgba(255,209,0,.6); animation: sp-lit .45s cubic-bezier(.2,1.5,.4,1); }
+.sp-roof.reached .sp-summit b { color: #1a1206; }
+
+/* the shaft: stone walls, a ladder on the left */
+.sp-shaft { position: relative; padding: 6px 0; border-radius: 6px;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.4) 0 2px, transparent 2px 19px), repeating-linear-gradient(90deg, rgba(0,0,0,.28) 0 2px, transparent 2px 46px),
+    linear-gradient(90deg, #2a221c, #3a3029 30%, #3a3029 70%, #261f1a);
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 2px rgba(255,255,255,.04), inset 0 0 40px rgba(0,0,0,.7), 0 18px 30px -16px #000; }
+.sp-shaft::before { content: ""; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 18px; opacity: .85; pointer-events: none;
+  background: linear-gradient(90deg, #7a4e27 0 3px, transparent 3px 15px, #7a4e27 15px 18px), repeating-linear-gradient(0deg, transparent 0 11px, #4f3218 11px 14px); }
+.sp-floors { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--gap); }
+.sp-floor { position: relative; height: var(--row); display: grid; grid-template-columns: var(--rail) var(--rungw) minmax(0, 1fr); align-items: center; gap: 8px; padding-right: 10px;
+  transition: background .35s, filter .35s, box-shadow .35s; }
+.sp-floor::after { content: ""; position: absolute; left: var(--rail); right: 0; bottom: calc(var(--gap) / -2 - 1px); height: 3px; background: linear-gradient(90deg, #5d5248, #3b332c); box-shadow: 0 1px 0 #000; }
+.sp-rung { grid-column: 2; } .sp-doors { grid-column: 3; }
+.sp-floor.dark { filter: brightness(.6) saturate(.7); }
+.sp-floor.here { background: radial-gradient(60% 120% at 55% 50%, rgba(255,170,60,.22), transparent 70%); box-shadow: inset 0 0 0 1px rgba(255,209,0,.45), 0 0 26px -8px rgba(255,170,60,.7); }
+.sp-floor.hit { background: radial-gradient(60% 120% at 55% 50%, rgba(255,70,20,.3), transparent 70%); box-shadow: inset 0 0 0 1px rgba(255,77,46,.6); }
+
+/* multiplier rungs */
+.sp-rung { display: grid; place-items: center; height: 26px; border-radius: 13px; font: 700 13px/1 var(--font-body); font-variant-numeric: tabular-nums; color: #b9a98a;
+  background: rgba(0,0,0,.5); box-shadow: inset 0 0 0 1px rgba(255,209,0,.16); transition: color .3s, background .3s, box-shadow .3s; }
+.sp-floor.here .sp-rung { color: #FFD100; box-shadow: inset 0 0 0 1px #FFD100, 0 0 12px rgba(255,209,0,.35); animation: sp-pulse 1.5s ease-in-out infinite; }
+.sp-floor.cleared .sp-rung { color: #1a1206; background: linear-gradient(180deg, #ffe27a, #e0a100); box-shadow: 0 0 0 1px #000, 0 0 14px rgba(255,209,0,.45); animation: sp-lit .42s cubic-bezier(.2,1.5,.4,1); }
+.sp-floor.hit .sp-rung { color: #fff; background: linear-gradient(180deg, #e2432a, #8a1a10); box-shadow: 0 0 0 1px #000; }
+
+/* the hero token rides the ladder */
+.sp-hero { position: absolute; z-index: 3; left: 1px; width: var(--hero); height: var(--hero); border-radius: 50%;
+  bottom: calc(6px + var(--f) * (var(--row) + var(--gap)) + (var(--row) - var(--hero)) / 2);
+  box-shadow: 0 0 0 2px #000, 0 0 0 3px #e0b04a, 0 0 16px rgba(255,209,0,.5), 0 6px 10px -2px #000; transition: bottom .52s cubic-bezier(.2,1.3,.4,1), filter .4s; }
+.sp-hero img { width: 100%; height: 100%; border-radius: 50%; display: block; }
+.sp-hero.won { animation: sp-hop .5s cubic-bezier(.2,1.5,.4,1) 2; box-shadow: 0 0 0 2px #000, 0 0 0 3px #FFD100, 0 0 26px rgba(255,209,0,.8); }
+.sp-hero.lost { filter: grayscale(1) brightness(.6); }
+
+/* arched doors */
+.sp-doors { display: flex; justify-content: center; gap: 12px; min-width: 0; }
+.sp-door { position: relative; flex: 1 1 0; min-width: 0; max-width: 96px; height: calc(var(--row) - 6px); padding: 0; border: 0; cursor: pointer;
+  border-radius: 50% 50% 4px 4px / 48% 48% 4px 4px; background: #0b0705;
+  box-shadow: 0 0 0 3px #5d5248, 0 0 0 4px #000, inset 0 0 12px #000; transition: box-shadow .25s, transform 90ms; -webkit-tap-highlight-color: transparent; }
+.sp-door:disabled { cursor: default; }
+.sp-door:focus-visible { outline: 2px solid #FFD100; outline-offset: 4px; }
+.sp-floor.here .sp-door { box-shadow: 0 0 0 3px #9a8a68, 0 0 0 4px #000, 0 0 16px rgba(255,190,80,.45); }
+.sp-floor.here .sp-door:not(:disabled):hover { box-shadow: 0 0 0 3px #FFD100, 0 0 0 4px #000, 0 0 22px rgba(255,209,0,.6); }
+.sp-floor.here .sp-door:not(:disabled):active { transform: scale(.96); transition-duration: 40ms; }
+.sp-behind { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; display: grid; place-items: center; background: radial-gradient(circle at 50% 60%, #2a1a0e, #070403); }
+.sp-behind img { height: 72%; width: auto; aspect-ratio: 1; border-radius: 6px; box-shadow: 0 0 0 1px #000; }
+.sp-door.safe .sp-behind { background: radial-gradient(circle at 50% 62%, rgba(255,200,60,.6), rgba(120,70,0,.4) 50%, #120a02 85%); }
+.sp-door.safe .sp-behind img { box-shadow: 0 0 0 1px #000, 0 0 14px rgba(255,209,0,.6); }
+.sp-door.chosen.safe .sp-behind img { animation: sp-lit .42s .14s cubic-bezier(.2,1.5,.4,1) both; }
+.sp-door.dragon .sp-behind { background: radial-gradient(circle at 50% 75%, rgba(255,150,40,.9), rgba(190,30,0,.6) 45%, #1a0402 85%); animation: sp-fire .32s ease-in-out infinite alternate; }
+.sp-door.dragon .sp-behind img { box-shadow: 0 0 0 1px #000, 0 0 16px rgba(255,90,20,.8); }
+.sp-door.chosen.dragon { z-index: 2; box-shadow: 0 0 0 3px #ff4d2e, 0 0 0 4px #000, 0 0 30px rgba(255,90,20,.9); }
+.sp-door.chosen.dragon .sp-behind img { animation: sp-roar .6s .12s cubic-bezier(.2,1.5,.4,1) both; }
+.sp-door.late.safe .sp-behind img { filter: brightness(.55) saturate(.6); box-shadow: 0 0 0 1px #000; }
+.sp-door.late.safe .sp-behind { background: radial-gradient(circle at 50% 60%, rgba(255,200,60,.18), #070403 80%); }
+.sp-door.late.dragon .sp-behind { animation: none; filter: brightness(.82); }
+
+.sp-leaf { position: absolute; inset: 0; border-radius: inherit; transform-origin: 0 50%; z-index: 1;
+  transition: transform .48s cubic-bezier(.3,1.25,.4,1), filter .48s; transition-delay: var(--d, 0ms);
+  background: linear-gradient(180deg, transparent 24%, rgba(22,22,22,.88) 24% 30%, transparent 30% 68%, rgba(22,22,22,.88) 68% 74%, transparent 74%),
+    repeating-linear-gradient(90deg, #7f5229 0 10px, #4a2c14 10px 11px), #6b4423;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.65), inset 0 6px 8px -4px rgba(255,220,160,.18), inset 0 -8px 10px -6px rgba(0,0,0,.6); }
+.sp-leaf i { position: absolute; right: 16%; top: 50%; width: 9px; height: 9px; margin-top: -4px; border-radius: 50%; border: 2px solid #c9a243; box-shadow: 0 0 0 1px #000; }
+.sp-door.open .sp-leaf { transform: perspective(600px) rotateY(-98deg); filter: brightness(.55); }
+.sp-floor.here .sp-door:not(:disabled):hover .sp-leaf { filter: brightness(1.18); }
+.sp-door.knock .sp-leaf { animation: sp-knock .18s ease-in-out infinite; }
+.sp-key { position: absolute; z-index: 2; left: 50%; bottom: 3px; transform: translateX(-50%); padding: 1px 5px; border-radius: 4px; pointer-events: none;
+  font: 700 10px/1.2 var(--font-body); color: rgba(255,232,190,.8); background: rgba(0,0,0,.55); }
+.sp-door.open .sp-key { display: none; }
+@media (pointer: coarse) { .sp-key { display: none; } }
+
+/* ground floor gate */
+.sp-base { position: relative; height: 24px; display: grid; place-items: center; border-radius: 0 0 10px 10px;
+  background: linear-gradient(180deg, #3a3029, #1f1915); box-shadow: 0 0 0 1px #000, 0 -2px 0 #5d5248 inset; }
+.sp-base span { font: 700 10px/1 var(--font-body); letter-spacing: .3em; text-transform: uppercase; color: rgba(233,223,198,.35); }
+
+/* dragon blast + win glow */
+.sp.burn .sp-shaft { animation: sp-shake .34s cubic-bezier(.36,.07,.19,.97); }
+.sp-flash { position: absolute; inset: -40px; z-index: 4; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(circle at 50% calc(100% - (var(--f) + .5) * 8%), rgba(255,210,120,.9), rgba(255,90,10,.55) 30%, rgba(140,0,0,.3) 55%, transparent 75%); animation: sp-flash .9s ease-out forwards; }
+.sp.o-won .sp-shaft { box-shadow: 0 0 0 1px #000, inset 0 0 0 2px rgba(255,209,0,.25), inset 0 0 40px rgba(0,0,0,.6), 0 0 40px -8px rgba(255,209,0,.55); }
+
+@keyframes sp-pulse { 50% { box-shadow: inset 0 0 0 1px #FFD100, 0 0 20px rgba(255,209,0,.6); } }
+@keyframes sp-lit { from { transform: scale(1.35); } 60% { transform: scale(.94); } }
+@keyframes sp-fire { from { filter: brightness(1); } to { filter: brightness(1.3) saturate(1.2); } }
+@keyframes sp-roar { 0% { transform: scale(.3); } 40% { transform: scale(1.4) rotate(-6deg); } 70% { transform: scale(.94) rotate(3deg); } 100% { transform: none; } }
+@keyframes sp-knock { 0%, 100% { transform: none; } 50% { transform: perspective(240px) rotateY(-9deg); } }
+@keyframes sp-hop { 50% { transform: translateY(-8px) scale(1.1); } }
+@keyframes sp-shake { 0%, 100% { transform: none; } 15% { transform: translate(-4px, 1px); } 35% { transform: translate(4px, -2px); } 55% { transform: translate(-3px, 2px); } 75% { transform: translate(2px, -1px); } }
+@keyframes sp-flash { from { opacity: 1; } to { opacity: 0; } }
+
+@media (max-width: 600px) {
+  .sp-machine .machine-screen { padding: 8px; }
+  .sp { --row: 42px; --gap: 5px; --rail: 26px; --rungw: 54px; --hero: 24px; padding-top: 14px; }
+  .sp-floor { gap: 6px; padding-right: 6px; }
+  .sp-rung { height: 22px; font-size: 11px; }
+  .sp-doors { gap: 9px; }
+  .sp-shaft::before { left: 5px; width: 16px; background: linear-gradient(90deg, #7a4e27 0 3px, transparent 3px 13px, #7a4e27 13px 16px), repeating-linear-gradient(0deg, transparent 0 10px, #4f3218 10px 13px); }
+  .sp-boss { width: 32px; height: 32px; }
+  .sp-summit { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-leaf, .sp-hero { transition: none; }
+  .sp-floor.here .sp-rung, .sp-floor.cleared .sp-rung, .sp-door .sp-behind, .sp-door .sp-behind img, .sp-door.knock .sp-leaf, .sp-hero.won, .sp.burn .sp-shaft, .sp-roof.reached .sp-summit { animation: none !important; }
+  .sp-flash { display: none; }
+}

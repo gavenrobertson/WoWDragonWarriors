@@ -88,7 +88,7 @@ export function CelebrationLayer() {
       }
       const tier = d.won > 0 ? tierFor(d.mult) : "none";
       if (d.won <= 0) { play("lose"); buzz("fail"); return; }
-      if (d.mult > 0 && d.mult < 1) { play("reveal", { pitch: 0.8 }); return; } // a partial return: soft, no coins
+      if (d.mult > 0 && d.mult <= 1) { play("reveal", { pitch: d.mult < 1 ? 0.8 : 1 }); return; } // a partial return or a push: soft, no coins
       const s = tierSound[tier] ?? "coin"; play(s); buzz(tier === "win" || tier === "none" ? "win" : "big");
       burst(tier === "none" ? "win" : tier);
       if (tier === "big" || tier === "epic" || tier === "legendary") {

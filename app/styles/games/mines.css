@@ -1,1 +1,86 @@
-/* mines: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* mines: a dwarven mine seam. Stone blocks flip in 3D to gems or bombs; the end-of-round reveal runs in a
+   diagonal stagger (transition-delay --d) with undug gems dimmer. */
+.mn-machine .readout-v { font-size: 20px; }
+.mn-machine .readout-v small { font-size: 12px; font-weight: 600; color: #c9bfa5; }
+.mn-pit { position: relative; width: 100%; display: grid; place-items: center; padding: 18px 0 8px; }
+
+/* hanging lanterns */
+.mn-lantern { position: absolute; top: -16px; width: 16px; height: 22px; border-radius: 4px 4px 6px 6px; z-index: 0;
+  background: radial-gradient(circle at 50% 60%, #fff3c4, #ffb340 45%, #8a4a0e 80%); box-shadow: 0 0 0 1px #000, 0 0 18px 6px rgba(255,170,60,.45), 0 0 60px 20px rgba(255,150,40,.16);
+  animation: mn-flicker 3.2s ease-in-out infinite; }
+.mn-lantern::before { content: ""; position: absolute; left: 50%; bottom: 100%; width: 2px; height: 14px; transform: translateX(-50%); background: #2a1d10; }
+.mn-lantern.l { left: 10%; } .mn-lantern.r { right: 10%; animation-delay: -1.4s; }
+
+/* the timber-framed seam */
+.mn-grid { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 10px; width: min(100%, 520px); padding: 12px;
+  border: 9px solid transparent; border-radius: 14px;
+  background: linear-gradient(180deg, rgba(10,7,4,.82), rgba(18,12,7,.9)) padding-box,
+    repeating-linear-gradient(90deg, #6a4422 0 22px, #5a391c 22px 23px, #6e4825 23px 46px) border-box;
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000, inset 0 0 30px rgba(0,0,0,.8), 0 20px 34px -18px #000; transition: box-shadow .4s; }
+.mn-grid::before, .mn-grid::after { content: ""; position: absolute; top: -9px; bottom: -9px; width: 9px; pointer-events: none;
+  background: radial-gradient(circle at 50% 14px, #c9a243 0 2.5px, #000 3px, transparent 3.5px), radial-gradient(circle at 50% calc(100% - 14px), #c9a243 0 2.5px, #000 3px, transparent 3.5px); }
+.mn-grid::before { left: -9px; } .mn-grid::after { right: -9px; }
+.mn-pit.won .mn-grid { box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000, inset 0 0 30px rgba(0,0,0,.8), 0 0 40px -6px rgba(255,209,0,.55); }
+
+/* tiles */
+.mn-tile { position: relative; aspect-ratio: 1; padding: 0; border: 0; border-radius: 10px; background: none; cursor: pointer; perspective: 520px; -webkit-tap-highlight-color: transparent;
+  transition: transform 90ms ease-out; }
+.mn-tile:disabled { cursor: default; }
+.mn-tile:focus-visible { outline: 2px solid #FFD100; outline-offset: 2px; }
+.mn-pit.live .mn-tile:not(:disabled):active { transform: scale(.96); transition-duration: 40ms; }
+.mn-in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .36s cubic-bezier(.2,1.3,.4,1); transition-delay: var(--d, 0ms); }
+.mn-tile.open .mn-in { transform: rotateY(180deg); }
+.mn-face { position: absolute; inset: 0; border-radius: 10px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+.mn-stone { background: radial-gradient(2px 2px at 26% 68%, rgba(255,214,90,.7), transparent), radial-gradient(1.5px 1.5px at 72% 30%, rgba(255,214,90,.55), transparent),
+  radial-gradient(1.5px 1.5px at 64% 78%, rgba(200,230,255,.45), transparent), radial-gradient(circle at 30% 22%, rgba(255,255,255,.16), transparent 45%),
+  linear-gradient(145deg, #75675a, #4a3f35 55%, #2c241d);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.14), inset 0 -4px 0 rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.6); transition: filter .15s, box-shadow .15s; }
+.mn-stone::after { content: ""; position: absolute; left: 50%; top: 50%; width: 30%; height: 30%; transform: translate(-50%, -50%) rotate(45deg); border-radius: 3px;
+  border: 2px solid rgba(0,0,0,.38); box-shadow: 1px 1px 0 rgba(255,255,255,.08), inset 1px 1px 0 rgba(255,255,255,.06); }
+.mn-pit:not(.live) .mn-tile:not(.open) .mn-stone { filter: brightness(.75) saturate(.8); }
+.mn-pit.live .mn-tile:not(:disabled):hover .mn-stone { filter: brightness(1.18); box-shadow: inset 0 2px 0 rgba(255,255,255,.2), inset 0 -4px 0 rgba(0,0,0,.45), inset 0 0 0 2px #FFD100, 0 0 14px rgba(255,209,0,.35); }
+.mn-pit.live .mn-tile:not(:disabled):hover { transform: translateY(-2px); }
+.mn-tile.dig .mn-in { animation: mn-dig .22s ease-in-out infinite; }
+
+.mn-under { transform: rotateY(180deg); display: grid; place-items: center;
+  background: radial-gradient(circle, color-mix(in srgb, var(--hue) 38%, transparent), #120d09 72%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hue) 70%, #000), inset 0 0 18px rgba(0,0,0,.7); }
+.mn-under img { width: 60%; height: 60%; border-radius: 8px; box-shadow: 0 0 0 1px #000, 0 0 16px color-mix(in srgb, var(--hue) 70%, transparent); transition: filter .3s, opacity .3s; }
+.mn-tile.gem:not(.late) .mn-under img { animation: mn-pop .42s cubic-bezier(.2,1.5,.4,1) .12s both; }
+.mn-tile.gem:not(.late) .mn-under::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.35) 50%, transparent 65%) -150% 0 / 250% 100% no-repeat; animation: mn-glint 2.8s 0.5s ease-in-out infinite; }
+.mn-tile.bomb .mn-under { background: radial-gradient(circle, rgba(255,90,40,.32), #1a0806 72%); box-shadow: inset 0 0 0 1px rgba(255,77,46,.55), inset 0 0 18px rgba(0,0,0,.7); }
+.mn-tile.bomb .mn-under img { box-shadow: 0 0 0 1px #000, 0 0 16px rgba(255,77,46,.6); }
+.mn-tile.late.gem .mn-under img { filter: brightness(.62) saturate(.55); opacity: .8; }
+.mn-tile.late.gem .mn-under { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), inset 0 0 18px rgba(0,0,0,.7); }
+.mn-tile.late.bomb .mn-under img { filter: brightness(.82); }
+.mn-tile.boom { z-index: 2; }
+.mn-tile.boom .mn-under { background: radial-gradient(circle, rgba(255,200,120,.7), rgba(255,77,46,.5) 40%, #2a0805 78%); box-shadow: inset 0 0 0 2px #ff4d2e, 0 0 34px rgba(255,77,46,.85); }
+.mn-tile.boom .mn-under img { animation: mn-boom .55s .15s cubic-bezier(.2,1.5,.4,1) both; }
+
+/* blast: hit-stop flash + shake */
+.mn-pit.blasted .mn-grid { animation: mn-shake .3s cubic-bezier(.36,.07,.19,.97); }
+.mn-flash { position: absolute; inset: -20px; z-index: 3; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(circle at 50% 55%, rgba(255,236,190,.95), rgba(255,120,40,.5) 35%, transparent 70%); animation: mn-flash .55s ease-out forwards; }
+
+@keyframes mn-flicker { 0%, 100% { opacity: 1; } 40% { opacity: .82; } 45% { opacity: .95; } 70% { opacity: .88; } }
+@keyframes mn-dig { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-3deg) translateY(1px); } 75% { transform: rotate(3deg); } }
+@keyframes mn-pop { from { transform: scale(.3) rotate(-20deg); opacity: 0; } 60% { transform: scale(1.14); opacity: 1; } to { transform: none; } }
+@keyframes mn-glint { 0% { background-position: -150% 0; } 50%, 100% { background-position: 150% 0; } }
+@keyframes mn-boom { 0% { transform: scale(.4); } 35% { transform: scale(1.35) rotate(-8deg); } 60% { transform: scale(.92) rotate(5deg); } 100% { transform: none; } }
+@keyframes mn-shake { 0%, 100% { transform: none; } 15% { transform: translate(-4px, 2px); } 35% { transform: translate(4px, -2px); } 55% { transform: translate(-3px, 1px); } 75% { transform: translate(2px, -1px); } }
+@keyframes mn-flash { from { opacity: 1; } to { opacity: 0; } }
+
+@media (max-width: 600px) {
+  .mn-machine .readout-v { font-size: 17px; }
+  .mn-pit { padding-top: 14px; }
+  .mn-grid { gap: 6px; padding: 8px; border-width: 7px; }
+  .mn-grid::before, .mn-grid::after { top: -7px; bottom: -7px; width: 7px; } .mn-grid::before { left: -7px; } .mn-grid::after { right: -7px; }
+  .mn-tile, .mn-face { border-radius: 8px; }
+  .mn-lantern { width: 12px; height: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mn-in { transition: none; }
+  .mn-lantern, .mn-tile.dig .mn-in, .mn-tile.gem .mn-under img, .mn-tile.gem .mn-under::after, .mn-tile.boom .mn-under img, .mn-pit.blasted .mn-grid { animation: none !important; }
+  .mn-flash { display: none; }
+}

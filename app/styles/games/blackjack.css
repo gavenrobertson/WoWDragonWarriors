@@ -1,1 +1,129 @@
-/* blackjack: per-game styles for the arcade overhaul. Loaded after globals.css and skins.css, so rules here win. */
+/* blackjack: a tavern felt table. Cards slide out of the shoe and flip mid-slide; result stamps spring in. */
+.bj-machine { --cw: 84px; --ch: 118px; --lap: .3; }
+.bj-machine .machine-screen { padding: 10px; }
+.bj-felt { position: relative; width: 100%; min-height: 452px; display: grid; grid-template-rows: auto 1fr auto; align-items: center; gap: 6px; padding: 12px 8px 14px;
+  border-radius: 14px 14px 50% 50% / 14px 14px 22% 22%;
+  background: radial-gradient(rgba(255,255,255,.03) 1px, transparent 1.2px) 0 0 / 4px 4px, radial-gradient(70% 55% at 50% 48%, rgba(60,190,130,.22), transparent 70%);
+  box-shadow: inset 0 0 0 2px rgba(255,209,0,.14), inset 0 0 0 6px rgba(0,0,0,.18), inset 0 0 0 7px rgba(255,209,0,.08); }
+
+/* the shoe (top right) and the discard tray (top left) */
+.bj-shoe { position: absolute; top: 10px; right: 12px; width: 74px; height: 56px; z-index: 3; transform: rotate(-8deg); border-radius: 6px 14px 6px 6px;
+  background: linear-gradient(180deg, #5a3a1c, #2a1a0b); box-shadow: 0 0 0 1px #000, inset 0 0 0 2px #8a6a2c, 0 10px 16px -6px rgba(0,0,0,.8); }
+.bj-shoe span { position: absolute; left: 8px; top: -7px; width: 52px; height: 30px; border-radius: 3px; transform: skewX(-12deg);
+  background: repeating-linear-gradient(45deg, rgba(255,209,0,.25) 0 1px, transparent 1px 6px), linear-gradient(180deg, #6a1a18, #3a0c0b); box-shadow: 0 0 0 1px #000; }
+.bj-shoe span:nth-child(2) { top: -4px; left: 10px; } .bj-shoe span:nth-child(3) { top: -1px; left: 12px; }
+.bj-shoe i { position: absolute; left: 10px; right: 10px; bottom: 9px; height: 8px; border-radius: 2px; background: linear-gradient(180deg, #ffe27a, #a87a1e); box-shadow: 0 0 0 1px #000; }
+.bj-tray { position: absolute; top: 12px; left: 14px; width: 62px; height: 46px; border-radius: 6px; border: 2px dashed rgba(255,209,0,.18); transform: rotate(6deg); }
+
+.bj-zone { position: relative; z-index: 2; display: grid; justify-items: center; gap: 10px; }
+.bj-plate { display: flex; align-items: center; gap: 8px; min-height: 32px; font: 700 13px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: #f3e7c4; text-shadow: 0 1px 0 #000; }
+.bj-q { color: #b9d9c8; letter-spacing: 0; }
+.bj-badge { display: inline-grid; place-items: center; min-width: 32px; height: 32px; padding: 0 8px; border-radius: 16px; font: 700 16px/1 var(--font-body); letter-spacing: 0; font-variant-numeric: tabular-nums;
+  color: #fff; background: radial-gradient(circle at 40% 30%, #2b2b2b, #050505); box-shadow: 0 0 0 2px #c9a243, 0 0 0 3px #000, 0 6px 12px -4px #000; animation: bj-pop .32s cubic-bezier(.2,1.5,.4,1); }
+.bj-badge.tw { color: #1a1206; background: linear-gradient(180deg, #ffe27a, #e0a100); box-shadow: 0 0 0 2px #000, 0 0 16px rgba(255,209,0,.6); }
+.bj-badge.over { color: #fff; background: linear-gradient(180deg, #e2432a, #8a1a10); box-shadow: 0 0 0 2px #000, 0 0 14px rgba(255,77,46,.6); }
+.bj-tag { padding: 3px 8px; border-radius: 6px; font: 700 11px/1 var(--font-body); letter-spacing: .08em; color: #1a1206; background: #FFD100; box-shadow: 0 0 0 1px #000; }
+
+/* hands */
+.bj-cards { display: flex; justify-content: center; align-items: center; min-height: calc(var(--ch) + 8px); padding-inline: 8px; }
+.bj-spot { width: var(--cw); height: var(--ch); border-radius: 9px; border: 2px dashed rgba(255,209,0,.22); background: rgba(0,0,0,.08); }
+.bj-spot + .bj-spot { margin-left: 10px; }
+.bj-card { position: relative; flex: none; width: var(--cw); height: var(--ch); will-change: transform; }
+.bj-card + .bj-card { margin-left: calc(var(--cw) * var(--lap) * -1); }
+.bj-card.dbl { margin-left: calc(var(--cw) * .12); }
+.bj-tilt { width: 100%; height: 100%; perspective: 520px; transform: rotate(calc((var(--i) - 1) * 2.5deg)) translateY(calc(var(--i) * 1px)); }
+.bj-card.dbl .bj-tilt { transform: rotate(90deg); }
+.bj-flip { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateY(180deg); transition: transform .44s cubic-bezier(.2,1.3,.4,1); }
+.bj-card.up .bj-flip { transform: rotateY(0deg); }
+.bj-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.bj-back { transform: rotateY(180deg); }
+
+/* card faces (PlayingCard markup, restyled here) */
+.bj-machine .hl-card.small { width: 100%; height: 100%; border-radius: 9px; animation: none;
+  background: radial-gradient(120% 80% at 30% 15%, #fffdf6, #f3e8cc 60%, #e4d2a6); color: #1d150a;
+  box-shadow: 0 0 0 1px #5b4318, 0 1px 0 1px rgba(255,255,255,.4) inset, 0 10px 18px -8px rgba(0,0,0,.85); }
+.bj-machine .hl-card.small::before { content: ""; position: absolute; inset: 5px; border-radius: 6px; border: 1px solid rgba(138,106,44,.45); pointer-events: none; }
+.bj-machine .hl-card.small.red { color: #a8231a; }
+.bj-machine .hl-card.small .hl-corner { left: 7px; top: 7px; font: 700 15px/1.05 var(--font-display); }
+.bj-machine .hl-card.small .hl-corner.br { display: block; left: auto; top: auto; right: 7px; bottom: 7px; }
+.bj-machine .hl-card.small .hl-center { font: 700 38px/1 var(--font-title); text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+.bj-machine .hl-card.back { background: radial-gradient(circle at 50% 50%, rgba(255,209,0,.25), transparent 38%), repeating-linear-gradient(45deg, rgba(255,209,0,.16) 0 1px, transparent 1px 8px),
+  repeating-linear-gradient(-45deg, rgba(255,209,0,.16) 0 1px, transparent 1px 8px), linear-gradient(160deg, #7a1c1a, #3a0a0a);
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px rgba(255,209,0,.5), 0 10px 18px -8px rgba(0,0,0,.85); }
+.bj-machine .hl-card.back::before { content: ""; position: absolute; inset: 5px; border-radius: 6px; border: 1px solid rgba(255,209,0,.55); }
+.bj-machine .hl-card.back::after { content: ""; position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; transform: translate(-50%, -50%) rotate(45deg);
+  background: linear-gradient(135deg, #ffe27a, #a87a1e); box-shadow: 0 0 0 1px #000, 0 0 0 4px rgba(58,10,10,.9), 0 0 0 5px rgba(255,209,0,.5); }
+
+/* the middle: printed arc, rule line, prompt and the result stamp */
+.bj-mid { position: relative; z-index: 2; display: grid; justify-items: center; align-content: center; min-height: 104px; }
+.bj-arc { width: min(520px, 96%); height: auto; overflow: visible; }
+.bj-arc text { font: 700 25px var(--font-display); letter-spacing: .16em; text-transform: uppercase; fill: rgba(255,214,90,.62); }
+.bj-arc-line { fill: none; stroke: rgba(255,209,0,.2); stroke-width: 2; stroke-dasharray: 2 6; }
+.bj-rule { margin: -18px 0 0; font: 600 12px/1 var(--font-body); letter-spacing: .22em; text-transform: uppercase; color: rgba(225,240,230,.45); }
+.bj-prompt { margin-top: 10px; padding: 5px 14px; border-radius: 999px; font: 600 14px/1.2 var(--font-body); color: #e9f3ea; background: rgba(0,0,0,.32); box-shadow: inset 0 0 0 1px rgba(255,209,0,.18); }
+.bj-prompt.off { visibility: hidden; }
+.bj-stamp { position: absolute; left: 50%; top: 50%; z-index: 5; display: grid; justify-items: center; gap: 2px; padding: 6px 24px 9px; border-radius: 12px; border: 3px solid currentColor; white-space: nowrap;
+  transform: translate(-50%, -50%) rotate(-5deg); background: rgba(8,16,12,.92); box-shadow: 0 0 0 2px #000, 0 18px 30px -12px #000; animation: bj-stamp .42s cubic-bezier(.2,1.5,.4,1) both; }
+.bj-stamp strong { font: 400 44px/1 var(--font-title); letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 3px 0 #000; }
+.bj-stamp span { font: 600 13px/1.2 var(--font-body); letter-spacing: .04em; color: #e9dfc6; }
+.bj-stamp.win { color: #6dff8a; box-shadow: 0 0 0 2px #000, 0 0 30px rgba(76,217,100,.45); }
+.bj-stamp.push { color: #e9dfc6; }
+.bj-stamp.lose { color: #ff8a7a; filter: saturate(.8); }
+.bj-stamp.bust { color: #ff4d2e; box-shadow: 0 0 0 2px #000, 0 0 26px rgba(255,77,46,.45); }
+.bj-stamp.bj { color: #FFD100; padding: 8px 30px 10px; background: radial-gradient(120% 140% at 50% 0%, rgba(255,209,0,.3), transparent 60%), #1c1103;
+  box-shadow: 0 0 0 2px #000, 0 0 0 5px rgba(255,209,0,.35), 0 0 44px rgba(255,209,0,.6); }
+.bj-stamp.bj strong { font-size: 52px; background: linear-gradient(180deg, #fff6c2, #ffd100 45%, #c47f00); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 3px 0 #000); }
+.bj-stamp.bj::after { content: ""; position: absolute; inset: -3px; border-radius: 12px; pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.5) 45%, transparent 60%) -200% 0 / 200% 100% no-repeat; animation: bj-shine 1.6s .4s ease-in-out infinite; }
+
+/* results on the hands */
+.bj-arc, .bj-rule { transition: opacity .3s; }
+.bj-felt.done .bj-arc, .bj-felt.done .bj-rule { opacity: .22; }
+.bj-felt .bj-card .hl-card { transition: filter .35s, box-shadow .35s; }
+.bj-felt.v-lose .player .bj-card .hl-card, .bj-felt.v-bust .player .bj-card .hl-card { filter: brightness(.72) saturate(.7); }
+.bj-felt.v-win .player .bj-card.up .hl-card, .bj-felt.v-bj .player .bj-card.up .hl-card { box-shadow: 0 0 0 1px #5b4318, 0 0 0 3px rgba(255,209,0,.75), 0 0 22px rgba(255,209,0,.55); }
+.bj-felt.v-win .dealer .bj-card .hl-card, .bj-felt.v-bj .dealer .bj-card .hl-card { filter: brightness(.8); }
+.bj-zone.shake .bj-cards { animation: bj-shake .34s cubic-bezier(.36,.07,.19,.97); }
+.bj-felt.sweep .bj-card { animation: bj-sweep .28s cubic-bezier(.5,0,.75,0) forwards; }
+.bj-felt.sweep .dealer .bj-card { animation-delay: .04s; }
+
+/* bet circle with a little chip stack */
+.bj-circle { position: relative; display: inline-block; width: 46px; height: 32px; margin-right: 4px; }
+.bj-circle::before { content: ""; position: absolute; left: 50%; bottom: -4px; width: 46px; height: 18px; transform: translateX(-50%); border-radius: 50%; border: 2px solid rgba(255,209,0,.45); }
+.bj-circle i { position: absolute; left: 50%; bottom: calc(var(--n, 0) * 4px); width: 32px; height: 11px; transform: translateX(-50%); border-radius: 50%;
+  background: linear-gradient(180deg, #d84a3a, #7a1a12); box-shadow: 0 0 0 1px #000, inset 0 0 0 2px rgba(255,255,255,.45); }
+.bj-circle i:nth-child(1) { --n: 0; } .bj-circle i:nth-child(2) { --n: 1; background: linear-gradient(180deg, #4a7ad8, #1a2f7a); } .bj-circle i:nth-child(3) { --n: 2; }
+.bj-circle i:nth-child(4) { --n: 3; background: linear-gradient(180deg, #ffe27a, #a87a1e); } .bj-circle i:nth-child(5) { --n: 4; background: linear-gradient(180deg, #ffe27a, #a87a1e); }
+.bj-circle b { position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%); padding: 1px 6px; border-radius: 6px; font: 700 10px/1.3 var(--font-body); letter-spacing: 0; color: #FFD100; background: rgba(0,0,0,.75); white-space: nowrap; }
+
+/* controls */
+.bj-act { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.bj-act kbd { font: 700 10px/1 var(--font-body); padding: 2px 5px; border-radius: 4px; background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); opacity: .75; }
+@media (pointer: coarse) { .bj-act kbd { display: none; } }
+
+@keyframes bj-pop { from { transform: scale(1.5); opacity: 0; } 60% { transform: scale(.94); opacity: 1; } }
+@keyframes bj-stamp { from { transform: translate(-50%, -50%) rotate(-12deg) scale(2.1); opacity: 0; } 55% { transform: translate(-50%, -50%) rotate(-4deg) scale(.95); opacity: 1; } to { transform: translate(-50%, -50%) rotate(-5deg) scale(1); } }
+@keyframes bj-shine { 0% { background-position: -200% 0; } 60%, 100% { background-position: 200% 0; } }
+@keyframes bj-shake { 0%, 100% { transform: none; } 20% { transform: translateX(-4px) rotate(-1deg); } 40% { transform: translateX(4px) rotate(1deg); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+@keyframes bj-sweep { to { transform: translate(-46vw, -120px) rotate(-30deg) scale(.6); opacity: 0; } }
+
+@media (max-width: 600px) {
+  .bj-machine { --cw: 58px; --ch: 82px; --lap: .46; }
+  .bj-machine .machine-screen { padding: 6px; }
+  .bj-felt { min-height: 404px; padding: 10px 4px 16px; border-radius: 12px 12px 50% 50% / 12px 12px 16% 16%; }
+  .bj-shoe { width: 52px; height: 40px; top: 8px; right: 8px; } .bj-shoe span { width: 38px; height: 22px; left: 5px; } .bj-shoe i { left: 7px; right: 7px; bottom: 6px; height: 6px; }
+  .bj-tray { width: 44px; height: 34px; top: 10px; left: 10px; }
+  .bj-machine .hl-card.small .hl-corner { left: 5px; top: 5px; font-size: 12px; } .bj-machine .hl-card.small .hl-corner.br { right: 5px; bottom: 5px; }
+  .bj-machine .hl-card.small .hl-center { font-size: 27px; }
+  .bj-machine .hl-card.small::before, .bj-machine .hl-card.back::before { inset: 3px; }
+  .bj-machine .hl-card.back::after { width: 11px; height: 11px; }
+  .bj-mid { min-height: 84px; }
+  .bj-arc text { font-size: 30px; }
+  .bj-rule { margin-top: -12px; font-size: 10px; letter-spacing: .16em; }
+  .bj-stamp { padding: 5px 16px 7px; } .bj-stamp strong { font-size: 34px; } .bj-stamp.bj strong { font-size: 38px; } .bj-stamp span { font-size: 12px; }
+  .bj-plate { font-size: 12px; gap: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bj-flip { transition: none; }
+  .bj-badge, .bj-stamp, .bj-stamp.bj::after, .bj-zone.shake .bj-cards, .bj-felt.sweep .bj-card { animation: none; }
+}
