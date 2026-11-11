@@ -17,7 +17,7 @@ const SYNC_META: Record<string, { name: string; src: string }> = {
   renders: { name: "Renders", src: "/character-media" },
   icons: { name: "Item icons", src: "/data/wow/media/item/{id}" },
   warcraftlogs: { name: "Warcraft Logs", src: "warcraftlogs.com/api/v2 (GraphQL)" },
-  discord: { name: "Discord bot", src: "Discord bot + webhooks" },
+  discord: { name: "Discord posts", src: "Channel webhooks (hub pushes, no polling)" },
   addon: { name: "Addon exports", src: "Upload: bank + loot addon" },
 };
 const STATE: Record<string, [string, string]> = {
@@ -63,7 +63,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   });
   const syncs = runs.map((r) => {
     const [state, color] = r.job === "warcraftlogs" && !configured.warcraftlogs() && !viewer.demo ? ["Not set up", "#A8987A"] : STATE[r.status] ?? STATE.waiting;
-    return { ...SYNC_META[r.job], job: r.job, state, color, value: r.value, note: r.minutesAgo != null && r.job === "roster" ? `Last sync ${timeAgo(r.minutesAgo)}` : r.note };
+    const note = r.minutesAgo == null ? (r.job === "discord" ? "Nothing posted yet. Posts appear here as the hub sends them." : r.note)
+      : r.job === "roster" ? `Last sync ${timeAgo(r.minutesAgo)}`
+      : r.job === "discord" ? `Last post ${timeAgo(r.minutesAgo)} · ${r.note}` : r.note;
+    return { ...SYNC_META[r.job], job: r.job, state, color, value: r.minutesAgo == null && r.job === "discord" ? "No posts yet" : r.value, note };
   });
   const on = (b: boolean): [string, string] => (viewer.demo || b ? ["Connected", "#4CD964"] : ["Not set up", "#A8987A"]);
   const integrations = [

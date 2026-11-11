@@ -3,7 +3,7 @@ import "server-only";
 // Webhooks + on/off per category live in the `settings` table (key "discord"), edited in Admin › Integrations.
 // DISCORD_SIGNUPS_WEBHOOK_URL (env) is a fallback channel for any category without its own webhook.
 import { SITE } from "./config";
-import { d1, sqlOne } from "./db";
+import { d1, nowIso, sql, sqlOne } from "./db";
 
 export const DISCORD_CATEGORIES = [
   { id: "events", label: "Raid events", desc: "New raid nights and a reminder an hour before start", defaultOn: true },
@@ -73,13 +73,24 @@ export async function notify(category: DiscordCategory, embed: Embed, opts: { co
         }],
       }),
     });
-    if (!res.ok) return { posted: false as const, reason: `Discord answered ${res.status}` };
+    if (!res.ok) { await logPost("error", "Post failed", `${def.label}: Discord answered ${res.status}`); return { posted: false as const, reason: `Discord answered ${res.status}` }; }
     const j = (await res.json().catch(() => ({}))) as { id?: string };
+    await logPost("ok", `Posted to ${def.label}`, embed.title.slice(0, 120));
     return { posted: true as const, messageId: j.id };
   } catch (e) {
     console.error("discord notify", category, e);
+    await logPost("error", "Post failed", `${DISCORD_CATEGORIES.find((c) => c.id === category)?.label ?? category}: network error`);
     return { posted: false as const, reason: "network error" };
   }
+}
+
+/** Record each post for the admin panel's Discord status (it's a push integration, so "last run" = last post). Never throws. */
+async function logPost(status: "ok" | "error", value: string, note: string) {
+  try {
+    if (!d1()) return;
+    const at = nowIso();
+    await sql("insert into sync_runs (job, status, value, note, started_at, finished_at) values ('discord',$1,$2,$3,$4,$4)", [status, value, note, at]);
+  } catch (e) { console.error("discord log", e); }
 }
 
 /** Back-compat helper for simple text posts (announcement-style). */
