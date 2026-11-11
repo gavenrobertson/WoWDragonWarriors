@@ -102,6 +102,35 @@ async function grantChests() {
       ].join("\n"),
     });
   }
+  const overhaul = await announceOnce("arcade-overhaul-2026-11");
+  if (overhaul) {
+    out.overhaulPosted = true;
+    await notify("announcements", {
+      title: "🐉 DW Arcade overhaul: every game rebuilt",
+      url: hubUrl("/arcade"), color: 0xffd100, thumbnail: "https://render.worldofwarcraft.com/us/icons/56/inv_misc_coin_02.jpg",
+      description: [
+        "Every game in **DW Arcade** has been rebuilt from the ground up. Same rules and odds, a whole new look and feel:",
+        "",
+        "🏰 **New cabinets**: every game sits in its own gold-trimmed machine with live stats, your recent results and a themed backdrop (arcane tower, dwarven mine, tavern felt, dusk sky and more).",
+        "🔊 **Sound**: clicks, ticks, gems, explosions, card deals and cash-outs, with streaks that climb in pitch. Mute button in the arcade bar.",
+        "🎆 **Win moments**: coins burst from the cabinet, and 3×, 10× and 50× wins get **Big**, **Epic** and **Legendary** banners with your payout counting up.",
+        "",
+        "**Some highlights**",
+        `🎰 [Dragon's Hoard](${hubUrl("/arcade/slots")}): blurred reels, a real lever, and the last reel slows when two dragons show`,
+        `🎡 [Roulette](${hubUrl("/arcade/roulette")}): a real wheel and ball, chip stacks on felt, column bets and Undo`,
+        `🃏 [Blackjack](${hubUrl("/arcade/blackjack")}): cards slide from the shoe and flip, with a gold Blackjack stamp`,
+        `💎 [Mines](${hubUrl("/arcade/mines")}): real WoW gems in a dwarven seam`,
+        `🐲 [Dragonspire](${hubUrl("/arcade/dragonspire")}): climb the tower to Nefarian, doors swing open as you go`,
+        `🔮 [Plinko](${hubUrl("/arcade/plinko")}): an orb that hops peg to peg down an arcane tower`,
+        `🪙 [Faction Flip](${hubUrl("/arcade/coinflip")}): a real 3D Alliance and Horde coin`,
+        `🎱 [8-ball](${hubUrl("/arcade/pool")}): balls that roll in 3D and a break that shakes the table`,
+        `🦅 [Gryphon Flight](${hubUrl("/arcade/gryphon")}), ⚡ [Interrupt!](${hubUrl("/arcade/reaction")}), 🔥 [Don't Stand in the Fire](${hubUrl("/arcade/fire")}) and every other skill game got the same treatment`,
+        `📦 [Chest opening](${hubUrl("/arcade/chests")}) and the daily wheel are more dramatic too: the chest rattles and bursts, and the reel lands with beams in the item's rarity colour.`,
+        "",
+        `Go take it for a spin: ${hubUrl("/arcade")}`,
+      ].join("\n"),
+    });
+  }
   return out;
 }
 
