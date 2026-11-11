@@ -64,13 +64,16 @@ function paintFloor(ps: number) {
     else { x.arc(0, 0, 3.5, 0, Math.PI * 1.5); }
     x.stroke(); x.restore();
   }
-  // a six-pointed star in the centre
-  x.strokeStyle = "rgba(192,140,255,.2)"; x.lineWidth = 2;
-  for (const rot of [0, Math.PI / 3]) {
-    x.beginPath();
-    for (let i = 0; i <= 3; i++) { const a = rot + (i / 3) * Math.PI * 2 - Math.PI / 2; if (i) x.lineTo(cx + Math.cos(a) * 96, cy + Math.sin(a) * 96); else x.moveTo(cx + Math.cos(a) * 96, cy + Math.sin(a) * 96); }
-    x.stroke();
+  // the centre: a warding dial of spokes around a dragon's eye (no star shapes)
+  x.strokeStyle = "rgba(192,140,255,.22)"; x.lineWidth = 2;
+  x.beginPath(); x.arc(cx, cy, 58, 0, Math.PI * 2); x.stroke();
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2, r0 = i % 2 ? 66 : 62, r1 = i % 2 ? 84 : 90;
+    x.beginPath(); x.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); x.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); x.stroke();
   }
+  x.strokeStyle = "rgba(192,140,255,.3)"; x.lineWidth = 2.5;
+  x.beginPath(); x.ellipse(cx, cy, 34, 20, 0, 0, Math.PI * 2); x.stroke();
+  x.fillStyle = "rgba(192,140,255,.22)"; x.beginPath(); x.ellipse(cx, cy, 5, 17, 0, 0, Math.PI * 2); x.fill();
   // brazier bowls in the corners
   for (const [bx, by] of [[34, 34], [AW - 34, 34], [34, AH - 34], [AW - 34, AH - 34]]) {
     x.fillStyle = "#0d0a08"; x.beginPath(); x.arc(bx, by, 17, 0, Math.PI * 2); x.fill();

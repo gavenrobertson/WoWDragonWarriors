@@ -87,3 +87,4 @@
   .rn-rune, .rn-beam { transition: none; }
   .rn-rune.lit { transform: none; }
 }
+.rn-stud { fill: rgba(192,140,255,.35); stroke: none; }

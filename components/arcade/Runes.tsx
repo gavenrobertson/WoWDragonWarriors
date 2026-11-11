@@ -35,7 +35,7 @@ function useRunMoments(result: SkillResult | null, label: (r: SkillResult) => st
   return chips;
 }
 
-/** The engraved circle behind the runes: rings, a star and small glyphs, the outer band turning slowly. */
+/** The engraved circle behind the runes: rings, studs and small glyphs, the outer band turning slowly. */
 function RuneCircle() {
   const marks = Array.from({ length: 16 }, (_, i) => i);
   return (
@@ -50,8 +50,8 @@ function RuneCircle() {
         ))}
       </g>
       <g className="rn-turn back">
-        <rect x="45" y="45" width="110" height="110" className="rn-star" />
-        <rect x="45" y="45" width="110" height="110" className="rn-star" transform="rotate(45 100 100)" />
+        <circle cx="100" cy="100" r="62" className="rn-star" />
+        {Array.from({ length: 8 }, (_, i) => <circle key={i} cx={(100 + Math.cos((i * Math.PI) / 4) * 62).toFixed(2)} cy={(100 + Math.sin((i * Math.PI) / 4) * 62).toFixed(2)} r="3.2" className="rn-stud" />)}
       </g>
       <circle cx="100" cy="100" r="56" className="rn-ring thin" />
       <circle cx="100" cy="100" r="30" className="rn-ring" />
