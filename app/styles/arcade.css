@@ -1,0 +1,116 @@
+@import "./games/plinko.css";
+@import "./games/mines.css";
+@import "./games/dragonflight.css";
+@import "./games/hilo.css";
+@import "./games/slots.css";
+@import "./games/dice.css";
+@import "./games/coinflip.css";
+@import "./games/blackjack.css";
+@import "./games/roulette.css";
+@import "./games/keno.css";
+@import "./games/dragonspire.css";
+@import "./games/scratch.css";
+@import "./games/leap.css";
+@import "./games/typing.css";
+@import "./games/reaction.css";
+@import "./games/murloc.css";
+@import "./games/runes.css";
+@import "./games/gryphon.css";
+@import "./games/pairs.css";
+@import "./games/fire.css";
+@import "./games/barrage.css";
+@import "./games/pool.css";
+@import "./games/snake.css";
+@import "./games/wheel.css";
+@import "./games/chests.css";
+
+/* =====================================================================
+   DW Arcade overhaul: shared cabinet, layout, HUD, results, celebrations
+   ===================================================================== */
+
+/* One layout for every game: the cabinet in the wide column, controls in a sidebar. */
+.game-layout { grid-template-columns: minmax(0, 1fr) 320px; grid-template-areas: "stage controls"; }
+.game-layout > .game-stage { grid-area: stage; }
+.game-layout > .game-controls { grid-area: controls; }
+@media (max-width: 900px) {
+  .game-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: none; }
+  .game-layout > .game-stage, .game-layout > .game-controls { grid-area: auto; }
+}
+/* a stage that holds a cabinet doesn't need its own box */
+.game-stage:has(> .machine) { padding: 0; background: none; box-shadow: none; border: 0; }
+
+/* ---- the cabinet ---- */
+.machine { position: relative; display: grid; gap: 10px; padding: 12px; border-radius: 16px; min-width: 0;
+  background: linear-gradient(180deg, #3a2614 0%, #24160b 45%, #1a1008 100%);
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 2px #8a6a2c, inset 0 0 0 3px #000, inset 0 1px 0 4px rgba(255,226,154,.08), 0 26px 50px -24px #000, 0 0 40px -22px rgba(155,93,255,.45); }
+.machine-rivet { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffe9a8, #b8862e 55%, #4a3410); box-shadow: 0 0 0 1px #000; z-index: 2; }
+.machine-rivet.r1 { top: 6px; left: 6px; } .machine-rivet.r2 { top: 6px; right: 6px; } .machine-rivet.r3 { bottom: 6px; left: 6px; } .machine-rivet.r4 { bottom: 6px; right: 6px; }
+.machine-hud { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 2px 8px 0; min-height: 38px; }
+.machine-screen { position: relative; isolation: isolate; display: grid; place-items: center; min-height: 360px; padding: 16px; border-radius: 10px; overflow: hidden;
+  background: var(--screen, #0d0814); box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px rgba(255,209,0,.12), inset 0 0 60px rgba(0,0,0,.85); }
+.machine-screen::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.55)); }
+.machine-screen > * { min-width: 0; }
+
+/* ---- screen themes ---- */
+.m-arcane { --screen: radial-gradient(60% 50% at 50% 35%, rgba(155,93,255,.28), transparent 70%), repeating-conic-gradient(from 0deg at 50% 50%, rgba(192,140,255,.035) 0 6deg, transparent 6deg 18deg), radial-gradient(1px 1px at 20% 30%, #cdb6ff, transparent), radial-gradient(1px 1px at 75% 65%, #fff, transparent), radial-gradient(1px 1px at 40% 85%, #cdb6ff, transparent), linear-gradient(180deg, #160b26, #0a0614); }
+.m-mine { --screen: radial-gradient(45% 40% at 18% 12%, rgba(255,170,70,.28), transparent 70%), radial-gradient(45% 40% at 82% 12%, rgba(255,170,70,.22), transparent 70%), repeating-linear-gradient(0deg, rgba(0,0,0,.35) 0 2px, transparent 2px 34px), repeating-linear-gradient(90deg, rgba(0,0,0,.3) 0 2px, transparent 2px 68px), linear-gradient(180deg, #2a2119, #15100b); }
+.m-sky { --screen: radial-gradient(40% 30% at 80% 90%, rgba(255,150,80,.45), transparent 70%), radial-gradient(60% 20% at 30% 30%, rgba(255,255,255,.06), transparent 70%), linear-gradient(180deg, #0c1238 0%, #3a2a6a 55%, #b0603a 100%); }
+.m-tavern { --screen: radial-gradient(70% 60% at 50% 40%, rgba(255,190,110,.18), transparent 70%), repeating-linear-gradient(90deg, rgba(0,0,0,.25) 0 2px, transparent 2px 90px), linear-gradient(180deg, #3a2414, #22140a); }
+.m-fire { --screen: radial-gradient(80% 50% at 50% 115%, rgba(255,90,20,.55), transparent 70%), radial-gradient(1.5px 1.5px at 30% 70%, #ffb347, transparent), radial-gradient(1.5px 1.5px at 70% 60%, #ffd36b, transparent), linear-gradient(180deg, #1a0604, #2a0a04); }
+.m-frost { --screen: radial-gradient(60% 50% at 50% 30%, rgba(140,210,255,.22), transparent 70%), repeating-linear-gradient(60deg, rgba(255,255,255,.03) 0 2px, transparent 2px 22px), repeating-linear-gradient(-60deg, rgba(255,255,255,.03) 0 2px, transparent 2px 22px), linear-gradient(180deg, #0a1a2e, #05101e); }
+.m-forest { --screen: radial-gradient(30% 30% at 78% 18%, rgba(240,240,210,.25), transparent 70%), radial-gradient(80% 40% at 50% 110%, rgba(30,90,50,.5), transparent 70%), linear-gradient(180deg, #0a1622, #0b1a12); }
+.m-void { --screen: radial-gradient(50% 45% at 50% 50%, rgba(106,44,255,.3), transparent 70%), radial-gradient(1px 1px at 15% 25%, #fff, transparent), radial-gradient(1px 1px at 85% 35%, #e0d0ff, transparent), radial-gradient(1.5px 1.5px at 60% 80%, #fff, transparent), radial-gradient(1px 1px at 30% 70%, #fff, transparent), #05020c; }
+.m-hoard { --screen: radial-gradient(70% 45% at 50% 105%, rgba(255,200,60,.4), transparent 70%), radial-gradient(50% 40% at 50% 30%, rgba(255,220,140,.12), transparent 70%), linear-gradient(180deg, #1e1406, #120c03); }
+.m-crypt { --screen: radial-gradient(50% 40% at 50% 30%, rgba(120,200,140,.14), transparent 70%), repeating-linear-gradient(0deg, rgba(0,0,0,.3) 0 2px, transparent 2px 40px), repeating-linear-gradient(90deg, rgba(0,0,0,.25) 0 2px, transparent 2px 80px), linear-gradient(180deg, #1a1e1c, #0e1210); }
+.m-felt { --screen: radial-gradient(75% 65% at 50% 45%, #1d7a5a, #0d4a37 70%, #08301f); }
+.m-parchment { --screen: radial-gradient(80% 70% at 50% 40%, #3a2a14, #1c1309); }
+
+/* ---- HUD readouts and result chips ---- */
+.readout { display: inline-grid; line-height: 1.1; }
+.readout-l { font: 600 10px/1.2 var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: #a8987a; }
+.readout-v { font: 700 18px/1.2 var(--font-body); font-variant-numeric: tabular-nums; color: #f2e8d0; }
+.readout.gold .readout-v { color: #FFD100; text-shadow: 0 0 12px rgba(255,209,0,.35); }
+.readout.win .readout-v { color: #4CD964; } .readout.lose .readout-v { color: #ff8a7a; }
+.result-strip { display: flex; flex-wrap: nowrap; gap: 4px; overflow: hidden; min-height: 24px; -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+.rs-chip { flex: none; padding: 3px 8px; border-radius: 6px; font: 700 12px/1.3 var(--font-body); font-variant-numeric: tabular-nums; box-shadow: 0 0 0 1px #000, inset 0 1px 0 rgba(255,255,255,.15); }
+.rs-chip.win { background: linear-gradient(180deg, #3fae5a, #1f6a32); color: #eaffef; }
+.rs-chip.big { background: linear-gradient(180deg, #ffe27a, #e0a100); color: #1a1206; }
+.rs-chip.lose { background: #2a2016; color: #a8987a; }
+.rs-chip.neutral { background: #2b2440; color: #d6ccff; }
+.rs-chip.fresh { animation: rs-in .35s cubic-bezier(.34,1.56,.64,1); }
+@keyframes rs-in { from { transform: translateX(-10px) scale(.6); opacity: 0; } }
+
+/* ---- celebrations ---- */
+.celebrate-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 85; pointer-events: none; }
+.celebrate-banner { position: fixed; z-index: 86; left: 50%; top: 32%; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 2px; padding: 18px 34px 16px; border-radius: 16px; pointer-events: none; text-align: center;
+  background: radial-gradient(120% 120% at 50% 0%, rgba(40,26,10,.95), rgba(12,8,4,.95)); box-shadow: 0 0 0 1px #000, inset 0 0 0 2px var(--tc), 0 0 60px -6px var(--tc), 0 30px 60px -20px #000;
+  animation: cb-in .5s cubic-bezier(.34,1.56,.64,1), cb-out .4s ease-in forwards; animation-delay: 0s, 1.6s; }
+.celebrate-banner.t-epic { animation-delay: 0s, 2.4s; } .celebrate-banner.t-legendary { animation-delay: 0s, 3.2s; }
+.celebrate-banner strong { font: 400 clamp(26px, 5vw, 46px)/1.05 var(--font-title); color: var(--tc); text-shadow: 0 2px 0 #000, 0 0 24px var(--tc); letter-spacing: .02em; }
+.celebrate-amount { font: 700 clamp(22px, 4vw, 34px)/1.1 var(--font-body); color: #FFD100; font-variant-numeric: tabular-nums; text-shadow: 0 2px 0 #000; }
+.celebrate-mult { font: 600 13px var(--font-body); color: #d9ccae; }
+.celebrate-banner.t-legendary strong { background: linear-gradient(90deg, #ff9433, #ffe27a, #ff5ce0, #ff9433); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: cb-shine 2s linear infinite; }
+@keyframes cb-in { from { transform: translate(-50%, -50%) scale(.4); opacity: 0; } }
+@keyframes cb-out { to { transform: translate(-50%, -60%) scale(.96); opacity: 0; } }
+@keyframes cb-shine { to { background-position: -300% 0; } }
+@media (prefers-reduced-motion: reduce) { .celebrate-banner, .celebrate-banner strong, .rs-chip.fresh { animation: none !important; } }
+
+/* ---- sound toggle in the arcade bar ---- */
+.sound-toggle { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid #000; cursor: pointer; margin-left: auto; margin-right: 8px;
+  background: linear-gradient(180deg, #2a2012, #120d07); box-shadow: inset 0 0 0 1px #6b5223; color: #FFD100; flex: none; }
+.sound-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.sound-toggle svg path:first-child { fill: currentColor; }
+.sound-toggle[aria-pressed="false"] { color: #8a7b60; }
+@media (max-width: 380px) { .sound-toggle { width: 30px; height: 30px; margin-right: 4px; } }
+
+/* the shared primary action reads as the cabinet's big button */
+.game-controls .btn-primary.btn-lg { min-height: 54px; font-size: 19px; letter-spacing: .04em; }
+.arcade-balance.punch { display: inline-block; animation: bal-punch .52s cubic-bezier(.2,1.5,.4,1); }
+@keyframes bal-punch { 0% { transform: scale(1); } 35% { transform: scale(1.16) rotate(-3deg); } 70% { transform: scale(.97); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .arcade-balance.punch { animation: none; } }
+.sound-toggle.floating { display: none; }
+@media (max-width: 600px) {
+  .sound-toggle:not(.floating) { display: none; }
+  .sound-toggle.floating { display: inline-grid; position: fixed; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 60; width: 44px; height: 44px; margin: 0;
+    box-shadow: inset 0 0 0 1px #8a6a2c, 0 8px 20px -6px #000, 0 0 0 1px #000; }
+}

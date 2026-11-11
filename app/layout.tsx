@@ -8,6 +8,7 @@ import "@fontsource/alegreya-sans/latin-500.css";
 import "@fontsource/alegreya-sans/latin-700.css";
 import "./globals.css";
 import "./styles/skins.css";
+import "./styles/arcade.css";
 import { SITE } from "@/lib/config";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Embers } from "@/components/Embers";

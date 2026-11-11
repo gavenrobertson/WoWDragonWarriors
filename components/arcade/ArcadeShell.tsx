@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { GAMES, wowIconUrl } from "@/lib/arcade-games";
 import { CHESTS } from "@/lib/cosmetics";
 import { myChests } from "@/app/arcade/actions";
+import { CelebrationLayer } from "./Celebrate";
+import { isMuted, onMuteChange, setMuted, unlockAudio } from "./sfx";
 export { GAMES, fmt } from "@/lib/arcade-games";
 export { wowIconUrl };
 
@@ -52,6 +55,16 @@ export function ArcadeShell({ initial, signedIn, chests: chests0 = {}, children 
     t.current = setTimeout(() => setDelta(null), 1800);
   }, []);
   const path = usePathname();
+  const [muted, setMutedS] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    setMutedS(isMuted());
+    const off = onMuteChange(setMutedS);
+    const unlock = () => unlockAudio();
+    window.addEventListener("pointerdown", unlock, { once: true }); window.addEventListener("keydown", unlock, { once: true });
+    return () => { off(); window.removeEventListener("pointerdown", unlock); window.removeEventListener("keydown", unlock); };
+  }, []);
   const chestCount = Object.values(chests).reduce((a, b) => a + b, 0);
   const foundChest = found ? CHESTS.find((c) => c.id === found.id) : null;
   return (
@@ -74,9 +87,11 @@ export function ArcadeShell({ initial, signedIn, chests: chests0 = {}, children 
               <img src={wowIconUrl("inv_misc_bag_10", 36)} alt="" width={22} height={22} className="tab-icon" /><span className="tab-text">Collection</span>
             </Link>
           </nav>
+          <SoundToggle muted={muted} />
+          {mounted && createPortal(<SoundToggle muted={muted} floating />, document.body)}
           <div className="arcade-wallet" aria-live="polite">
             <span className="mark-coin" aria-hidden="true" />
-            <span className="arcade-balance"><span className="bal-full">{signedIn ? balance.toLocaleString("en-US") : "—"}</span><span className="bal-short">{signedIn ? shortMarks(balance) : "—"}</span></span>
+            <span key={delta && delta.n > 0 ? `bal-${delta.k}` : "bal"} className={`arcade-balance${delta && delta.n > 0 ? " punch" : ""}`}><span className="bal-full">{signedIn ? balance.toLocaleString("en-US") : "—"}</span><span className="bal-short">{signedIn ? shortMarks(balance) : "—"}</span></span>
             <span className="micro muted">Dragon Marks</span>
             {delta && <span key={delta.k} className={`arcade-delta ${delta.n > 0 ? "up" : "down"}`}>{delta.n > 0 ? "+" : ""}{delta.n.toLocaleString("en-US")}</span>}
           </div>
@@ -94,6 +109,7 @@ export function ArcadeShell({ initial, signedIn, chests: chests0 = {}, children 
           </div>
         )}
         {children}
+        <CelebrationLayer />
         <p className="arcade-fine">Dragon Marks are play money for fun and cosmetics. They can&apos;t be bought, sold or cashed out.</p>
       </div>
     </Ctx.Provider>
@@ -154,3 +170,14 @@ export function BetInput({ value, onChange, disabled }: { value: number; onChang
   );
 }
 
+
+/** Mute button: in the arcade bar on wide screens, floating bottom-right on phones (portalled to <body>). */
+function SoundToggle({ muted, floating = false }: { muted: boolean; floating?: boolean }) {
+  return (
+    <button type="button" className={`sound-toggle${floating ? " floating" : ""}`} aria-pressed={!muted} aria-label={muted ? "Turn sound on" : "Mute sound"} title={muted ? "Sound off" : "Sound on"} onClick={() => setMuted(!muted)}>
+      {muted
+        ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16 9l5 6M21 9l-5 6" /></svg>
+        : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" /></svg>}
+    </button>
+  );
+}

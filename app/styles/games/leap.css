@@ -1,0 +1,19 @@
+/* leap: Leap of Faith (limbo). A dusk sky; the gryphon rider climbs a log-scale altitude. */
+.lp-sky { position: relative; width: 100%; height: clamp(320px, 48vh, 460px); }
+.lp-tick { position: absolute; left: 6px; transform: translateY(50%); font: 600 11px var(--font-body); color: rgba(255,255,255,.4); }
+.lp-tick::after { content: ""; position: absolute; left: 34px; top: 50%; width: 18px; border-top: 1px solid rgba(255,255,255,.18); }
+.lp-target { position: absolute; left: 0; right: 0; height: 0; border-top: 2px dashed rgba(255,209,0,.7); transform: translateY(50%); transition: border-color .2s; }
+.lp-target > span { position: absolute; right: 8px; bottom: 4px; padding: 2px 8px; border-radius: 6px; font: 700 12px var(--font-body); color: #1a1206; background: #FFD100; box-shadow: 0 0 0 1px #000; }
+.lp-target.crossed { border-top-style: solid; border-color: #4CD964; box-shadow: 0 0 16px rgba(76,217,100,.6); }
+.lp-target.crossed > span { background: #4CD964; }
+.lp-rider { position: absolute; left: 50%; transform: translate(-50%, 50%); transition: none; filter: drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
+.lp-rider img { border-radius: 50%; box-shadow: 0 0 0 2px #000, 0 0 0 4px #e0b04a, 0 0 22px rgba(255,209,0,.5); }
+.lp-sky.flying .lp-rider::after { content: ""; position: absolute; left: 50%; top: 100%; width: 6px; height: 60px; transform: translateX(-50%); background: linear-gradient(180deg, rgba(255,230,160,.7), transparent); border-radius: 3px; }
+.lp-number { position: absolute; left: 50%; top: 14%; transform: translateX(-50%); font: 400 clamp(54px, 9vw, 96px)/1 var(--font-title); color: #fff; text-shadow: 0 4px 0 #000, 0 0 30px rgba(140,160,255,.5); font-variant-numeric: tabular-nums; }
+.lp-sky.win .lp-number { color: #6dff8a; text-shadow: 0 4px 0 #000, 0 0 34px rgba(76,217,100,.7); }
+.lp-sky.lose .lp-number { color: #9a8e80; text-shadow: 0 4px 0 #000; filter: brightness(.8); }
+.lp-verdict { position: absolute; left: 50%; top: calc(14% + clamp(62px, 10vw, 104px)); transform: translateX(-50%); padding: 4px 14px; border-radius: 10px; font: 700 16px var(--font-body); animation: lp-pop .42s cubic-bezier(.2,1.5,.4,1); white-space: nowrap; }
+.lp-verdict.win { color: #1a1206; background: linear-gradient(180deg, #ffe27a, #e0a100); box-shadow: 0 0 0 1px #000, 0 0 20px rgba(255,209,0,.5); }
+.lp-verdict.lose { color: #d9ccae; background: rgba(0,0,0,.5); box-shadow: 0 0 0 1px #3b2f17; }
+@keyframes lp-pop { from { transform: translateX(-50%) scale(1.18); opacity: 0; } 60% { transform: translateX(-50%) scale(.97); } }
+@media (prefers-reduced-motion: reduce) { .lp-verdict { animation: none; } }
