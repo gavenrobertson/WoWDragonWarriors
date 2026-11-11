@@ -9,7 +9,7 @@ import * as P from "@/lib/pool";
 import { fmt, useArcade } from "./ArcadeShell";
 import { Machine } from "./Machine";
 import { ResultStrip, celebrate, type Chip } from "./Celebrate";
-import { buzz, play } from "./sfx";
+import { buzz, isMuted, onMuteChange, play, setMuted } from "./sfx";
 
 type Mode = "ai" | "friend";
 type Phase = "menu" | "aim" | "strike" | "rolling" | "ai" | "over";
@@ -87,10 +87,22 @@ export function Pool({ rules, leftToday0, board, me }: {
     setHud({ turn: s.turn, groups: s.groups, note: s.note, left: s.balls.filter((b) => !b.down && b.id !== 0).map((b) => b.id), inHand: s.inHand, winner: s.winner });
   }, []);
   const vertical = width < 560;
-  // on phones the table stands upright; keep it short enough that the shoot bar fits under it
+  // On phones the table stands upright and is sized so the cabinet's player row, the table and the shoot bar
+  // all fit between the sticky header + arcade bar and the bottom of the screen: nothing covers the table.
   const [vh, setVh] = useState(800);
-  useEffect(() => { const f = () => setVh(window.innerHeight); f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
-  const scale = vertical ? Math.min(width / TH, Math.max(0.4, (vh - 310) / TW)) : width / TW;
+  const [chrome, setChrome] = useState(120);
+  useEffect(() => {
+    const f = () => {
+      setVh(window.innerHeight);
+      const hdr = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 64;
+      const bar = document.querySelector(".arcade-bar")?.getBoundingClientRect().height ?? 48;
+      setChrome(Math.round(hdr + bar));
+    };
+    f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f);
+  }, []);
+  // player row ~46, shoot bar ~122, cabinet and screen padding + gaps ~52, a little breathing room ~8
+  const PHONE_EXTRA = 46 + 122 + 52 + 8;
+  const scale = vertical ? Math.min(width / TH, Math.max(0.3, (vh - chrome - PHONE_EXTRA) / TW)) : width / TW;
 
   useEffect(() => {
     const el = wrap.current; if (!el) return;
@@ -172,6 +184,12 @@ export function Pool({ rules, leftToday0, board, me }: {
     runId.current = m === "ai" && signedIn ? poolStart({ level: lvl }).then((r) => (r.ok ? r.id : null)).catch(() => null) : null;
     play("deal"); setTimeout(() => play("chip", { pitch: .8 }), 90);
     setPhase("aim");
+    // phones: bring the whole cabinet into view, tucked under the sticky header and arcade bar
+    if (vertical) requestAnimationFrame(() => {
+      const mc = document.querySelector(".pl-machine"); if (!mc) return;
+      const top = mc.getBoundingClientRect().top + window.scrollY - chrome - 4;
+      window.scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    });
   };
 
   const shoot = useCallback(() => {
@@ -612,6 +630,7 @@ export function Pool({ rules, leftToday0, board, me }: {
         <button type="button" className="btn pl-nudge" aria-label="Turn aim right (hold to keep turning)" disabled={!yourTurn} {...nudgeProps(1)}>▶</button>
         <button type="button" className={`btn pl-fine${fine ? " on" : ""}`} aria-pressed={fine} title="Fine aim: drag sideways on the table to turn the cue slowly"
           onClick={() => { fineRef.current = !fine; setFine(!fine); play("click", { vol: .4 }); }}>Fine</button>
+        <PoolMute />
       </div>
     </div>
   );
@@ -715,5 +734,16 @@ function SpinPicker({ spin, onChange, disabled }: { spin: P.Spin; onChange: (s: 
       </button>
       <span className="micro muted">{label}</span>
     </div>
+  );
+}
+
+/** On phones the mute button lives in 8-ball's control row (the floating one would sit on the table). */
+function PoolMute() {
+  const [muted, setM] = useState(false);
+  useEffect(() => { setM(isMuted()); return onMuteChange(setM); }, []);
+  return (
+    <button type="button" className="btn pl-mute" aria-pressed={!muted} aria-label={muted ? "Turn sound on" : "Mute sound"} onClick={() => setMuted(!muted)}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" />{muted ? <path d="M16 9l5 6M21 9l-5 6" /> : <path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" />}</svg>
+    </button>
   );
 }

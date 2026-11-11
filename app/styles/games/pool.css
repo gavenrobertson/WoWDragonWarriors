@@ -65,3 +65,43 @@
 .pool-shootbar .pl-fine { min-width: 52px; font-size: 13px; }
 .pool-shootbar .pl-fine.on { color: #1a1206; background: linear-gradient(180deg, #ffe27a, #e0a100); box-shadow: inset 0 0 0 1px #fff3b0, 0 0 12px rgba(255,209,0,.45); }
 @media (prefers-reduced-motion: reduce) { .pl-spin-dot { transition: none; } }
+
+
+/* =====================================================================
+   Phones: table, players and controls all on one screen, nothing overlapping
+   ===================================================================== */
+@media (max-width: 600px) {
+  .pool-game .pool-stage { gap: 6px; }
+  /* the shoot bar sits under the table instead of floating over it */
+  .pool-game .pool-stage > .pool-shootbar { position: static; padding: 8px 10px; gap: 6px; }
+  .pool-game .pool-shootbar .pl-bar-top { gap: 10px; }
+  .pool-game .pool-stage > .pool-shootbar .pl-power-field { gap: 6px; font-size: 13px; }
+  .pool-game .pool-shootbar .pl-power-field .micro { min-width: 4.5em; }
+  .pool-game .pl-spin-ball { width: 44px; height: 44px; }
+  .pool-game .pl-spin .micro { display: none; }
+  .pool-game .pool-shootbar .btn { min-height: 44px; padding-top: 0; padding-bottom: 0; }
+  .pool-game .pool-shootbar .btn-primary.btn-lg { min-height: 46px; font-size: 18px; }
+  /* a slim player row: name and remaining balls on one line */
+  .pl-machine { padding: 8px; gap: 6px; }
+  .pl-machine .machine-hud { padding: 0 4px; min-height: 0; }
+  .pl-machine .machine-hud .result-strip { display: none; }
+  .pl-machine .pool-players { flex: 1 1 100%; gap: 6px; }
+  .pl-machine .pool-player { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; align-items: center; column-gap: 6px; row-gap: 0; padding: 4px 8px; }
+  .pl-machine .pool-player strong { font-size: 13px; grid-column: 1; grid-row: 1; }
+  .pl-machine .pool-player .micro { font-size: 10.5px; grid-column: 1; grid-row: 2; }
+  .pl-machine .pool-player .pool-minis { grid-column: 2; grid-row: 1 / span 2; display: grid; grid-template-columns: repeat(4, 10px); gap: 2px; }
+  .pl-machine .pool-player .pool-mini { width: 10px; height: 10px; }
+  .pl-machine .pool-player.up::after { top: 4px; right: 4px; width: 6px; height: 6px; }
+  .pl-machine .machine-screen { padding: 6px; }
+  .pool-game .pool-note { font-size: 13px; margin: 0; }
+}
+
+/* mute: in the control row on phones, where the floating button would cover the table */
+.pool-shootbar .pl-mute { display: none; min-width: 44px; padding: 0; }
+.pool-shootbar .pl-mute svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.pool-shootbar .pl-mute svg path:first-child { fill: currentColor; }
+.pool-shootbar .pl-mute[aria-pressed="false"] { color: #8a7b60; }
+@media (max-width: 600px) {
+  .pool-game .pool-stage > .pool-shootbar .pl-mute { display: inline-grid; place-items: center; }
+  body:has(.pool-stage > .pool-shootbar) .sound-toggle.floating { display: none; }
+}

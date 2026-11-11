@@ -117,5 +117,3 @@
 /* a full results strip must never widen the cabinet past a phone screen */
 .machine > .machine-hud, .machine > .machine-screen { min-width: 0; }
 .machine-hud .result-strip { flex: 1 1 150px; min-width: 0; justify-content: flex-start; margin-left: auto; }
-/* pages with a pinned bottom bar (8-ball's shoot bar) lift the floating mute button above it */
-@media (max-width: 600px) { body:has(.pool-shootbar) .sound-toggle.floating { bottom: calc(196px + env(safe-area-inset-bottom)); } }
