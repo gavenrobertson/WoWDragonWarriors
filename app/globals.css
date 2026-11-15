@@ -420,7 +420,8 @@ label.btn:focus-within { box-shadow: var(--focus-ring); }
 /* character render below the detail panel, cropped to the figure (renders are 1600×1200 with the character centred) */
 .bis-figure { position: relative; flex: 1 1 260px; min-height: 260px; border-radius: var(--r-lg); border: 1px solid var(--dw-border); overflow: hidden; display: grid; place-items: center;
   background: radial-gradient(60% 70% at 50% 75%, rgba(155,93,255,.28), transparent 70%), linear-gradient(#120F0D, #0a0705); }
-.bis-figure img { position: absolute; left: 50%; top: 50%; height: 220%; width: auto; max-width: none; transform: translate(-50%, -54%); filter: drop-shadow(0 0 24px rgba(155,93,255,.45)); animation: float 5.5s ease-in-out infinite; }
+.bis-figure img { position: absolute; left: 50%; top: 50%; height: 172%; width: auto; max-width: none; translate: -50% -56%; filter: drop-shadow(0 0 24px rgba(155,93,255,.45)); animation: float 5.5s ease-in-out infinite; }
+/* centred with `translate`, not `transform`: the float animation owns `transform`, and sharing it made the figure swing across the panel */
 .picker { width: min(620px, calc(100vw - 32px)); max-height: min(720px, calc(100vh - 48px)); padding: 0; border: 1px solid var(--dw-gold-antique); border-radius: var(--r-xl); background: var(--dw-card); color: var(--dw-text); box-shadow: var(--glow-purple), 0 30px 80px -20px #000; }
 .picker::backdrop { background: rgba(6,4,2,.78); backdrop-filter: blur(3px); }
 .picker[open] { animation: rise .25s var(--ease-out) both; }
