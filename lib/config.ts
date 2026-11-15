@@ -39,6 +39,7 @@ export const NAV = [
   { href: "/raids", label: "Raids" },
   { href: "/roster", label: "Roster" },
   { href: "/admin", label: "Admin", adminOnly: true },
+  { href: "/waypost", label: "Waypost" },
   { href: "/arcade", label: "DW Arcade" },
 ] as const;
 

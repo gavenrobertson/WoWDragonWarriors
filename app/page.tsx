@@ -7,6 +7,7 @@ import { Avatar, Bar, vars } from "@/components/bits";
 import { SITE, isDemo } from "@/lib/config";
 import { LEVEL_BANDS_SAMPLE, getCharacters, getEvents, store } from "@/lib/store";
 import { classColor, timeAgo } from "@/lib/ui";
+import { WAYPOST } from "@/lib/waypost";
 
 const BAND_COLORS = ["#E3B341", "#D4A537", "#A9832E", "#7D6127", "#56441F"];
 
@@ -97,6 +98,19 @@ export default async function HomePage() {
               <span className="small muted">{r.note}</span>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="waypost-promo" className="wp-promo">
+        <img src="/assets/waypost/scene-1145.webp" srcSet="/assets/waypost/scene-760.webp 760w, /assets/waypost/scene-1145.webp 1145w" sizes="(max-width: 900px) 100vw, 1200px" alt="" width={1145} height={400} loading="lazy" className="wp-promo-art" />
+        <div className="wp-promo-copy">
+          <span className="eyebrow">Our addon · Still leveling?</span>
+          <h2 id="waypost-promo">Waypost gets you to 60</h2>
+          <p>The guild&apos;s free leveling guide for WoW Forever: routes for every race, a gold arrow to follow, and quests picked up and handed in for you.</p>
+          <div className="row" style={{ gap: 10 }}>
+            <a href={WAYPOST.curseforge} target="_blank" rel="noopener noreferrer" className="btn btn-primary">Get it on CurseForge</a>
+            <Link href="/waypost" className="btn">See what it does</Link>
+          </div>
         </div>
       </section>
 
