@@ -41,7 +41,12 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
   const [tab, setTab] = useState<Tab>("stats");
   const { pending, run, toast } = useAction();
   const color = classColor(active.className);
-  const gearLeft = active.gear.slice(0, 8), gearRight = active.gear.slice(8, 16);
+  // Like the in-game character sheet: armor down both sides, weapons (main hand, off hand, ranged) along the bottom.
+  const WEAPON_SLOTS = ["Main hand", "Off hand", "Ranged", "Two-hand"];
+  const armor = active.gear.filter((g) => !WEAPON_SLOTS.includes(g.slot));
+  const weapons = active.gear.filter((g) => WEAPON_SLOTS.includes(g.slot));
+  const half = Math.ceil(armor.length / 2);
+  const gearLeft = armor.slice(0, half), gearRight = armor.slice(half);
 
   return (
     <main id="main" tabIndex={-1} className="container page">
@@ -92,10 +97,13 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
         </div>
       </section>
 
-      <section aria-label="Equipment and model" className="row" style={{ alignItems: "stretch", gap: 16 }}>
-        <GearList label="Equipped, left" gear={gearLeft} />
-        <ModelStage name={active.name} color={color} renderUrl={active.renderUrl} slug={active.slug} />
-        <GearList label="Equipped, right" gear={gearRight} />
+      <section aria-label="Equipment and model" className="stack" style={{ gap: 16 }}>
+        <div className="row" style={{ alignItems: "stretch", gap: 16 }}>
+          <GearList label="Equipped, left" gear={gearLeft} />
+          <ModelStage name={active.name} color={color} renderUrl={active.renderUrl} slug={active.slug} />
+          <GearList label="Equipped, right" gear={gearRight} />
+        </div>
+        {weapons.length > 0 && <GearList label="Weapons" gear={weapons} weapons />}
       </section>
 
       <section aria-label="Character details" className="panel" style={{ padding: 0, gap: 0, borderRadius: 16, overflow: "hidden" }}>
@@ -196,12 +204,12 @@ export function CharacterView({ active, switcher, isOwn, canSync, namespace }: {
   );
 }
 
-function GearList({ label, gear }: { label: string; gear: { slot: string; name: string; quality: string; iconUrl?: string | null; itemId?: number }[] }) {
+function GearList({ label, gear, weapons }: { label: string; gear: { slot: string; name: string; quality: string; iconUrl?: string | null; itemId?: number }[]; weapons?: boolean }) {
   if (!gear.length) {
     return <div className="empty" style={{ flex: "1 1 280px", alignSelf: "flex-start" }}>Gear appears after the next profile sync.</div>;
   }
   return (
-    <ul aria-label={label} className="stack" style={{ flex: "1 1 280px", minWidth: 0, gap: 8 }}>
+    <ul aria-label={label} className={weapons ? "gear-weapons" : "stack"} style={weapons ? undefined : { flex: "1 1 280px", minWidth: 0, gap: 8 }}>
       {gear.map((g, i) => (
         <li key={`${g.slot}-${i}`} className="list-row" data-item-id={g.itemId || undefined} tabIndex={g.itemId ? 0 : undefined}>
           <ItemIcon slot={g.slot} quality={g.quality} iconUrl={g.iconUrl} />

@@ -1664,3 +1664,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; h
 .wp-promo-copy p { margin: 0; color: #f2e8d0; text-shadow: 0 2px 8px #000; }
 @media (max-width: 700px) { .wp-promo::before { background: linear-gradient(180deg, rgba(8,5,2,.3) 0%, rgba(8,5,2,.88) 45%, rgba(8,5,2,.96) 100%); } .wp-promo { padding-top: 120px; } }
 @media (prefers-reduced-motion: reduce) { .wp-promo-art { transition: none; } }
+
+/* character inspect: weapons row under the model (main hand, off hand, ranged), like the in-game character sheet */
+.gear-weapons { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 8px; max-width: 920px; width: 100%; margin-inline: auto; }
