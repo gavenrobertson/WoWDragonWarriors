@@ -4,9 +4,12 @@
 // Model files load through our same-origin relay (/modelviewer/live/...).
 import { useEffect, useRef, useState } from "react";
 
-type ModelConfig = { modelId: number; options: { optionId: number; choiceId: number }[]; items: [number, number][]; missing: number };
+type Pair = [number, number]; // [viewer inventory slot, display id]
+type ModelConfig = { modelId: number; options: { optionId: number; choiceId: number }[]; items: Pair[]; melee?: Pair[]; ranged?: Pair[]; weaponView?: "melee" | "ranged"; missing: number };
+export type WeaponView = "melee" | "ranged" | "sheathed";
+type Actor = { setAnimation?: (n: string) => void; getNumAnimations?: () => number; setItems?: (l: { slot: number; display: number }[]) => void; clearSlots?: (s: string) => void; setSheath?: (main: number, off: number) => void };
 type Zoom = { target: number; current: number; rateCurrent: number; range: [number, number] };
-type Viewer = { renderer?: { azimuth: number; zenith: number; distance: number; zoom?: Zoom; actors?: { setAnimation?: (n: string) => void; getNumAnimations?: () => number }[] }; destroy?: () => void };
+type Viewer = { renderer?: { azimuth: number; zenith: number; distance: number; zoom?: Zoom; actors?: Actor[] }; destroy?: () => void };
 
 declare global {
   interface Window { ZamModelViewer?: new (opts: unknown) => Viewer; jQuery?: (el: Element) => unknown; WH?: Record<string, unknown>; CONTENT_PATH?: string }
@@ -60,16 +63,29 @@ function loadViewer() {
   return loader;
 }
 
-export type Model3DHandle = { rotate: (rad: number) => void; reset: () => void; zoom: (d: number) => void; animate: (name: string) => boolean };
+export type Model3DHandle = { rotate: (rad: number) => void; reset: () => void; zoom: (d: number) => void; animate: (name: string) => boolean; weapons: (v: WeaponView) => void };
+
+// Every slot a weapon can attach to (one-hand, shield, bow, two-hand, main/off hand, held, thrown, gun/wand).
+const HAND_SLOTS = [13, 14, 15, 17, 21, 22, 23, 25, 26];
+/** The weapons to put on the model for a view. Bows and crossbows (15) sit in the left hand; guns, wands and
+ *  thrown weapons are drawn in the main hand (the viewer doesn't show a wand in its own ranged slot). Sheathed
+ *  carries everything on the back, like a character standing in town. */
+function weaponItems(m: ModelConfig, v: WeaponView): Pair[] {
+  const melee = m.melee ?? [], ranged = m.ranged ?? [];
+  if (v === "ranged") return ranged.map(([s, d]) => [s === 15 ? 15 : 21, d] as Pair);
+  if (v === "sheathed") return [...melee, ...ranged];
+  return melee;
+}
 
 export function Model3D({ slug, onState, handleRef, autoRotate }: {
   slug: string;
-  onState: (s: "loading" | "ready" | "failed", info?: { missing?: number; reason?: string }) => void;
+  onState: (s: "loading" | "ready" | "failed", info?: { missing?: number; reason?: string; ranged?: boolean; melee?: boolean; view?: WeaponView }) => void;
   handleRef?: React.MutableRefObject<Model3DHandle | null>;
   autoRotate?: boolean;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const viewer = useRef<Viewer | null>(null);
+  const config = useRef<ModelConfig | null>(null);
   const [mounted, setMounted] = useState(0);
 
   useEffect(() => {
@@ -80,6 +96,8 @@ export function Model3D({ slug, onState, handleRef, autoRotate }: {
         const res = await fetch(`/api/model/${encodeURIComponent(slug)}`);
         const { model, reason } = (await res.json()) as { model: ModelConfig | null; reason?: string };
         if (!model) { if (!cancelled) onState("failed", { reason }); return; }
+        config.current = model;
+        const view: WeaponView = model.weaponView ?? "melee";
         await loadViewer();
         if (cancelled || !box.current || !window.ZamModelViewer || !window.jQuery) throw new Error("viewer unavailable");
         box.current.innerHTML = "";
@@ -93,7 +111,7 @@ export function Model3D({ slug, onState, handleRef, autoRotate }: {
           container: window.jQuery(el),
           aspect: rect.width / Math.max(1, rect.height),
           hd: true,
-          items: model.items,
+          items: [...model.items, ...weaponItems(model, view)],
           models: { id: model.modelId, type: 16 },
           charCustomization: { options: model.options },
         });
@@ -110,7 +128,7 @@ export function Model3D({ slug, onState, handleRef, autoRotate }: {
           try { loaded = !!actor && (actor.getNumAnimations?.() ?? 0) > 0; } catch { loaded = false; }
           if (loaded && el.querySelector("canvas")) {
             // One more beat so textures finish binding before the fade-in.
-            setTimeout(() => { if (!cancelled) { onState("ready", { missing: model.missing }); setMounted((m) => m + 1); } }, 400);
+            setTimeout(() => { if (!cancelled) { onState("ready", { missing: model.missing, ranged: (model.ranged?.length ?? 0) > 0, melee: (model.melee?.length ?? 0) > 0, view }); setMounted((m) => m + 1); } }, 400);
             return;
           }
           if (Date.now() - started > 90_000) { onState("failed"); return; }
@@ -152,6 +170,14 @@ export function Model3D({ slug, onState, handleRef, autoRotate }: {
       zoom: (d) => { const z = viewer.current?.renderer?.zoom; if (z) setZoom(z, z.target + d); },
       animate: (name) => {
         try { viewer.current?.renderer?.actors?.[0]?.setAnimation?.(name); return true; } catch { return false; }
+      },
+      weapons: (v) => {
+        const a = viewer.current?.renderer?.actors?.[0], m = config.current;
+        if (!a || !m) return;
+        // One slot per call: the viewer's clearSlots misbehaves when given a list longer than the item list.
+        for (const s of HAND_SLOTS) { try { a.clearSlots?.(String(s)); } catch { /* slot was empty */ } }
+        try { a.setItems?.(weaponItems(m, v).map(([slot, display]) => ({ slot, display }))); } catch { /* ignore */ }
+        try { a.setSheath?.(v === "sheathed" ? 1 : -1, v === "sheathed" ? 1 : -1); } catch { /* ignore */ }
       },
     };
   }, [handleRef, mounted]);

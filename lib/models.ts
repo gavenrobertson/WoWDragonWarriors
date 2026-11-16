@@ -22,12 +22,16 @@ const HIDDEN = new Set(["NECK", "FINGER_1", "FINGER_2", "TRINKET_1", "TRINKET_2"
 const VIEWER_RACES = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 34, 35, 36, 37, 52, 70, 84, 85]);
 // Viewer slots whose models live under meta/item (weapons, shields, held items); everything else is meta/armor/{slot}.
 const ITEM_META_SLOTS = new Set([13, 14, 15, 17, 21, 22, 23, 25, 26]);
-const viewerMetaUrl = (slot: number, display: number) =>
-  `https://wow.zamimg.com/modelviewer/live/meta/${ITEM_META_SLOTS.has(slot) ? "item" : `armor/${slot}`}/${display}.json`;
+// Wowhead's live data set lacks many Classic-era display ids (old guns, wands, thrown weapons...). Its Classic
+// set has them, and the model and texture files they point at are in the live set, so the /modelviewer relay
+// falls back to Classic for meta files. Check both here the same way.
+const viewerMetaUrl = (slot: number, display: number, set: "live" | "classic" = "live") =>
+  `https://wow.zamimg.com/modelviewer/${set}/meta/${ITEM_META_SLOTS.has(slot) ? "item" : `armor/${slot}`}/${display}.json`;
 async function viewerHas(slot: number, display: number) {
   try {
-    const r = await fetch(viewerMetaUrl(slot, display), { headers: { "User-Agent": "Mozilla/5.0 (compatible; DragonWarriorsHub/1.0)", Referer: "https://www.wowhead.com/" }, cf: { cacheEverything: true, cacheTtl: 604800 } } as RequestInit);
-    return r.ok;
+    const init = { headers: { "User-Agent": "Mozilla/5.0 (compatible; DragonWarriorsHub/1.0)", Referer: "https://www.wowhead.com/" }, cf: { cacheEverything: true, cacheTtl: 604800 } } as RequestInit;
+    if ((await fetch(viewerMetaUrl(slot, display), init)).ok) return true;
+    return (await fetch(viewerMetaUrl(slot, display, "classic"), init)).ok;
   } catch { return null; }
 }
 const APPEARANCE_TTL_MS = 6 * 3600_000;
@@ -36,7 +40,10 @@ const MAX_LOOKUPS = 36; // Blizzard calls per request (Workers Free allows 50 su
 export interface ModelConfig {
   race: number; gender: number; modelId: number; raceName?: string; supported: boolean;
   options: { optionId: number; choiceId: number }[];
-  items: [number, number][]; // [inventoryType, displayId]
+  items: [number, number][]; // [inventoryType, displayId]: armor
+  melee: [number, number][]; // main hand and off hand
+  ranged: [number, number][]; // bow, gun, crossbow, wand or thrown (relics aren't drawn on the model)
+  weaponView: "melee" | "ranged"; // what to hold first: hunters show their ranged weapon
   missing: number;           // equipped items we couldn't resolve yet
 }
 
@@ -79,7 +86,7 @@ export async function modelConfig(slug: string): Promise<ModelConfig | null> {
   const a = await loadAppearance(slug);
   if (!a) return null;
   if (!VIEWER_RACES.has(a.race)) {
-    return { race: a.race, raceName: a.raceName, gender: a.gender, modelId: 0, options: [], items: [], missing: 0, supported: false };
+    return { race: a.race, raceName: a.raceName, gender: a.gender, modelId: 0, options: [], items: [], melee: [], ranged: [], weaponView: "melee", missing: 0, supported: false };
   }
   const shown = a.items.filter((i) => !HIDDEN.has(i.slot));
   const ids = shown.map((i) => i.id);
@@ -122,11 +129,17 @@ export async function modelConfig(slug: string): Promise<ModelConfig | null> {
     await tx(async (q) => { for (const v of verdicts) await q("update item_displays set viewer_ok = $2 where item_id = $1", [v.id, v.ok ? 1 : 0]); });
     for (const v of verdicts) { const p = placed.find((x) => x.item.id === v.id); if (p?.d) p.d.viewer_ok = v.ok ? 1 : 0; }
   }
-  const items: [number, number][] = [];
+  const items: [number, number][] = [], melee: [number, number][] = [], ranged: [number, number][] = [];
   let missing = 0;
   for (const p of placed) {
+    if (p.item.slot === "RANGED" && p.inv === INV.RELIC) continue; // idols, totems and librams have no model
     if (!p.d?.display_id || !p.inv || p.d.viewer_ok === 0) { missing++; continue; }
-    items.push([p.inv, p.d.display_id]);
+    const entry: [number, number] = [p.inv, p.d.display_id];
+    if (p.item.slot === "MAIN_HAND" || p.item.slot === "OFF_HAND") melee.push(entry);
+    else if (p.item.slot === "RANGED") ranged.push(entry);
+    else items.push(entry);
   }
-  return { race: a.race, raceName: a.raceName, gender: a.gender, modelId: a.race * 2 - 1 + a.gender, options: a.options, items, missing, supported: true };
+  const cls = await sqlOne<{ class: string | null }>("select class from characters where slug = $1", [slug]);
+  const weaponView = ranged.length && (cls?.class === "Hunter" || !melee.length) ? "ranged" : "melee";
+  return { race: a.race, raceName: a.raceName, gender: a.gender, modelId: a.race * 2 - 1 + a.gender, options: a.options, items, melee, ranged, weaponView, missing, supported: true };
 }

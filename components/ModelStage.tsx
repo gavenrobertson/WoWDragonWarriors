@@ -3,7 +3,7 @@
 // The API has no 3D models, so the render turns on a turntable (CSS 3D), mirrored when facing away.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IconRotL, IconRotR } from "./icons";
-import { Model3D, type Model3DHandle } from "./Model3D";
+import { Model3D, type Model3DHandle, type WeaponView } from "./Model3D";
 
 const RUNES = "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛊ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛞ ᛟ · DRAGON WARRIORS · ";
 
@@ -21,6 +21,9 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
   const [missing, setMissing] = useState(0);
   const [why2d, setWhy2d] = useState<string | null>(null);
   const [anim, setAnim] = useState("Stand");
+  // Which weapons the 3D model holds, offered when the character has a ranged weapon the viewer can draw.
+  const [weaponView, setWeaponView] = useState<WeaponView>("melee");
+  const [weaponKinds, setWeaponKinds] = useState<{ ranged: boolean; melee: boolean }>({ ranged: false, melee: false });
   const handle = useRef<Model3DHandle | null>(null);
   const is3d = mode3d === "ready";
   const drag = useRef<{ x: number; a: number } | null>(null);
@@ -148,7 +151,10 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
         {slug && want3d && mode3d !== "failed" && (
           <div className={`model3d-layer${is3d ? " ready" : ""}`}>
             <Model3D slug={slug} handleRef={handle} autoRotate={auto && is3d}
-              onState={(st, info) => { setMode3d(st); if (info?.missing != null) setMissing(info.missing); if (st === "failed") setWhy2d(info?.reason ?? null); }} />
+              onState={(st, info) => {
+                setMode3d(st); if (info?.missing != null) setMissing(info.missing); if (st === "failed") setWhy2d(info?.reason ?? null);
+                if (st === "ready") { setWeaponKinds({ ranged: !!info?.ranged, melee: !!info?.melee }); if (info?.view) setWeaponView(info.view); }
+              }} />
           </div>
         )}
 
@@ -197,6 +203,16 @@ export function ModelStage({ name, color, renderUrl, slug }: { name: string; col
         <button type="button" className="btn btn-sm" aria-pressed={auto} onClick={() => setAuto(!auto)} style={auto ? { borderColor: "var(--dw-gold)" } : undefined}>
           Auto-rotate
         </button>
+        {is3d && weaponKinds.ranged && (
+          <div className="weapon-toggle" role="group" aria-label="Weapons on the model">
+            {(["melee", "ranged", "sheathed"] as const).filter((v) => v !== "melee" || weaponKinds.melee).map((v) => (
+              <button key={v} type="button" aria-pressed={weaponView === v}
+                onClick={() => { setWeaponView(v); handle.current?.weapons(v); }}>
+                {v === "melee" ? "Melee" : v === "ranged" ? "Ranged" : "Sheathed"}
+              </button>
+            ))}
+          </div>
+        )}
         {is3d && (
           <label className="row small strong" style={{ gap: 6 }}>
             <span className="visually-hidden">Animation</span>

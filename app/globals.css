@@ -1667,3 +1667,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; h
 
 /* character inspect: weapons row under the model (main hand, off hand, ranged), like the in-game character sheet */
 .gear-weapons { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 8px; max-width: 920px; width: 100%; margin-inline: auto; }
+
+/* 3D model: which weapons the character holds (melee, ranged, or both on the back) */
+.weapon-toggle { display: inline-flex; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #8a6a2c; }
+.weapon-toggle button { min-height: 40px; padding: 0 12px; border: 0; background: linear-gradient(180deg, #2a2010, #17110a); color: var(--dw-text-2); font-family: var(--font-display); font-size: 14px; cursor: pointer; }
+.weapon-toggle button + button { box-shadow: inset 1px 0 0 #8a6a2c; }
+.weapon-toggle button[aria-pressed="true"] { background: linear-gradient(180deg, #5a4214, #2e220c); color: #ffe27a; }
+.weapon-toggle button:focus-visible { outline: 2px solid var(--dw-gold); outline-offset: -2px; }
