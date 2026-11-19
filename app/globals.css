@@ -1674,3 +1674,35 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; h
 .weapon-toggle button + button { box-shadow: inset 1px 0 0 #8a6a2c; }
 .weapon-toggle button[aria-pressed="true"] { background: linear-gradient(180deg, #5a4214, #2e220c); color: #ffe27a; }
 .weapon-toggle button:focus-visible { outline: 2px solid var(--dw-gold); outline-offset: -2px; }
+
+/* ---------- Admin › Marks & chests ---------- */
+.grant-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.grant-who, .grant-what { gap: 14px; }
+.grant-all { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; min-height: 40px; }
+.grant-all input, .grant-person input { width: 18px; height: 18px; accent-color: var(--dw-gold); flex: none; }
+.grant-people { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 460px; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+.grant-person { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--dw-card-2); box-shadow: inset 0 0 0 1px var(--dw-border); cursor: pointer; min-height: 52px; }
+.grant-person:hover { box-shadow: inset 0 0 0 1px var(--dw-border-2); }
+.grant-person.on { box-shadow: inset 0 0 0 1px var(--dw-gold); background: linear-gradient(180deg, rgba(255,209,0,.08), rgba(255,209,0,.02)), var(--dw-card-2); }
+.grant-person-name { display: grid; min-width: 0; flex: 1 1 auto; line-height: 1.25; }
+.grant-person-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grant-person-held { display: grid; justify-items: end; gap: 2px; flex: none; }
+.grant-marks { font-variant-numeric: tabular-nums; font-weight: 600; color: #ffe27a; font-size: 14px; }
+.grant-marks::after { content: " DM"; font-size: 10px; color: var(--dw-text-muted); letter-spacing: .06em; }
+.grant-owned { display: flex; gap: 6px; font-size: 11px; color: var(--dw-text-2); }
+.grant-owned span { display: inline-flex; align-items: center; gap: 2px; }
+.grant-owned img { border-radius: 3px; }
+.grant-what input[type="number"], .grant-what input[type="text"] { width: 100%; box-sizing: border-box; }
+.grant-chests { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.grant-chests li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--dw-card-2); box-shadow: inset 0 0 0 1px var(--dw-border); }
+.grant-chests li.on { box-shadow: inset 0 0 0 1px var(--dw-gold); }
+.grant-chests img { border-radius: 6px; box-shadow: 0 0 0 1px #000, 0 0 0 2px #8a6a2c; flex: none; }
+.grant-chest-name { display: grid; min-width: 0; flex: 1 1 auto; line-height: 1.25; }
+.grant-stepper { display: inline-flex; align-items: center; border-radius: 8px; overflow: hidden; box-shadow: inset 0 0 0 1px #8a6a2c; flex: none; }
+.grant-stepper button { width: 40px; height: 40px; border: 0; background: linear-gradient(180deg, #2a2010, #17110a); color: #ffe27a; font-size: 20px; cursor: pointer; }
+.grant-stepper button:disabled { color: #5a4a2a; cursor: default; }
+.grant-stepper output { min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; }
+.grant-send { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid var(--dw-border); }
+.grant-send .btn { min-height: 44px; }
+@media (max-width: 900px) { .grant-grid { grid-template-columns: 1fr; } .grant-people { max-height: 360px; } }
+@media (max-width: 480px) { .grant-send .btn { width: 100%; } }

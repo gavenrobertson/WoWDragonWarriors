@@ -194,7 +194,9 @@ export function playDice(target: number, over: boolean) {
   if (!(t >= 2 && t <= 98)) throw new ArcadeError("Target must be between 2 and 98.");
   const chance = over ? (100 - t) / 100 : t / 100;
   const roll = Math.floor(rand() * 10000) / 100;
-  const win = over ? roll > t : roll < t;
+  // 10,000 equally likely rolls (0.00-99.99): "over" wins on rolls from the target up, "under" on rolls below it,
+  // so each side wins exactly as often as its stated chance.
+  const win = over ? roll >= t : roll < t;
   const mult = Math.floor((EDGE / chance) * 10000) / 10000;
   return { roll, win, mult, chance };
 }
@@ -215,7 +217,7 @@ export const SLOT_SYMBOLS = [
 ] as const;
 const SLOT_W = SLOT_SYMBOLS.reduce((a, s) => a + s.w, 0);
 /** Paytable: three of a kind pays its line; otherwise a pair pays 0.5x and each dragon adds (1 dragon 1x, 2 dragons 15x). */
-export const SLOT_PAIR = 0.5, SLOT_DRAGON_ONE = 1, SLOT_DRAGON_TWO = 15;
+export const SLOT_PAIR = 0.5, SLOT_DRAGON_ONE = 1, SLOT_DRAGON_TWO = 19; // exact return 97.0%
 function slotMult(r: number[]) {
   const ids = r.map((i) => SLOT_SYMBOLS[i].id);
   if (ids[0] === ids[1] && ids[1] === ids[2]) return SLOT_SYMBOLS[r[0]].pay3;
@@ -377,7 +379,7 @@ async function crashSettle(userId: string, r: { id: string; bet: number; state: 
   const elapsed = Date.now() - start;
   const current = crashAt(elapsed);
   // Auto cash-out wins if the target is reached before the dive.
-  if (auto && auto < point && current >= auto) return settleWin(userId, r, auto);
+  if (auto && auto <= point && point > 1 && current >= auto) return settleWin(userId, r, auto);
   if (current >= point || point <= 1) {
     if (await closeRound(r.id, { ...r.state, end: point }, "lost")) await logPlay(userId, "crash", r.bet, 0, { point });
     return { status: "lost" as const, point, mult: point, won: 0, balance: (await wallet(userId)).marks };
@@ -600,11 +602,12 @@ export function playRoulette(bets: RouletteBet[]) {
 
 // ---------------------------------------------------------------- Rune Keno: 40 runes, pick 1-10, 10 drawn
 export const KENO_RUNES = 40, KENO_DRAWN = 10;
-/** Multiplier by hits, per number of picks. Built from the exact draw odds; ~93-96% back over time, top prize 5,000x. */
+/** Multiplier by hits, per number of picks. Built from the exact draw odds: 96.9-97.2% back over time for every
+ *  pick count (the same as the other games), top prize 5,000x. */
 export const KENO_PAYS: Record<number, Record<number, number>> = {
-  1: { 1: 3.8 }, 2: { 1: 1.5, 2: 6.7 }, 3: { 2: 4.3, 3: 30 }, 4: { 2: 2.1, 3: 8.1, 4: 79 }, 5: { 3: 6, 4: 33, 5: 427 },
-  6: { 3: 3.2, 4: 12, 5: 89, 6: 1560 }, 7: { 4: 9.8, 5: 50, 6: 495, 7: 5000 }, 8: { 4: 5.2, 5: 21, 6: 144, 7: 1920, 8: 5000 },
-  9: { 5: 18, 6: 95, 7: 883, 8: 5000, 9: 5000 }, 10: { 5: 9.4, 6: 41, 7: 293, 8: 3830, 9: 5000, 10: 5000 },
+  1: { 1: 3.88 }, 2: { 1: 1.51, 2: 6.74 }, 3: { 2: 4.38, 3: 30.5 }, 4: { 2: 2.15, 3: 8.27, 4: 80.7 }, 5: { 3: 6.09, 4: 33.5, 5: 434 },
+  6: { 3: 3.26, 4: 12.2, 5: 90.7, 6: 1591 }, 7: { 4: 10.1, 5: 51.6, 6: 511, 7: 5000 }, 8: { 4: 5.41, 5: 21.8, 6: 150, 7: 1998, 8: 5000 },
+  9: { 5: 18.5, 6: 97.7, 7: 908, 8: 5000, 9: 5000 }, 10: { 5: 9.75, 6: 42.5, 7: 304, 8: 3975, 9: 5000, 10: 5000 },
 };
 export function playKeno(picks: unknown) {
   const p = Array.isArray(picks) ? [...new Set(picks.map((x) => Math.floor(Number(x))))] : [];
@@ -622,8 +625,8 @@ export const SCRATCH_PRIZES = [
   { id: "gem", icon: "inv_misc_gem_01", mult: 10, p: 0.02 },
   { id: "sword", icon: "inv_sword_04", mult: 5, p: 0.04 },
   { id: "potion", icon: "inv_potion_51", mult: 2, p: 0.1 },
-  { id: "coin", icon: "inv_misc_coin_02", mult: 1, p: 0.15 },
-] as const;
+  { id: "coin", icon: "inv_misc_coin_02", mult: 1, p: 0.17 },
+] as const; // exact return: 50(.004) + 10(.02) + 5(.04) + 2(.1) + 1(.17) = 97%
 export const SCRATCH_FILLER = { id: "rune", icon: "inv_misc_rune_01" } as const;
 export function playScratch() {
   let r = rand(), win: (typeof SCRATCH_PRIZES)[number] | null = null;
@@ -765,7 +768,10 @@ export async function bjAct(userId: string, id: string, action: "hit" | "stand" 
   }
   if (action === "double") {
     if (r.state.player.length !== 2 || r.state.doubled) throw new ArcadeError("You can only double on your first two cards.");
-    await debit(userId, r.bet);
+    // Claim the double first, so a double-click can't take the extra bet twice.
+    const claimed = await sqlOne("update arcade_rounds set state = json_set(state, '$.doubled', json('true')) where id = $1 and status = 'active' and coalesce(json_extract(state, '$.doubled'), 0) = 0 returning id", [r.id]);
+    if (!claimed) throw new ArcadeError("You can only double once.");
+    try { await debit(userId, r.bet); } catch (e) { await saveRound(r.id, r.state); throw e; }
     const state = { ...r.state, doubled: true, player: [...r.state.player, drawCard()] };
     if (handValue(state.player) > 21) return bjFinish(userId, { ...r, state }, "Bust", 0);
     return bjDealerPlays(userId, { ...r, state });
@@ -909,4 +915,65 @@ export async function crownMonthlyChampions(now = new Date()) {
     if (rows.length) winners.push({ game, rows });
   }
   return { month: month.label, winners };
+}
+
+// ---------------------------------------------------------------- admin grants (Admin › Marks & chests)
+export const GRANT_MAX_MARKS = 1_000_000, GRANT_MAX_CHESTS = 100;
+export type GrantLog = { at: string; battletag: string; character: string | null; marks: number; chests: Record<string, number>; by: string; note: string };
+export type Holdings = Record<string, { marks: number; chests: Record<string, number> }>;
+
+/** Everyone's marks and unopened chests, for the admin page. */
+export async function holdings(): Promise<Holdings> {
+  const [w, c] = await Promise.all([
+    sql<{ user_id: string; marks: number }>("select user_id, marks from arcade_wallets"),
+    sql<{ user_id: string; chest_id: string; count: number }>("select user_id, chest_id, count from arcade_chest_inv where count > 0"),
+  ]);
+  const out: Holdings = {};
+  for (const r of w) out[r.user_id] = { marks: Number(r.marks), chests: {} };
+  for (const r of c) (out[r.user_id] ??= { marks: 0, chests: {} }).chests[r.chest_id] = Number(r.count);
+  return out;
+}
+
+/** Recent officer gifts, newest first. */
+export async function recentGrants(limit = 25): Promise<GrantLog[]> {
+  const rows = await sql<{ created_at: string; payout: number; detail: string | null; battletag: string; name: string | null; surname: string | null }>(
+    `select p.created_at, p.payout, p.detail, u.battletag, c.name, c.surname from arcade_plays p join users u on u.id = p.user_id
+     left join characters c on c.id = u.main_character_id where p.game = 'reward:gift' order by p.created_at desc limit ${Math.min(100, limit)}`);
+  return rows.map((r) => {
+    let d: { note?: string; by?: string; chests?: Record<string, number> } = {};
+    try { d = r.detail ? JSON.parse(r.detail) : {}; } catch { /* old rows */ }
+    return { at: r.created_at, battletag: r.battletag, character: r.name ? `${r.name} ${r.surname ?? ""}`.trim() : null, marks: Number(r.payout),
+      chests: d.chests ?? {}, by: d.by ?? "An officer", note: (d.note ?? "").replace(/^Officer gift: [\d,]+ marks$/, "") };
+  });
+}
+
+/** Give marks and/or chests to some members (or everyone). Each gift is logged with who gave it. */
+export async function grantRewards(by: string, targets: string[] | "all", marksIn: unknown, chestsIn: unknown, noteIn: unknown) {
+  const marks = Math.floor(Number(marksIn) || 0);
+  if (!(marks >= 0 && marks <= GRANT_MAX_MARKS)) throw new ArcadeError(`Marks must be between 0 and ${GRANT_MAX_MARKS.toLocaleString("en-US")}.`);
+  const chests: Record<string, number> = {};
+  for (const c of CHESTS) {
+    const n = Math.floor(Number((chestsIn as Record<string, unknown> | null)?.[c.id]) || 0);
+    if (!(n >= 0 && n <= GRANT_MAX_CHESTS)) throw new ArcadeError(`Give 0 to ${GRANT_MAX_CHESTS} of each chest.`);
+    if (n) chests[c.id] = n;
+  }
+  if (!marks && !Object.keys(chests).length) throw new ArcadeError("Add some marks or at least one chest.");
+  const note = typeof noteIn === "string" ? noteIn.trim().slice(0, 200) : "";
+  const ids = targets === "all"
+    ? (await sql<{ id: string }>("select id from users")).map((r) => r.id)
+    : [...new Set(targets.map(String))];
+  if (!ids.length) throw new ArcadeError("Pick who gets it.");
+  if (ids.length > 500) throw new ArcadeError("That's too many people at once.");
+  const known = new Set((await sql<{ id: string }>("select id from users where id in (select value from json_each($1))", [JSON.stringify(ids)])).map((r) => r.id));
+  let n = 0;
+  for (const id of ids) {
+    if (!known.has(id)) continue;
+    await wallet(id);
+    if (marks) await credit(id, marks);
+    for (const [chest, count] of Object.entries(chests)) await addChests(id, chest, count);
+    await logPlay(id, "reward:gift", 0, marks, { note, by, chests });
+    n++;
+  }
+  if (!n) throw new ArcadeError("None of those accounts exist any more.");
+  return { people: n, marks, chests };
 }

@@ -8,6 +8,8 @@ import { timeAgo } from "@/lib/ui";
 import { AdminConsole, type Section } from "./AdminConsole";
 import { assignableRoles } from "@/lib/roles";
 import { DISCORD_CATEGORIES, discordConfig } from "@/lib/discord";
+import { holdings, recentGrants } from "@/lib/arcade";
+import { CHESTS } from "@/lib/cosmetics";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 
@@ -35,7 +37,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     ...(p.isAdmin ? (["ranks"] as const) : []),
     ...(p.isAdmin || p.canRunRaids ? (["events"] as const) : []),
     ...(p.isAdmin ? (["guild"] as const) : []),
-    ...(p.canManageRoles ? (["people"] as const) : []),
+    ...(p.canManageRoles ? (["people", "rewards"] as const) : []),
     ...(p.isAdmin ? (["keys"] as const) : []),
   ];
   if (!allowed.length) {
@@ -55,6 +57,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     store().syncRuns(), store().applications(), getRanks(), getSettings(), p.canManageRoles ? store().users() : Promise.resolve([]),
   ]);
   const s = settings as Record<string, unknown>;
+  // Admin › Marks & chests: everyone's balances and the gift log (Super Admins and Guild Leaders only).
+  const [held, grantLog] = p.canManageRoles && !viewer.demo
+    ? await Promise.all([holdings().catch(() => ({})), recentGrants().catch(() => [])])
+    : [{}, []];
   const dc = p.isAdmin ? await discordConfig() : { webhooks: {}, enabled: {} };
   // Never send webhook URLs to the browser: only whether one is set and its last characters.
   const discord = DISCORD_CATEGORIES.map((c) => {
@@ -93,6 +99,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       notice={notice}
       discord={discord}
       discordFallback={!!process.env.DISCORD_SIGNUPS_WEBHOOK_URL}
+      holdings={held}
+      grantLog={grantLog}
+      chestTypes={CHESTS.map((c) => ({ id: c.id, name: c.name, icon: c.icon, price: c.price }))}
     />
   );
 }

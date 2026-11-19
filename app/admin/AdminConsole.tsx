@@ -2,8 +2,10 @@
 import { useState } from "react";
 import {
   createEvent, decideApplication, importBank, importLootLog, publishAnnouncement, recordAward, saveGuildPage, saveLootSettings, saveRanks,
-  saveDiscordSettings, setUserRole, syncEverything, testDiscord,
+  saveDiscordSettings, setUserRole, syncEverything, testDiscord, grantArcadeRewards,
 } from "@/app/actions";
+import type { GrantLog, Holdings } from "@/lib/arcade";
+import { RewardsSection } from "./RewardsSection";
 import { Avatar } from "@/components/bits";
 import { ROLES, canChangeRoleOf, roleLabel, type SiteRole } from "@/lib/roles";
 import { StatusDot } from "@/components/bits";
@@ -12,8 +14,8 @@ import { useAction } from "@/components/useAction";
 import type { HubApplication, HubRank, HubUser } from "@/lib/store";
 import { ROLE_LABEL, classColor } from "@/lib/ui";
 
-export type Section = "overview" | "apps" | "loot" | "ranks" | "events" | "guild" | "people" | "keys";
-const LABELS: Record<Section, string> = { overview: "Sync & health", apps: "Applications", loot: "Loot system", ranks: "Ranks & permissions", events: "Events & news", guild: "Guild page", people: "People & roles", keys: "Integrations" };
+export type Section = "overview" | "apps" | "loot" | "ranks" | "events" | "guild" | "people" | "rewards" | "keys";
+const LABELS: Record<Section, string> = { overview: "Sync & health", apps: "Applications", loot: "Loot system", ranks: "Ranks & permissions", events: "Events & news", guild: "Guild page", people: "People & roles", rewards: "Marks & chests", keys: "Integrations" };
 const SYSTEMS = [
   ["wishlist_council", "Wishlist + loot council", "Ranked wishlists, officers decide ties"],
   ["epgp", "EPGP", "Effort points vs. gear points ratio"],
@@ -32,6 +34,7 @@ export function AdminConsole(props: {
   users: HubUser[]; me: { userId: string; role: SiteRole | null }; assignable: (SiteRole | null)[];
   guildText: { motd: string; info: string }; notice?: string;
   discord: { id: string; label: string; desc: string; connected: boolean; hint: string; enabled: boolean }[]; discordFallback: boolean;
+  holdings: Holdings; grantLog: GrantLog[]; chestTypes: { id: string; name: string; icon: string; price: number }[];
 }) {
   const [sec, setSec] = useState<Section>(props.initial);
   const [apps, setApps] = useState(props.apps);
@@ -282,6 +285,11 @@ export function AdminConsole(props: {
             </div>
             <p className="micro muted">People appear here after they sign in once. The roster&apos;s in-game ranks still apply; a hub role only adds permissions.</p>
           </>
+        )}
+
+        {sec === "rewards" && (
+          <RewardsSection users={users} me={props.me.userId} holdings={props.holdings} log={props.grantLog} chests={props.chestTypes}
+            pending={pending} run={run} grant={grantArcadeRewards} />
         )}
 
         {sec === "keys" && (

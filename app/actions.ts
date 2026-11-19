@@ -12,7 +12,8 @@ import type { ActionResult } from "@/components/useAction";
 import type { Role, SignupStatus } from "@/lib/types";
 import { assignableRoles, canChangeRoleOf, roleLabel, type SiteRole } from "@/lib/roles";
 import { BIS_PHASE, SLOTS, SOURCE_TYPES } from "@/lib/bis";
-import { COUNCIL_VOTE_MARKS, grantMarks, poolSettle } from "@/lib/arcade";
+import { ArcadeError, COUNCIL_VOTE_MARKS, grantMarks, grantRewards, holdings, poolSettle, recentGrants, type GrantLog, type Holdings } from "@/lib/arcade";
+import { CHESTS } from "@/lib/cosmetics";
 import { contestedCount, latestSession } from "@/lib/council";
 
 const ROLES: Role[] = ["tank", "healer", "melee", "ranged"];
@@ -704,4 +705,24 @@ export async function councilPulse(input: { since: string; itemIds: number[] }) 
   const votes = await sql<{ item_id: number; voter_user_id: string; character_id: string }>(
     `select item_id, voter_user_id, character_id from council_votes where item_id in (${list(1)})`, ids);
   return { ok: true as const, awards, votes, now: nowIso() };
+}
+
+// ---------------------------------------------------------------- Admin › Marks & chests
+/** Super Admins and Guild Leaders give Dragon Marks and/or chests to members, or to everyone at once. */
+export async function grantArcadeRewards(input: { userIds: string[] | "all"; marks: number; chests: Record<string, number>; note?: string }) {
+  let extra: { holdings: Holdings; log: GrantLog[] } | null = null;
+  const r = await act("canManageRoles", "Rewards sent", async (v) => {
+    const by = v.main?.name ?? v.battletag ?? "An officer";
+    try {
+      const g = await grantRewards(by, input.userIds === "all" ? "all" : Array.isArray(input.userIds) ? input.userIds : [], input.marks, input.chests, input.note);
+      const parts = [g.marks ? `${g.marks.toLocaleString("en-US")} marks` : "", ...Object.entries(g.chests).map(([id, n]) => `${n} ${CHESTS.find((c) => c.id === id)?.name ?? id}${n === 1 ? "" : "s"}`)].filter(Boolean);
+      extra = { holdings: await holdings(), log: await recentGrants() };
+      revalidatePath("/admin");
+      return { ok: true, message: `Sent ${parts.join(" and ")} to ${g.people === 1 ? "1 person" : `${g.people} people`}` };
+    } catch (e) {
+      if (e instanceof ArcadeError) return { ok: false, error: e.message };
+      throw e;
+    }
+  });
+  return extra ? { ...r, ...(extra as object) } : r;
 }
