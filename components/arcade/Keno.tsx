@@ -1,6 +1,7 @@
 "use client";
 // Rune Keno: pick up to 10 of 40 runestones, then the rune drum winds up and ten runes are drawn one by one.
 // Hits flare gold and climb in pitch; the paytable ladder for your pick count lights up live as hits land.
+import { revealOnPhone } from "./reveal";
 import { useEffect, useRef, useState } from "react";
 import { kenoPlay } from "@/app/arcade/actions";
 import { BetInput, fmt, useArcade } from "./ArcadeShell";
@@ -51,6 +52,7 @@ export function Keno({ pays }: { pays: Record<number, Record<number, number>> })
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!reduced) { setWinding(true); play("spin"); }
     const t0 = performance.now();
+    revealOnPhone(document.querySelector(".game-controls")?.parentElement?.querySelector(".machine"));
     const r = await kenoPlay({ bet, picks });
     if (!r.ok) { setBusy(false); setWinding(false); play("error"); return setErr(r.error); }
     const wait = reduced ? 0 : Math.max(0, WIND - (performance.now() - t0));

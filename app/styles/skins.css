@@ -141,7 +141,7 @@ html[data-theme^="x-"] a { color: var(--sk-link); }
 html[data-theme^="x-"] a:hover { color: var(--sk-link-hi); }
 html[data-theme^="x-"] :is(.title-xl, .hero h1, .page-head h1:not([style*="color"]), .admin h1) {
   background: var(--sk-title); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
-  filter: var(--sk-title-filter); animation: sk-title 10s linear infinite;
+  text-shadow: none; filter: var(--sk-title-filter); animation: sk-title 10s linear infinite;
 }
 @keyframes sk-title { from { background-position: 0 0; } to { background-position: -200% 0; } }
 
@@ -415,7 +415,7 @@ html[data-theme="x-prismatic"] .site-header { border-image: var(--sk-rainbow) 1;
   background: radial-gradient(circle, rgba(10,6,20,.8), rgba(5,3,10,.92)); border-radius: 18px; overflow-y: auto; }
 .pool-levels { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 8px; }
 @media (max-width: 560px) { .pool-levels { grid-template-columns: minmax(0, 1fr); width: 100%; } }
-.pool-level { display: grid; justify-items: start; gap: 2px; text-align: left; padding: 10px 14px; min-height: 0; white-space: normal; }
+.pool-level { display: grid; grid-template-columns: minmax(0, 1fr); justify-content: stretch; justify-items: start; gap: 2px; text-align: left; padding: 10px 14px; min-height: 0; white-space: normal; }
 .pool-level strong { font-size: 16px; }
 .pool-level .micro { font-family: var(--font-body); }
 .pool-players { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -581,7 +581,8 @@ html[data-theme="x-prismatic"] .site-header { border-image: var(--sk-rainbow) 1;
 .tab-icon.tab-crest { box-shadow: none !important; border-radius: 0; filter: drop-shadow(0 1px 0 #000); }
 @media (max-width: 380px) { .arcade-tabs a.tab-iconic { padding: 6px 4px; } .games-menu-btn { padding: 8px 5px; } }
 .bal-short { display: none; }
-@media (max-width: 380px) { .bal-full { display: none; } .bal-short { display: inline; } .arcade-wallet { padding-left: 6px; padding-right: 8px; gap: 4px; } }
+@media (max-width: 600px) { .bal-full { display: none; } .bal-short { display: inline; } }
+@media (max-width: 380px) { .arcade-wallet { padding-left: 6px; padding-right: 8px; gap: 4px; } }
 
 /* =====================================================================
    November additions: name styles

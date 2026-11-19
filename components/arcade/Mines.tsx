@@ -144,7 +144,7 @@ export function Mines({ tiles }: { tiles: number }) {
       </div>
       <div className="game-controls panel">
         <BetInput value={bet} onChange={setBet} disabled={active || busy} />
-        <label className="field">Bombs: <strong className="gold">{mines}</strong>
+        <label className="field"><span>Bombs <strong className="field-value">{mines}</strong></span>
           <input type="range" min={1} max={24} value={mines} disabled={active || busy} onChange={(e) => setMines(Number(e.target.value))} />
         </label>
         <div className="seg" role="group" aria-label="Bomb presets">

@@ -654,7 +654,7 @@ export function Pool({ rules, leftToday0, board, me }: {
               <canvas ref={cv} className="pool-canvas" aria-label="8-ball table. Aim with the mouse or by dragging, set power, then shoot." />
               {phase === "menu" && (
                 <div className="pool-overlay">
-                  <strong className="snake-big">Dragon&apos;s Eye 8-Ball</strong>
+                  <strong className="snake-big">Dragon&apos;s Eye <span style={{ whiteSpace: "nowrap" }}>8-Ball</span></strong>
                   <span className="soft">Sink your seven, then the Dragon&apos;s Eye. Sink it early and you lose.</span>
                   <div className="pool-levels">
                     {LEVELS.map((l) => (

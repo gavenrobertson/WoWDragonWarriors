@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { GAMES, wowIconUrl } from "@/lib/arcade-games";
 import { CHESTS } from "@/lib/cosmetics";
 import { myChests } from "@/app/arcade/actions";
@@ -56,9 +55,7 @@ export function ArcadeShell({ initial, signedIn, chests: chests0 = {}, children 
   }, []);
   const path = usePathname();
   const [muted, setMutedS] = useState(false);
-  const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    setMounted(true);
     setMutedS(isMuted());
     const off = onMuteChange(setMutedS);
     const unlock = () => unlockAudio();
@@ -88,7 +85,6 @@ export function ArcadeShell({ initial, signedIn, chests: chests0 = {}, children 
             </Link>
           </nav>
           <SoundToggle muted={muted} />
-          {mounted && createPortal(<SoundToggle muted={muted} floating />, document.body)}
           <div className="arcade-wallet" aria-live="polite">
             <span className="mark-coin" aria-hidden="true" />
             <span key={delta && delta.n > 0 ? `bal-${delta.k}` : "bal"} className={`arcade-balance${delta && delta.n > 0 ? " punch" : ""}`}><span className="bal-full">{signedIn ? balance.toLocaleString("en-US") : "—"}</span><span className="bal-short">{signedIn ? shortMarks(balance) : "—"}</span></span>
@@ -171,10 +167,10 @@ export function BetInput({ value, onChange, disabled }: { value: number; onChang
 }
 
 
-/** Mute button: in the arcade bar on wide screens, floating bottom-right on phones (portalled to <body>). */
-function SoundToggle({ muted, floating = false }: { muted: boolean; floating?: boolean }) {
+/** Mute button, in the arcade bar at every width (a floating one covered games' buttons on phones). */
+function SoundToggle({ muted }: { muted: boolean }) {
   return (
-    <button type="button" className={`sound-toggle${floating ? " floating" : ""}`} aria-pressed={!muted} aria-label={muted ? "Turn sound on" : "Mute sound"} title={muted ? "Sound off" : "Sound on"} onClick={() => setMuted(!muted)}>
+    <button type="button" className="sound-toggle" aria-pressed={!muted} aria-label={muted ? "Turn sound on" : "Mute sound"} title={muted ? "Sound off" : "Sound on"} onClick={() => setMuted(!muted)}>
       {muted
         ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16 9l5 6M21 9l-5 6" /></svg>
         : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" /></svg>}

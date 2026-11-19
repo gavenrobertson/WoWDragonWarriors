@@ -89,7 +89,9 @@
 .celebrate-banner strong { font: 400 clamp(26px, 5vw, 46px)/1.05 var(--font-title); color: var(--tc); text-shadow: 0 2px 0 #000, 0 0 24px var(--tc); letter-spacing: .02em; }
 .celebrate-amount { font: 700 clamp(22px, 4vw, 34px)/1.1 var(--font-body); color: #FFD100; font-variant-numeric: tabular-nums; text-shadow: 0 2px 0 #000; }
 .celebrate-mult { font: 600 13px var(--font-body); color: #d9ccae; }
-.celebrate-banner.t-legendary strong { background: linear-gradient(90deg, #ff9433, #ffe27a, #ff5ce0, #ff9433); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: cb-shine 2s linear infinite; }
+/* gradient text can't carry a text-shadow (it paints over the transparent glyphs), so the glow is a drop-shadow filter */
+.celebrate-banner.t-legendary strong { background: linear-gradient(90deg, #ff9433, #ffe27a, #ff5ce0, #ff9433); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: cb-shine 2s linear infinite;
+  text-shadow: none; filter: drop-shadow(0 2px 0 #000) drop-shadow(0 0 16px rgba(255,148,51,.55)); }
 @keyframes cb-in { from { transform: translate(-50%, -50%) scale(.4); opacity: 0; } }
 @keyframes cb-out { to { transform: translate(-50%, -60%) scale(.96); opacity: 0; } }
 @keyframes cb-shine { to { background-position: -300% 0; } }
@@ -101,19 +103,35 @@
 .sound-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .sound-toggle svg path:first-child { fill: currentColor; }
 .sound-toggle[aria-pressed="false"] { color: #8a7b60; }
-@media (max-width: 380px) { .sound-toggle { width: 30px; height: 30px; margin-right: 4px; } }
+@media (max-width: 380px) { .sound-toggle { width: 34px; height: 34px; margin-right: 2px; } }
 
 /* the shared primary action reads as the cabinet's big button */
 .game-controls .btn-primary.btn-lg { min-height: 54px; font-size: 19px; letter-spacing: .04em; }
 .arcade-balance.punch { display: inline-block; animation: bal-punch .52s cubic-bezier(.2,1.5,.4,1); }
 @keyframes bal-punch { 0% { transform: scale(1); } 35% { transform: scale(1.16) rotate(-3deg); } 70% { transform: scale(.97); } 100% { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .arcade-balance.punch { animation: none; } }
-.sound-toggle.floating { display: none; }
-@media (max-width: 600px) {
-  .sound-toggle:not(.floating) { display: none; }
-  .sound-toggle.floating { display: inline-grid; position: fixed; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 60; width: 44px; height: 44px; margin: 0;
-    box-shadow: inset 0 0 0 1px #8a6a2c, 0 8px 20px -6px #000, 0 0 0 1px #000; }
-}
+/* phones: the mute button stays in the arcade bar, compact, with a full-size touch area */
+@media (max-width: 600px) { .sound-toggle { width: 36px; height: 36px; margin-right: 4px; position: relative; } .sound-toggle::after { content: ""; position: absolute; inset: -4px; } }
 /* a full results strip must never widen the cabinet past a phone screen */
 .machine > .machine-hud, .machine > .machine-screen { min-width: 0; }
 .machine-hud .result-strip { flex: 1 1 150px; min-width: 0; justify-content: flex-start; margin-left: auto; }
+
+/* phones: every control is at least 40px tall (option toggles, Dragonspire doors, collection previews) */
+@media (max-width: 600px), (pointer: coarse) {
+  .seg button { min-height: 40px; }
+  .drop-cell .preview-btn { min-height: 40px; }
+}
+@media (max-width: 600px) { .sp .sp-door { height: calc(var(--row) - 2px); } }
+
+/* a field's live value (Mines' bomb count) sits beside its label, in gold */
+.field .field-value { display: inline; margin-left: 6px; color: var(--wow-gold, #FFD100); font-variant-numeric: tabular-nums; }
+
+/* phones: a compact game header and cabinet so the board and its main button share the screen */
+@media (max-width: 600px) {
+  .arcade-game { gap: 10px; }
+  .arcade-game-head h1 { font-size: 24px; }
+  .arcade-game-head > .soft { display: none; }
+  .machine { padding: 8px; gap: 6px; }
+  .machine-hud { min-height: 30px; padding-top: 0; }
+  .machine-screen { min-height: 280px; padding: 10px; }
+}

@@ -3,6 +3,7 @@
 // the ball's lead over its planned pocket shrinks smoothly to nothing, it drops off the track, hops over the
 // frets and settles. Chips are real stacks on the layout: winners glow, losers are swept away.
 // The server picks the number; the wheel only plans a landing on it.
+import { revealOnPhone } from "./reveal";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { rouletteSpin } from "@/app/arcade/actions";
 import { fmt, useArcade } from "./ArcadeShell";
@@ -178,6 +179,7 @@ export function Roulette() {
     if (!bets.length || spinning) return;
     setSpinning(true); setErr(null); setSettled(null); setLanded(null);
     play("chip"); buzz("tap");
+    revealOnPhone(document.querySelector(".rw-wheel-wrap")?.closest(".machine"));
     const bs = bets;
     const r = await rouletteSpin({ bets: bs });
     if (!r.ok) { setSpinning(false); play("error"); return setErr(r.error); }

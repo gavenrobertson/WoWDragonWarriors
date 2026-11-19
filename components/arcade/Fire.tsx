@@ -337,8 +337,8 @@ export function Fire({ rules, best0, leftToday0, board }: SkillProps) {
       ctx.globalAlpha = 1; s.close = s.close.filter((cl) => now - cl.t < 700);
 
       // the survival clock, popping at every 10 seconds
-      if (s.state !== "ready") {
-        const t = s.state === "on" ? (now - s.t0) / 1000 : (s.deadAt - s.t0) / 1000;
+      if (s.state === "on") {
+        const t = Math.floor(((now - s.t0) / 1000) * 10) / 10;
         const mk = Math.min(1, (now - s.mileAt) / 600), pop = reduced ? 1 : 1 + (mk < 1 ? .3 * Math.sin(mk * Math.PI) : 0);
         ctx.save(); ctx.translate(AW / 2, 46); ctx.scale(pop, pop);
         ctx.font = `700 40px ${BODY}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
